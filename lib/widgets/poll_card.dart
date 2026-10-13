@@ -26,6 +26,7 @@ class _PollCardState extends State<PollCard> {
 
   final Set<String> _selected = {};
   PollResults? _results;
+  String? _resultsFor; // phiếu của mình lúc kết quả được tải
   bool _loading = false;
   bool _failed = false;
   bool _voting = false;
@@ -418,8 +419,20 @@ class _PollCardState extends State<PollCard> {
           final mine = snap.data;
           final showResults =
               closed || (mine != null && !_changing) || _peek;
-          if (showResults && _results == null && !_loading && !_failed) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
+          // Kết quả không tự cập nhật theo thời gian thực, nên tải lại mỗi khi
+          // phiếu của mình đổi (kể cả đổi từ một thẻ khác của cùng bài, ví dụ
+          // ở màn hình chính). Chờ một chút để phiếu kịp ghi lên máy chủ.
+          final voteKey = (mine ?? const <String>[]).join(',');
+          if (showResults &&
+              !_loading &&
+              !_failed &&
+              (_results == null || _resultsFor != voteKey)) {
+            final first = _results == null;
+            _resultsFor = voteKey;
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              if (!first) {
+                await Future<void>.delayed(const Duration(seconds: 1));
+              }
               if (mounted) _loadResults();
             });
           }
