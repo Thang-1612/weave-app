@@ -130,6 +130,21 @@ class PostCard extends StatelessWidget {
     }
   }
 
+  /// Tác giả bổ sung một gợi ý vào câu hỏi.
+  Future<void> _addHint(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final text = await showDialog<String>(
+      context: context,
+      builder: (_) => const _HintDialog(),
+    );
+    if (text == null || text.trim().isEmpty) return;
+    try {
+      await PostService.addHint(post, text);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   Future<void> _onMenu(BuildContext context, String value) async {
     final messenger = ScaffoldMessenger.of(context);
     final prefs = UserPrefs.instance;
@@ -273,9 +288,9 @@ class PostCard extends StatelessWidget {
   List<PopupMenuEntry<String>> _menuItems(bool isMine) {
     final prefs = UserPrefs.instance;
 
-    // Chỉ bài công khai mới rẽ nhánh được
+    // Chỉ bài công khai (và không phải câu hỏi) mới rẽ nhánh được
     final forkItem = <PopupMenuEntry<String>>[
-      if (post.collection == 'posts')
+      if (post.collection == 'posts' && !post.isQuestion)
         PopupMenuItem<String>(
           value: 'fork',
           child: Text(tr('Rẽ nhánh bài này', 'Fork this post')),
@@ -295,10 +310,12 @@ class PostCard extends StatelessWidget {
                   : tr('Ghim lên đầu hồ sơ', 'Pin to profile'),
             ),
           ),
-        PopupMenuItem<String>(
-          value: 'space',
-          child: Text(tr('Đổi chủ đề', 'Change topic')),
-        ),
+        // Câu hỏi không có chủ đề nên không có mục đổi chủ đề
+        if (!post.isQuestion)
+          PopupMenuItem<String>(
+            value: 'space',
+            child: Text(tr('Đổi chủ đề', 'Change topic')),
+          ),
         PopupMenuItem<String>(
           value: 'audience',
           child: Text(tr('Đổi đối tượng xem', 'Change audience')),
@@ -417,11 +434,77 @@ class PostCard extends StatelessWidget {
     );
   }
 
+  /// Khung gợi ý của câu hỏi: tác giả bổ sung, mọi người đọc.
+  Widget _buildHints(BuildContext context, bool isMine) {
+    if (!post.isQuestion) return const SizedBox.shrink();
+    if (post.hints.isEmpty && !isMine) return const SizedBox.shrink();
+
+    final canAdd = isMine && post.hints.length < PostService.maxHints;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 4, bottom: 4),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (post.hints.isNotEmpty) ...[
+            Text(
+              '💡 ${tr('Gợi ý bổ sung từ tác giả', 'Hints from the author')}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            for (final h in post.hints)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('• '),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(text: h.text),
+                            TextSpan(
+                              text: '  ${formatTimeAgo(h.createdAt)}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+          if (canAdd)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => _addHint(context),
+                icon: const Icon(Icons.lightbulb_outline, size: 18),
+                label: Text(tr('Bổ sung gợi ý', 'Add a hint')),
+                style: TextButton.styleFrom(foregroundColor: AppColors.brand),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final space = findSpace(post.spaceId) ?? defaultSpaces.first;
     final isMine = post.authorId == FirebaseAuth.instance.currentUser?.uid;
     final isFork = post.forkedFrom != null;
+    final isQuestion = post.isQuestion;
     if (post.isExpired && !isMine) return const SizedBox.shrink();
 
     // Nhãn đối tượng xem: chỉ hiện với bài không công khai
@@ -432,8 +515,18 @@ class PostCard extends StatelessWidget {
     final pinTag = (showPinnedTag && post.isPinned)
         ? '📌 ${tr('Đã ghim', 'Pinned')} · '
         : '';
+
+    // Câu hỏi không có chủ đề: hiện nhãn "Câu hỏi" thay cho chủ đề
+    final String topicLabel;
+    if (isQuestion) {
+      topicLabel = '❓ ${tr('Câu hỏi', 'Question')}';
+    } else {
+      final space = findSpace(post.spaceId) ?? defaultSpaces.first;
+      topicLabel =
+      '${space.emoji} ${tr(space.name, space.nameEn ?? space.name)}';
+    }
     final subtitle =
-        '$pinTag${space.emoji} ${tr(space.name, space.nameEn ?? space.name)} · ${formatTimeAgo(post.createdAt)}$audienceTag';
+        '$pinTag$topicLabel · ${formatTimeAgo(post.createdAt)}$audienceTag';
 
     return Card(
       color: isFork ? const Color(0xFFF6F7FF) : Colors.white,
@@ -509,16 +602,34 @@ class PostCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             // Nội dung bài, tóm tắt cảm xúc và hàng nút nằm NGOÀI hàng tiêu đề
-            ForkOrigin(post: post),
+            if (!isQuestion) ForkOrigin(post: post),
             PostBlocks(post: post),
+            // Câu hỏi: gợi ý bổ sung của tác giả và trạng thái đáp án
+            _buildHints(context, isMine),
+            if (isQuestion && post.hasAcceptedAnswer)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '✅ ${tr('Đã có đáp án được chọn', 'An answer has been picked')}',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF15803D),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             // Bình chọn đính kèm bài (key theo id bài để giữ trạng thái khi
             // danh sách cuộn hoặc cập nhật)
             if (post.hasPoll)
               PollCard(key: ValueKey('poll_${post.id}'), post: post),
             _buildSummary(),
-            ResponseBar(post: post),
-            ForkCount(post: post),
-            PostExtras(post: post),
+            // Câu hỏi không có phản hồi theo chủ đề, nhánh, cập nhật, góp ý
+            // hay ghi chú theo khối
+            if (!isQuestion) ...[
+              ResponseBar(post: post),
+              ForkCount(post: post),
+              PostExtras(post: post),
+            ],
             const Divider(height: 16),
             Row(
               children: [
@@ -526,8 +637,17 @@ class PostCard extends StatelessWidget {
                 TextButton.icon(
                   onPressed:
                   openCommentsOnTap ? () => _openComments(context) : null,
-                  icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                  label: Text(tr('Bình luận', 'Comment')),
+                  icon: Icon(
+                    isQuestion
+                        ? Icons.question_answer_outlined
+                        : Icons.chat_bubble_outline,
+                    size: 20,
+                  ),
+                  label: Text(
+                    isQuestion
+                        ? tr('Trả lời', 'Answer')
+                        : tr('Bình luận', 'Comment'),
+                  ),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.grey.shade700,
                   ),
@@ -561,6 +681,59 @@ class PostCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Hộp nhập gợi ý bổ sung (tự quản lý bộ điều khiển ô nhập).
+class _HintDialog extends StatefulWidget {
+  const _HintDialog();
+
+  @override
+  State<_HintDialog> createState() => _HintDialogState();
+}
+
+class _HintDialogState extends State<_HintDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: Text(tr('Bổ sung gợi ý', 'Add a hint')),
+      content: SizedBox(
+        width: 360,
+        child: TextField(
+          controller: _controller,
+          autofocus: true,
+          maxLines: 4,
+          minLines: 2,
+          maxLength: PostService.maxHintLength,
+          decoration: InputDecoration(
+            hintText: tr(
+              'Thêm thông tin giúp mọi người trả lời đúng hơn',
+              'Add details to help people answer better',
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(tr('Hủy', 'Cancel')),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: Text(tr('Thêm', 'Add')),
+        ),
+      ],
     );
   }
 }

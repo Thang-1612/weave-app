@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/post.dart';
@@ -6,7 +8,9 @@ import '../services/poll_service.dart';
 import '../theme/app_theme.dart';
 
 /// Bình chọn trong bài. Người xem phải bình chọn mới thấy kết quả (tránh bị
-/// ảnh hưởng); tác giả có thể xem kết quả mà không cần bình chọn.
+/// ảnh hưởng); tác giả có thể xem kết quả mà không cần bình chọn. Khi bình
+/// chọn đã khóa (quá hạn), mọi người đều xem được kết quả và không ai đổi
+/// được phiếu.
 class PollCard extends StatefulWidget {
   final Post post;
 
@@ -27,8 +31,41 @@ class _PollCardState extends State<PollCard> {
   bool _voting = false;
   bool _changing = false; // đang đổi bình chọn
   bool _peek = false; // tác giả xem kết quả khi chưa bình chọn
+  Timer? _closeTimer;
 
   static const _grey = TextStyle(fontSize: 12, color: Colors.grey);
+
+  @override
+  void initState() {
+    super.initState();
+    // Tới giờ khóa thì tự chuyển sang chế độ xem kết quả
+    final closes = widget.post.pollClosesAt;
+    if (closes != null) {
+      final left = closes.difference(DateTime.now());
+      if (!left.isNegative) {
+        _closeTimer = Timer(left + const Duration(seconds: 1), () {
+          if (!mounted) return;
+          setState(() {
+            _changing = false;
+            _peek = false;
+            _results = null;
+            _selected.clear();
+          });
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _closeTimer?.cancel();
+    super.dispose();
+  }
+
+  String _two(int n) => n.toString().padLeft(2, '0');
+
+  String _fmt(DateTime d) =>
+      '${_two(d.day)}/${_two(d.month)} ${_two(d.hour)}:${_two(d.minute)}';
 
   Future<void> _loadResults() async {
     if (_loading) return;
@@ -39,7 +76,8 @@ class _PollCardState extends State<PollCard> {
     try {
       final r = await PollService.results(widget.post);
       if (mounted) setState(() => _results = r);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('poll results error: $e');
       if (mounted) setState(() => _failed = true);
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -89,8 +127,10 @@ class _PollCardState extends State<PollCard> {
     }
   }
 
-  Widget _header() {
-    return Row(
+  Widget _header(bool closed) {
+    final closes = widget.post.pollClosesAt;
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         const Icon(Icons.poll_outlined, size: 18, color: AppColors.brand),
         const SizedBox(width: 6),
@@ -101,6 +141,13 @@ class _PollCardState extends State<PollCard> {
         if (widget.post.pollMultiple)
           Text(
             ' · ${tr('chọn nhiều', 'multiple answers')}',
+            style: _grey,
+          ),
+        if (closed)
+          Text(' · 🔒 ${tr('đã khóa', 'closed')}', style: _grey)
+        else if (closes != null)
+          Text(
+            ' · ${tr('khóa lúc', 'closes')} ${_fmt(closes)}',
             style: _grey,
           ),
       ],
@@ -262,7 +309,7 @@ class _PollCardState extends State<PollCard> {
     );
   }
 
-  List<Widget> _resultsView(List<String> mine, bool hasVote) {
+  List<Widget> _resultsView(List<String> mine, bool hasVote, bool closed) {
     final r = _results;
     return [
       if (r == null && _failed)
@@ -303,7 +350,8 @@ class _PollCardState extends State<PollCard> {
             icon: const Icon(Icons.refresh, size: 18),
             onPressed: _loading ? null : _loadResults,
           ),
-          if (hasVote)
+          // Đã khóa: không đổi hay rút phiếu được nữa
+          if (hasVote && !closed)
             TextButton(
               onPressed: () => setState(() {
                 _changing = true;
@@ -313,12 +361,12 @@ class _PollCardState extends State<PollCard> {
               }),
               child: Text(tr('Đổi bình chọn', 'Change vote')),
             ),
-          if (hasVote)
+          if (hasVote && !closed)
             TextButton(
               onPressed: _retract,
               child: Text(tr('Rút phiếu', 'Remove vote')),
             ),
-          if (!hasVote && _peek)
+          if (!hasVote && _peek && !closed)
             TextButton(
               onPressed: () => setState(() => _peek = false),
               child: Text(tr('Quay lại', 'Back')),
@@ -332,6 +380,7 @@ class _PollCardState extends State<PollCard> {
   Widget build(BuildContext context) {
     final post = widget.post;
     final isAuthor = FirebaseAuth.instance.currentUser?.uid == post.authorId;
+    final closed = post.pollClosed;
 
     return Container(
       width: double.infinity,
@@ -346,16 +395,29 @@ class _PollCardState extends State<PollCard> {
         stream: _mine,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Text(
-              tr('Không tải được bình chọn', 'Could not load the poll'),
-              style: _grey,
+            // Hiện cả lỗi thật để biết nguyên nhân (thường là chưa deploy luật)
+            final detail = '${snap.error}';
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tr('Không tải được bình chọn', 'Could not load the poll'),
+                  style: _grey,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  detail.length > 140 ? '${detail.substring(0, 140)}...' : detail,
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                ),
+              ],
             );
           }
           if (snap.connectionState == ConnectionState.waiting) {
             return const LinearProgressIndicator(minHeight: 2);
           }
           final mine = snap.data;
-          final showResults = (mine != null && !_changing) || _peek;
+          final showResults =
+              closed || (mine != null && !_changing) || _peek;
           if (showResults && _results == null && !_loading && !_failed) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) _loadResults();
@@ -364,10 +426,10 @@ class _PollCardState extends State<PollCard> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _header(),
+              _header(closed),
               const SizedBox(height: 8),
               if (showResults)
-                ..._resultsView(mine ?? const <String>[], mine != null)
+                ..._resultsView(mine ?? const <String>[], mine != null, closed)
               else
                 ..._voteView(mine, isAuthor),
             ],

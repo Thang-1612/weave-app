@@ -156,7 +156,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           'A time capsule cannot be public'));
       return;
     }
-    setState(() => _visibility = picked);
+    setState(() {
+      _visibility = picked;
+      // Bài không công khai không tính điểm đáp án nên tắt chế độ câu hỏi
+      if (picked != 'public') _isQuestion = false;
+    });
   }
 
   /// Mở hộp soạn bình chọn (tạo bản nháp nếu chưa có).
@@ -365,7 +369,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     setState(() => _posting = true);
     try {
-      var spaceId = _spaceId;
+      // Câu hỏi không gắn chủ đề: bỏ qua bước chọn và nhận biết chủ đề
+      var spaceId = _isQuestion ? '' : _spaceId;
       var source = 'user';
 
       if (spaceId == null) {
@@ -435,6 +440,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         isQuestion: _isQuestion,
         pollOptions: _poll?.options,
         pollMultiple: _poll?.multiple ?? false,
+        pollClosesAt: _poll?.closeAfter == null
+            ? null
+            : DateTime.now().add(_poll!.closeAfter!),
       );
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -445,7 +453,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            source == 'user'
+            (source == 'user' || _isQuestion)
                 ? tr('Đã đăng bài viết', 'Post published')
                 : tr(
               'Đã đăng và tự xếp vào $spaceLabel',
@@ -607,37 +615,38 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
             children: [
-              // Chủ đề
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ChoiceChip(
-                        avatar: const Icon(Icons.auto_awesome, size: 16),
-                        label: Text(tr('Tự động', 'Auto')),
-                        selected: _spaceId == null,
-                        onSelected: (_) => setState(() => _spaceId = null),
-                      ),
-                      ActionChip(
-                        backgroundColor:
-                        _spaceId != null ? AppColors.soft : null,
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(_spaceChipLabel()),
-                            const Icon(Icons.arrow_drop_down, size: 18),
-                          ],
+              // Chủ đề (câu hỏi không có chủ đề)
+              if (!_isQuestion)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ChoiceChip(
+                          avatar: const Icon(Icons.auto_awesome, size: 16),
+                          label: Text(tr('Tự động', 'Auto')),
+                          selected: _spaceId == null,
+                          onSelected: (_) => setState(() => _spaceId = null),
                         ),
-                        onPressed: _posting ? null : _pickSpace,
-                      ),
-                    ],
+                        ActionChip(
+                          backgroundColor:
+                          _spaceId != null ? AppColors.soft : null,
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(_spaceChipLabel()),
+                              const Icon(Icons.arrow_drop_down, size: 18),
+                            ],
+                          ),
+                          onPressed: _posting ? null : _pickSpace,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
               // Đối tượng xem: Công khai / Bạn bè / Chỉ mình tôi
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
@@ -667,24 +676,25 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     ),
                   ),
                 ),
-              // Hộp thời gian
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: InputChip(
-                    avatar: const Icon(Icons.hourglass_bottom, size: 16),
-                    label: Text(_openAt == null
-                        ? tr('Hẹn giờ mở', 'Time capsule')
-                        : '${tr('Mở vào', 'Opens on')} ${CapsuleService.fmtDate(_openAt!)}'),
-                    onPressed: _posting ? null : _pickOpenAt,
-                    onDeleted: _openAt == null
-                        ? null
-                        : () => setState(() => _openAt = null),
+              // Hộp thời gian (câu hỏi không dùng)
+              if (!_isQuestion)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: InputChip(
+                      avatar: const Icon(Icons.hourglass_bottom, size: 16),
+                      label: Text(_openAt == null
+                          ? tr('Hẹn giờ mở', 'Time capsule')
+                          : '${tr('Mở vào', 'Opens on')} ${CapsuleService.fmtDate(_openAt!)}'),
+                      onPressed: _posting ? null : _pickOpenAt,
+                      onDeleted: _openAt == null
+                          ? null
+                          : () => setState(() => _openAt = null),
+                    ),
                   ),
                 ),
-              ),
-              if (_openAt == null)
+              if (_openAt == null && !_isQuestion)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                   child: Align(
@@ -701,8 +711,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     ),
                   ),
                 ),
-              // Câu hỏi: người xem trả lời bằng bình luận, tác giả chọn đáp án
-              if (_openAt == null && widget.forkOf == null)
+              // Câu hỏi: người xem trả lời bằng bình luận, tác giả chọn đáp án.
+              // Chỉ hiện ở bài công khai vì bài khác không tính điểm đáp án.
+              if (_openAt == null &&
+                  widget.forkOf == null &&
+                  _visibility == 'public')
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                   child: Align(
@@ -713,7 +726,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       selected: _isQuestion,
                       onSelected: _posting
                           ? null
-                          : (v) => setState(() => _isQuestion = v),
+                          : (v) => setState(() {
+                        _isQuestion = v;
+                        if (v) _expiresAt = null;
+                      }),
                     ),
                   ),
                 ),

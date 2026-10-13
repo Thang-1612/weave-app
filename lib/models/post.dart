@@ -9,6 +9,14 @@ class PollOption {
   const PollOption(this.id, this.text);
 }
 
+/// Một gợi ý tác giả bổ sung vào câu hỏi sau khi đăng.
+class PostHint {
+  final String text;
+  final DateTime createdAt;
+
+  const PostHint(this.text, this.createdAt);
+}
+
 class Post {
   final String id;
 
@@ -20,6 +28,8 @@ class Post {
   final String visibility;
   final String authorId;
   final String authorName;
+
+  /// Chủ đề của bài. Câu hỏi không có chủ đề (chuỗi rỗng).
   final String spaceId;
   final String text; // phần chữ của bài (dùng cho xem trước, thông báo)
   final List<Map<String, dynamic>> blocks; // các khối nội dung
@@ -53,6 +63,9 @@ class Post {
   /// Bài hỏi đáp: đăng như một câu hỏi, tác giả chọn bình luận làm đáp án.
   final bool isQuestion;
 
+  /// Gợi ý tác giả bổ sung vào câu hỏi (theo thứ tự thêm).
+  final List<PostHint> hints;
+
   /// Id bình luận được chọn làm đáp án (null = chưa chọn).
   final String? acceptedCommentId;
 
@@ -65,6 +78,9 @@ class Post {
 
   /// Cho chọn nhiều đáp án trong bình chọn.
   final bool pollMultiple;
+
+  /// Thời điểm khóa bình chọn (null = không giới hạn).
+  final DateTime? pollClosesAt;
 
   const Post({
     required this.id,
@@ -89,10 +105,12 @@ class Post {
     this.pinnedAt,
     this.contributors = const <String>[],
     this.isQuestion = false,
+    this.hints = const <PostHint>[],
     this.acceptedCommentId,
     this.acceptedAuthorId,
     this.pollOptions = const <PollOption>[],
     this.pollMultiple = false,
+    this.pollClosesAt,
   });
 
   /// Bài không công khai (bạn bè hoặc chỉ mình tôi).
@@ -100,6 +118,9 @@ class Post {
 
   /// Đang được ghim lên đầu hồ sơ.
   bool get isPinned => pinnedAt != null;
+
+  /// Bài có gắn chủ đề (câu hỏi thì không).
+  bool get hasTopic => spaceId.isNotEmpty;
 
   /// Đã quá hạn tự ẩn.
   bool get isExpired =>
@@ -112,6 +133,10 @@ class Post {
   /// Bài có bình chọn (cần ít nhất hai lựa chọn).
   bool get hasPoll => pollOptions.length >= 2;
 
+  /// Bình chọn đã khóa (quá hạn).
+  bool get pollClosed =>
+      pollClosesAt != null && DateTime.now().isAfter(pollClosesAt!);
+
   /// Tham chiếu tới tài liệu của bài viết (đúng collection).
   DocumentReference<Map<String, dynamic>> get ref =>
       FirebaseFirestore.instance.collection(collection).doc(id);
@@ -123,6 +148,7 @@ class Post {
     final lpu = d['lastPublicUpdateAt'];
     final ex = d['expiresAt'];
     final pa = d['pinnedAt'];
+    final pc = d['pollClosesAt'];
     final col = doc.reference.parent.id;
 
     final summary = <String, int>{};
@@ -151,6 +177,20 @@ class Post {
     if (rawContrib is List) {
       for (final c in rawContrib) {
         contributors.add(c.toString());
+      }
+    }
+
+    final hints = <PostHint>[];
+    final rawHints = d['hints'];
+    if (rawHints is List) {
+      for (final h in rawHints) {
+        if (h is Map) {
+          final t = h['text'];
+          final at = h['at'];
+          if (t is String && t.isNotEmpty) {
+            hints.add(PostHint(t, at is Timestamp ? at.toDate() : DateTime.now()));
+          }
+        }
       }
     }
 
@@ -208,10 +248,12 @@ class Post {
       pinnedAt: pa is Timestamp ? pa.toDate() : null,
       contributors: contributors,
       isQuestion: d['isQuestion'] == true,
+      hints: hints,
       acceptedCommentId: accepted,
       acceptedAuthorId: acceptedAuthor,
       pollOptions: pollOptions,
       pollMultiple: d['pollMultiple'] == true,
+      pollClosesAt: pc is Timestamp ? pc.toDate() : null,
     );
   }
 }

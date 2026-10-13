@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import '../services/l10n.dart';
 import '../services/post_service.dart';
 
-/// Bản nháp bình chọn đang soạn: danh sách ô nhập và tùy chọn chọn nhiều.
+/// Bản nháp bình chọn đang soạn: danh sách ô nhập, tùy chọn chọn nhiều và
+/// thời hạn khóa.
 class PollDraft extends ChangeNotifier {
   final List<TextEditingController> controllers = [];
   bool multiple = false;
+
+  /// Khóa bình chọn sau khoảng thời gian này kể từ lúc đăng (null = không giới hạn).
+  Duration? closeAfter;
 
   PollDraft() {
     controllers.add(_make());
@@ -34,6 +38,11 @@ class PollDraft extends ChangeNotifier {
 
   void setMultiple(bool v) {
     multiple = v;
+    notifyListeners();
+  }
+
+  void setCloseAfter(Duration? d) {
+    closeAfter = d;
     notifyListeners();
   }
 
@@ -86,6 +95,14 @@ class PollEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final closeOptions = <(String, Duration?)>[
+      (tr('Không giới hạn', 'No limit'), null),
+      (tr('1 giờ', '1 hour'), const Duration(hours: 1)),
+      (tr('24 giờ', '24 hours'), const Duration(hours: 24)),
+      (tr('3 ngày', '3 days'), const Duration(days: 3)),
+      (tr('7 ngày', '7 days'), const Duration(days: 7)),
+    ];
+
     return ListenableBuilder(
       listenable: draft,
       builder: (context, _) {
@@ -156,6 +173,33 @@ class PollEditor extends StatelessWidget {
                     tr('Cho chọn nhiều đáp án', 'Allow multiple answers'),
                   ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  tr('Khóa bình chọn sau', 'Close the poll after'),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    for (final o in closeOptions)
+                      ChoiceChip(
+                        label: Text(o.$1),
+                        selected: draft.closeAfter == o.$2,
+                        onSelected: (_) => draft.setCloseAfter(o.$2),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  tr(
+                    'Sau khi khóa, không ai bỏ phiếu, đổi hay rút phiếu được nữa và mọi người đều xem được kết quả.',
+                    'Once closed, nobody can vote, change or remove a vote, and everyone can see the results.',
+                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(

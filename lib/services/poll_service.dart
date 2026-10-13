@@ -18,9 +18,15 @@ class PollResults {
 /// nên đổi hoặc rút phiếu chỉ là ghi đè hoặc xóa đúng tài liệu của mình.
 /// Kết quả đếm bằng `count()` nên số người bình chọn không bị giới hạn bởi
 /// kích thước tài liệu và không có bộ đếm nào bị tranh chấp ghi.
+/// Bình chọn có thể có thời hạn khóa (`pollClosesAt`): quá hạn thì không bỏ,
+/// đổi hay rút phiếu được nữa (luật Firestore cũng chặn).
 class PollService {
   static CollectionReference<Map<String, dynamic>> _votes(Post post) =>
       post.ref.collection('poll_votes');
+
+  static Exception _closed() => Exception(
+    tr('Bình chọn đã khóa', 'This poll is closed'),
+  );
 
   /// Phiếu của mình: danh sách id lựa chọn, hoặc null nếu chưa bình chọn.
   static Stream<List<String>?> watchMyVote(Post post) {
@@ -38,6 +44,7 @@ class PollService {
   static Future<void> vote(Post post, Iterable<String> choices) async {
     final me = FirebaseAuth.instance.currentUser;
     if (me == null) throw Exception(msgNotSignedIn);
+    if (post.pollClosed) throw _closed();
 
     final valid = post.pollOptions.map((o) => o.id).toSet();
     final picked = choices.where(valid.contains).toSet().toList();
@@ -62,6 +69,7 @@ class PollService {
   static Future<void> removeVote(Post post) async {
     final me = FirebaseAuth.instance.currentUser;
     if (me == null) throw Exception(msgNotSignedIn);
+    if (post.pollClosed) throw _closed();
     await _votes(post).doc(me.uid).delete();
   }
 

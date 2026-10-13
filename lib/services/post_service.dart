@@ -20,6 +20,10 @@ class PostService {
   /// count() khi hiện kết quả, nên không nên đặt quá cao).
   static const maxPollOptions = 20;
 
+  /// Số gợi ý tối đa tác giả được bổ sung vào một câu hỏi, và độ dài mỗi gợi ý.
+  static const maxHints = 10;
+  static const maxHintLength = 300;
+
   static final _db = FirebaseFirestore.instance;
   static final _posts = _db.collection('posts');
   static final _friendPosts = _db.collection('friend_posts');
@@ -154,9 +158,11 @@ class PostService {
   /// Đăng bài gồm nhiều khối: text, image, link.
   /// [visibility]: 'public' (công khai), 'friends' (bạn bè) hoặc 'me' (chỉ mình tôi).
   /// [isQuestion]: đăng như câu hỏi, người xem trả lời bằng bình luận và
-  /// tác giả chọn một bình luận làm đáp án.
+  /// tác giả chọn một bình luận làm đáp án. Câu hỏi không có chủ đề
+  /// ([spaceId] để rỗng).
+  /// [pollClosesAt]: thời điểm khóa bình chọn (null = không giới hạn).
   static Future<void> createPost({
-    required String spaceId,
+    String spaceId = '',
     required List<Map<String, dynamic>> blocks,
     String spaceSource = 'user', // user, keyword hoặc ai
     String visibility = 'public',
@@ -166,6 +172,7 @@ class PostService {
     bool isQuestion = false,
     List<String>? pollOptions,
     bool pollMultiple = false,
+    DateTime? pollClosesAt,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception(msgNotSignedIn);
@@ -184,7 +191,7 @@ class PostService {
     final data = <String, dynamic>{
       'authorId': user.uid,
       'authorName': name.isNotEmpty ? name : (user.email ?? msgUser),
-      'spaceId': spaceId,
+      'spaceId': isQuestion ? '' : spaceId,
       'spaceSource': spaceSource,
       'text': text,
       'blocks': blocks,
@@ -226,6 +233,9 @@ class PostService {
         for (var i = 0; i < options.length; i++) 'o$i',
       ];
       if (pollMultiple) data['pollMultiple'] = true;
+      if (pollClosesAt != null) {
+        data['pollClosesAt'] = Timestamp.fromDate(pollClosesAt);
+      }
     }
 
     final DocumentReference<Map<String, dynamic>> ref;
@@ -243,14 +253,46 @@ class PostService {
       });
     }
 
-    InterestService.track(spaceId, 3);
+    // Câu hỏi không có chủ đề nên không ghi nhận sở thích chủ đề
+    if (!isQuestion && spaceId.isNotEmpty) InterestService.track(spaceId, 3);
     if (forkedFrom != null) forkTick.value++;
     await NotificationService.notifyPostCreated(postId: ref.id, text: preview);
   }
 
   // ---------------------------------------------------------------------
-  // Hỏi đáp: chọn đáp án và điểm đóng góp
+  // Hỏi đáp: gợi ý bổ sung, chọn đáp án và điểm đóng góp
   // ---------------------------------------------------------------------
+
+  /// Tác giả bổ sung một gợi ý vào câu hỏi của mình.
+  static Future<void> addHint(Post post, String text) async {
+    final me = FirebaseAuth.instance.currentUser;
+    if (me == null) throw Exception(msgNotSignedIn);
+    if (post.authorId != me.uid) {
+      throw Exception(tr('Chỉ tác giả câu hỏi mới bổ sung gợi ý được',
+          'Only the author of the question can add hints'));
+    }
+    if (!post.isQuestion) {
+      throw Exception(tr('Bài viết này không phải câu hỏi',
+          'This post is not a question'));
+    }
+    final t = text.trim();
+    if (t.isEmpty) {
+      throw Exception(tr('Gợi ý đang trống', 'The hint is empty'));
+    }
+    if (t.length > maxHintLength) {
+      throw Exception(tr('Gợi ý tối đa $maxHintLength ký tự',
+          'A hint can have at most $maxHintLength characters'));
+    }
+    if (post.hints.length >= maxHints) {
+      throw Exception(tr('Chỉ bổ sung được tối đa $maxHints gợi ý',
+          'You can add at most $maxHints hints'));
+    }
+    await post.ref.update({
+      'hints': FieldValue.arrayUnion([
+        {'text': t, 'at': Timestamp.now()},
+      ]),
+    });
+  }
 
   /// Chọn một bình luận gốc làm đáp án (chỉ tác giả câu hỏi).
   ///
