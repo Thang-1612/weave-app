@@ -4,6 +4,7 @@ import '../services/l10n.dart';
 import '../services/user_prefs.dart';
 import '../theme/app_theme.dart';
 import 'contribution_screen.dart';
+import 'on_this_day_screen.dart';
 import 'profile_screen.dart';
 
 /// Trang cá nhân của một người dùng khác, có menu yêu thích, tắt tiếng, chặn.
@@ -57,6 +58,12 @@ class UserProfilePage extends StatelessWidget {
     );
   }
 
+  void _openOnThisDay(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const OnThisDayScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMe = userId == FirebaseAuth.instance.currentUser?.uid;
@@ -66,6 +73,13 @@ class UserProfilePage extends StatelessWidget {
         flexibleSpace: const GradientAppBarBackground(),
         title: Text(title, overflow: TextOverflow.ellipsis),
         actions: [
+          // Ngày này năm xưa chỉ có ý nghĩa với bài của chính mình
+          if (isMe)
+            IconButton(
+              icon: const Icon(Icons.history),
+              tooltip: tr('Ngày này năm xưa', 'On this day'),
+              onPressed: () => _openOnThisDay(context),
+            ),
           IconButton(
             icon: const Icon(Icons.emoji_events_outlined),
             tooltip: tr('Dấu vết đóng góp', 'Contribution trail'),
