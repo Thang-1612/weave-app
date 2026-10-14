@@ -30,6 +30,7 @@ import 'contribution_screen.dart';
 import 'chat_list_screen.dart';
 import '../widgets/chat_widgets.dart' show ChatUnreadBadge;
 import 'my_box_screen.dart';
+import 'weave_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -390,6 +391,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   leading: const Icon(Icons.inbox_outlined),
                   title: Text(tr('Hộp thư của tôi', 'My box')),
                   onTap: () => _pushFromDrawer(const MyBoxScreen()),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.groups),
+                  title: const Text('Weave Together'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const WeaveListScreen()),
+                  ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.emoji_events_outlined),
