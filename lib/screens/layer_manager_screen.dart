@@ -11,7 +11,6 @@ import '../widgets/auth_widgets.dart';
 import '../widgets/layer_audience_picker.dart';
 import '../widgets/layer_tab_bar.dart';
 
-
 /// Màn hình của tác giả: thêm, đổi tên, đổi quyền xem, bật/tắt bình luận,
 /// sắp xếp và xóa các lớp của một bài, không phải đăng lại bài.
 class LayerManagerScreen extends StatefulWidget {

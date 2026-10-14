@@ -6,6 +6,7 @@ import '../models/post.dart';
 import '../models/space.dart';
 import '../screens/comments_screen.dart';
 import '../screens/create_post_screen.dart';
+import '../screens/layer_manager_screen.dart';
 import '../screens/user_profile_page.dart';
 import '../services/account_service.dart';
 import '../services/activity_service.dart';
@@ -22,10 +23,8 @@ import 'reaction_picker.dart';
 import 'response_bar.dart';
 import 'space_picker.dart';
 import 'post_extras.dart';
+import 'weave_layers_view.dart';
 import '../services/capsule_service.dart';
-import 'weave_layers_view.dart';
-import '../screens/layer_manager_screen.dart';
-import 'weave_layers_view.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -170,7 +169,9 @@ class PostCard extends StatelessWidget {
           break;
         case 'layers':
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => LayerManagerScreen(post: post)),
+            MaterialPageRoute(
+              builder: (_) => LayerManagerScreen(post: post),
+            ),
           );
           break;
         case 'pin':
@@ -328,15 +329,16 @@ class PostCard extends StatelessWidget {
           value: 'audience',
           child: Text(tr('Đổi đối tượng xem', 'Change audience')),
         ),
-        PopupMenuItem<String>(
-          value: 'delete',
-          child: Text(tr('Xóa bài viết', 'Delete post')),
-        ),
-        if (post.collection != 'capsules')
+        // Weave Layers: hộp thời gian và câu hỏi không có lớp
+        if (post.collection != 'capsules' && !post.isQuestion)
           PopupMenuItem<String>(
             value: 'layers',
             child: Text(tr('Quản lý lớp', 'Manage layers')),
           ),
+        PopupMenuItem<String>(
+          value: 'delete',
+          child: Text(tr('Xóa bài viết', 'Delete post')),
+        ),
       ];
     }
     final name = post.authorName;
@@ -616,6 +618,8 @@ class PostCard extends StatelessWidget {
             const SizedBox(height: 10),
             // Nội dung bài, tóm tắt cảm xúc và hàng nút nằm NGOÀI hàng tiêu đề
             if (!isQuestion) ForkOrigin(post: post),
+            // Bài có nhiều lớp (Weave): hiện thanh tab các lớp; bài thường
+            // giữ nguyên cách hiển thị cũ
             post.isWeave
                 ? WeaveLayersView(key: ValueKey('weave_${post.id}'), post: post)
                 : PostBlocks(post: post),

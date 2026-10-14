@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../models/weave_layer.dart';
 import '../services/l10n.dart';
+import '../services/friend_service.dart';
 import '../services/layer_access.dart';
 import '../services/layer_service.dart';
 import 'audience_picker.dart';
@@ -19,9 +20,8 @@ class WeaveLayersView extends StatefulWidget {
 
   /// Kiểm tra người xem có phải bạn bè của tác giả không (cho lớp 'friends').
   ///
-  /// TODO: nối với FriendService của bạn. Nếu để null, widget chỉ suy ra
-  /// được trường hợp bài nằm trong 'friend_posts' (người xem thấy bài
-  /// nghĩa là đã là bạn bè hoặc là tác giả). Còn lại coi như chưa là bạn bè.
+  /// Mặc định dùng FriendService.isFriend. Chỉ truyền vào khi muốn thay thế
+  /// (ví dụ khi thử nghiệm).
   final Future<bool> Function(String authorId)? isFriend;
 
   const WeaveLayersView({super.key, required this.post, this.isFriend});
@@ -56,9 +56,6 @@ class _WeaveLayersViewState extends State<WeaveLayersView> {
       '${m.id}|${m.name}|${m.audienceType}|${m.groupId}|${m.order}',
   ].join(';');
 
-  Future<bool> _defaultIsFriend(String authorId) async =>
-      widget.post.friendsOnly && widget.post.visibility == 'friends';
-
   Future<void> _load() async {
     final token = ++_loadToken;
     final post = widget.post;
@@ -67,7 +64,7 @@ class _WeaveLayersViewState extends State<WeaveLayersView> {
       final access = await LayerAccess.load(
         viewerId: uid,
         authorId: post.authorId,
-        isFriend: widget.isFriend ?? _defaultIsFriend,
+        isFriend: widget.isFriend ?? FriendService.isFriend,
       );
       final layers =
       await LayerService.fetchVisible(post.ref, post.layerMetas, access);
