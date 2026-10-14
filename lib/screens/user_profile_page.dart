@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/l10n.dart';
 import '../services/user_prefs.dart';
 import '../theme/app_theme.dart';
+import 'constellation_screen.dart';
 import 'contribution_screen.dart';
 import 'on_this_day_screen.dart';
 import 'profile_screen.dart';
@@ -64,6 +65,12 @@ class UserProfilePage extends StatelessWidget {
     );
   }
 
+  void _openConstellation(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ConstellationScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMe = userId == FirebaseAuth.instance.currentUser?.uid;
@@ -73,7 +80,13 @@ class UserProfilePage extends StatelessWidget {
         flexibleSpace: const GradientAppBarBackground(),
         title: Text(title, overflow: TextOverflow.ellipsis),
         actions: [
-          // Ngày này năm xưa chỉ có ý nghĩa với bài của chính mình
+          // Bản đồ kết nối và Ngày này năm xưa chỉ có ý nghĩa với chính mình
+          if (isMe)
+            IconButton(
+              icon: const Icon(Icons.hub_outlined),
+              tooltip: tr('Bản đồ kết nối', 'Connection map'),
+              onPressed: () => _openConstellation(context),
+            ),
           if (isMe)
             IconButton(
               icon: const Icon(Icons.history),

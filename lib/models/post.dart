@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/l10n.dart';
+import 'weave_layer.dart';
 
 /// Một lựa chọn của bình chọn trong bài.
 class PollOption {
@@ -32,7 +33,7 @@ class Post {
   /// Chủ đề của bài. Câu hỏi không có chủ đề (chuỗi rỗng).
   final String spaceId;
   final String text; // phần chữ của bài (dùng cho xem trước, thông báo)
-  final List<Map<String, dynamic>> blocks; // các khối nội dung
+  final List<Map<String, dynamic>> blocks; // các khối nội dung (lớp gốc)
   final int reactions;
   final int comments;
   final Map<String, int> reactionSummary; // emoji -> số người
@@ -82,6 +83,10 @@ class Post {
   /// Thời điểm khóa bình chọn (null = không giới hạn).
   final DateTime? pollClosesAt;
 
+  /// Weave Layers: tóm tắt các lớp thêm ngoài lớp gốc (`blocks`).
+  /// Nội dung đầy đủ của từng lớp nằm ở `ref/layers/{layerId}`.
+  final List<LayerMeta> layerMetas;
+
   const Post({
     required this.id,
     this.collection = 'posts',
@@ -111,6 +116,7 @@ class Post {
     this.pollOptions = const <PollOption>[],
     this.pollMultiple = false,
     this.pollClosesAt,
+    this.layerMetas = const <LayerMeta>[],
   });
 
   /// Bài không công khai (bạn bè hoặc chỉ mình tôi).
@@ -136,6 +142,9 @@ class Post {
   /// Bình chọn đã khóa (quá hạn).
   bool get pollClosed =>
       pollClosesAt != null && DateTime.now().isAfter(pollClosesAt!);
+
+  /// Bài có thêm các lớp ngoài lớp gốc (Weave Layers).
+  bool get isWeave => layerMetas.isNotEmpty;
 
   /// Tham chiếu tới tài liệu của bài viết (đúng collection).
   DocumentReference<Map<String, dynamic>> get ref =>
@@ -254,6 +263,7 @@ class Post {
       pollOptions: pollOptions,
       pollMultiple: d['pollMultiple'] == true,
       pollClosesAt: pc is Timestamp ? pc.toDate() : null,
+      layerMetas: LayerMeta.listFrom(d),
     );
   }
 }

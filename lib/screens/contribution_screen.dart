@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../services/l10n.dart';
+import '../services/post_service.dart';
 import '../theme/app_theme.dart';
 
 class _Stats {
@@ -11,7 +12,8 @@ class _Stats {
   final int living;
   final int updates;
   final int longestLivingDays;
-  final int accepted;
+  final int accepted; // đề xuất sửa bài được nhận
+  final int answers; // câu trả lời được tác giả chọn làm đáp án
   final int? thanks; // chỉ có khi xem hồ sơ của chính mình
   const _Stats({
     required this.posts,
@@ -20,6 +22,7 @@ class _Stats {
     required this.updates,
     required this.longestLivingDays,
     required this.accepted,
+    required this.answers,
     required this.thanks,
   });
 }
@@ -68,6 +71,12 @@ class _ContributionScreenState extends State<ContributionScreen> {
         .count()
         .get();
 
+    // Câu trả lời được chọn: lỗi ở đây không được làm hỏng cả màn hình
+    var answers = 0;
+    try {
+      answers = await PostService.acceptedAnswerCount(widget.userId);
+    } catch (_) {}
+
     int? thanks;
     if (_isSelf) {
       try {
@@ -88,6 +97,7 @@ class _ContributionScreenState extends State<ContributionScreen> {
       updates: updates,
       longestLivingDays: longest,
       accepted: acceptedAgg.count ?? 0,
+      answers: answers,
       thanks: thanks,
     );
   }
@@ -150,6 +160,8 @@ class _ContributionScreenState extends State<ContributionScreen> {
           final cards = <Widget>[
             _card('📝', '${s.posts}${s.postsCapped ? '+' : ''}',
                 tr('Bài đã đăng', 'Posts published')),
+            _card('✅', '${s.answers}',
+                tr('Câu trả lời được chọn', 'Answers accepted')),
             _card('🔄', '${s.living}', tr('Bài sống', 'Living posts')),
             _card('⏳', '${s.longestLivingDays}',
                 tr('Ngày: bài sống lâu nhất', 'Days: longest living post')),
@@ -188,8 +200,8 @@ class _ContributionScreenState extends State<ContributionScreen> {
                   const SizedBox(height: 16),
                   Text(
                     tr(
-                      'Số liệu tính trên tối đa $_cap bài công khai gần nhất của tài khoản. Lời cảm ơn là riêng tư nên chỉ chủ tài khoản thấy con số này.',
-                      'Counted over the account\'s latest $_cap public posts at most. Thank-yous are private, so only the account owner sees that number.',
+                      'Số liệu bài đăng tính trên tối đa $_cap bài công khai gần nhất của tài khoản. Câu trả lời được chọn chỉ tính ở các câu hỏi công khai. Lời cảm ơn là riêng tư nên chỉ chủ tài khoản thấy con số này.',
+                      'Post stats are counted over the account\'s latest $_cap public posts at most. Accepted answers only count on public questions. Thank-yous are private, so only the account owner sees that number.',
                     ),
                     style: const TextStyle(
                         fontSize: 12, color: Colors.grey, height: 1.4),

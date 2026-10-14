@@ -75,6 +75,21 @@ class UserService {
     await PostService.updateAuthorName(user.uid, name);
   }
 
+  /// Lưu sở thích và mục tiêu (dùng cho bản đồ quan hệ).
+  static Future<void> saveTags({
+    required List<String> interests,
+    required List<String> goalTags,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception(msgNotSignedIn);
+
+    await _users.doc(user.uid).set({
+      'interests': normalizeTags(interests),
+      'goalTags': normalizeTags(goalTags),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   /// Tìm người dùng theo tên (không phân biệt dấu, hoa thường).
   static Future<List<UserProfile>> searchUsers(String query) async {
     final me = FirebaseAuth.instance.currentUser?.uid;
@@ -102,5 +117,37 @@ class UserService {
       if (ok) results.add(p);
     }
     return results;
+  }
+
+  /// Gợi ý người có chung sở thích / mục tiêu, sắp xếp theo số tag chung.
+  /// Chỉ trả về người để `discoverable = true`.
+  static Future<List<UserProfile>> suggestByInterests(
+      List<String> myTags, {
+        Set<String> exclude = const {},
+      }) async {
+    final me = FirebaseAuth.instance.currentUser?.uid;
+    final tags = myTags.toSet().take(30).toList(); // giới hạn của array-contains-any
+    if (tags.isEmpty) return [];
+
+    final byInterest =
+    await _users.where('interests', arrayContainsAny: tags).limit(40).get();
+    final byGoal =
+    await _users.where('goalTags', arrayContainsAny: tags).limit(40).get();
+
+    final seen = <String>{};
+    final scored = <MapEntry<UserProfile, int>>[];
+    for (final doc in [...byInterest.docs, ...byGoal.docs]) {
+      if (doc.id == me || exclude.contains(doc.id) || !seen.add(doc.id)) {
+        continue;
+      }
+      final p = UserProfile.fromMap(doc.id, doc.data());
+      if (p.name.isEmpty || !p.discoverable) continue;
+      if (UserPrefs.instance.isBlocked(doc.id)) continue;
+      final common =
+          {...p.interests, ...p.goalTags}.where(tags.contains).length;
+      if (common > 0) scored.add(MapEntry(p, common));
+    }
+    scored.sort((a, b) => b.value.compareTo(a.value));
+    return scored.map((e) => e.key).take(30).toList();
   }
 }

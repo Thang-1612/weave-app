@@ -7,11 +7,22 @@ import '../models/post.dart';
 import '../theme/app_theme.dart';
 import '../services/l10n.dart';
 
-/// Hiển thị nội dung bài đăng theo từng khối.
+/// Hiển thị nội dung theo từng khối.
+///
+/// - `PostBlocks(post: p)`: nội dung bài đăng (lớp gốc), dùng như cũ.
+/// - `PostBlocks.layer(blocks: l.blocks)`: nội dung một lớp của Weave.
 class PostBlocks extends StatelessWidget {
-  final Post post;
+  final List<Map<String, dynamic>> blocks;
 
-  const PostBlocks({super.key, required this.post});
+  /// Bài cũ chưa có khối: hiện phần chữ này.
+  final String fallbackText;
+
+  PostBlocks({super.key, required Post post})
+      : blocks = post.blocks,
+        fallbackText = post.text;
+
+  const PostBlocks.layer({super.key, required this.blocks})
+      : fallbackText = '';
 
   static const _textStyle = TextStyle(fontSize: 15, height: 1.4);
 
@@ -42,11 +53,11 @@ class PostBlocks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Bài cũ chưa có khối: hiện phần chữ
-    if (post.blocks.isEmpty) {
-      return post.text.isEmpty
+    // Chưa có khối: hiện phần chữ (nếu có)
+    if (blocks.isEmpty) {
+      return fallbackText.isEmpty
           ? const SizedBox.shrink()
-          : Text(post.text, style: _textStyle);
+          : Text(fallbackText, style: _textStyle);
     }
 
     final children = <Widget>[];
@@ -62,7 +73,7 @@ class PostBlocks extends StatelessWidget {
       children.add(Text(t, style: _textStyle));
     }
 
-    for (final b in post.blocks) {
+    for (final b in blocks) {
       final type = b['type'];
       if (type == 'text') {
         final t = (b['text'] as String? ?? '').trim();

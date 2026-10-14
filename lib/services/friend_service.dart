@@ -4,17 +4,24 @@ import 'l10n.dart';
 
 enum FriendStatus { none, friends, outgoing, incoming }
 
+/// Mức hiển thị của một mối quan hệ trên bản đồ của người khác.
+enum EdgeVisibility { public, hidden }
+
 class Friendship {
   final String id;
   final List<String> users;
   final String requesterId;
   final String status; // 'pending' hoặc 'accepted'
 
+  /// uid -> 'public' | 'hidden'. Mỗi bên chỉ được ghi giá trị của chính mình.
+  final Map<String, String> visibility;
+
   const Friendship({
     required this.id,
     required this.users,
     required this.requesterId,
     required this.status,
+    this.visibility = const {},
   });
 
   factory Friendship.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -24,6 +31,10 @@ class Friendship {
       users: List<String>.from(d['users'] as List? ?? const []),
       requesterId: d['requesterId'] as String? ?? '',
       status: d['status'] as String? ?? 'pending',
+      visibility: Map<String, String>.from(
+        (d['visibility'] as Map?)?.map((k, v) => MapEntry('$k', '$v')) ??
+            const <String, String>{},
+      ),
     );
   }
 
@@ -31,6 +42,14 @@ class Friendship {
 
   String otherUid(String me) =>
       users.firstWhere((u) => u != me, orElse: () => '');
+
+  /// Chưa có giá trị nghĩa là 'hidden' (an toàn cho dữ liệu cũ).
+  bool isPublicBy(String uid) => (visibility[uid] ?? 'hidden') == 'public';
+
+  bool isHiddenBy(String uid) => !isPublicBy(uid);
+
+  /// Mối quan hệ chỉ hiện với người thứ ba khi CẢ HAI bên để public.
+  bool get isPublic => users.isNotEmpty && users.every(isPublicBy);
 }
 
 class FriendService {
@@ -126,5 +145,51 @@ class FriendService {
   /// Hủy lời mời đã gửi, từ chối lời mời, hoặc hủy kết bạn.
   static Future<void> remove(String other) async {
     await _col.doc(_id(_me, other)).delete();
+    await _syncQuietly();
+  }
+
+  /// Tôi và [other] đã là bạn bè chưa.
+  static Future<bool> isFriend(String other) async {
+    final me = FirebaseAuth.instance.currentUser?.uid;
+    if (me == null || me == other) return false;
+    final s = await _col.doc(_id(me, other)).get();
+    return s.exists && s.data()?['status'] == 'accepted';
+  }
+
+  // ---------------------------------------------------------------------
+  // Bản đồ quan hệ (Weave Constellation)
+  // ---------------------------------------------------------------------
+
+  /// Đổi mức hiển thị của mối quan hệ với [other]. Chỉ ghi phần của chính mình.
+  static Future<void> setVisibility(String other, EdgeVisibility v) async {
+    final me = _me;
+    await _col.doc(_id(me, other)).update({
+      'visibility.$me': v.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    await _syncQuietly();
+  }
+
+  /// Cập nhật `users/{me}/public/edges`: danh sách bạn mà CẢ HAI bên đều để
+  /// public. Chạy ở client vì gói Spark không có Cloud Functions.
+  static Future<void> syncPublicEdges() async {
+    final me = _me;
+    final snap = await _col.where('users', arrayContains: me).get();
+    final friends = snap.docs
+        .map(Friendship.fromDoc)
+        .where((f) => f.accepted && f.isPublic)
+        .map((f) => f.otherUid(me))
+        .where((u) => u.isNotEmpty)
+        .toList();
+    await FirebaseFirestore.instance.doc('users/$me/public/edges').set({
+      'friends': friends,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<void> _syncQuietly() async {
+    try {
+      await syncPublicEdges();
+    } catch (_) {}
   }
 }
