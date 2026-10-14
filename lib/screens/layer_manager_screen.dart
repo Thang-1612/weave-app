@@ -10,6 +10,7 @@ import '../widgets/audience_picker.dart';
 import '../widgets/auth_widgets.dart';
 import '../widgets/layer_audience_picker.dart';
 import '../widgets/layer_tab_bar.dart';
+import 'close_friend_screen.dart';
 
 /// Màn hình của tác giả: thêm, đổi tên, đổi quyền xem, bật/tắt bình luận,
 /// sắp xếp và xóa các lớp của một bài, không phải đăng lại bài.
@@ -304,10 +305,19 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
-        title: Text(tr('Quản lý lớp', 'Manage layers')),
-      ),
+        appBar: AppBar(
+          flexibleSpace: const GradientAppBarBackground(),
+          title: Text(tr('Quản lý lớp', 'Manage layers')),
+          actions: [
+            IconButton(
+              tooltip: tr('Danh sách bạn thân', 'Close friends'),
+              icon: const Icon(Icons.favorite_border),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CloseFriendsScreen()),
+              ),
+            ),
+          ],
+        ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.brand,
         foregroundColor: Colors.white,
