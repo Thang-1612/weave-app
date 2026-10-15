@@ -35,16 +35,22 @@
   <meta property="og:description" content="Mạng xã hội chia sẻ theo chủ đề: học tập, nấu ăn, du lịch, chế tạo.">
   <meta property="og:type" content="website">
   <link rel="manifest" href="manifest.json">
+
+  <!-- CHỈ DÙNG KHI PHÁT TRIỂN: bật App Check debug token trên web.
+       XÓA khối này trước khi phát hành. -->
+  <script>
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  </script>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+<!--
+  You can customize the "flutter_bootstrap.js" script.
+  This is useful to provide a custom configuration to the Flutter loader
+  or to give the user feedback during the initialization process.
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-  <script src="flutter_bootstrap.js" async></script>
+  For more details:
+  * https://docs.flutter.dev/platform-integration/web/initialization
+-->
+<script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
