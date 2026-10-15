@@ -208,6 +208,13 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (_) => const ChatListScreen()),
             ),
           ),
+          IconButton(
+            tooltip: 'Weave Storymaker',
+            icon: const Icon(Icons.auto_awesome),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const StoryListScreen()),
+            ),
+          ),
         ],
       );
     }
