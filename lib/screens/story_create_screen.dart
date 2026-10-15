@@ -1,9 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:convert';
+
 import '../models/story_models.dart';
+import '../services/image_utils.dart';
 import '../services/l10n.dart';
-import '../services/story_ai_service.dart';
 import '../services/story_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/story_widgets.dart';
@@ -11,9 +13,6 @@ import 'story_detail_screen.dart';
 
 const kMaxStoryPhotos = 10;
 const kMaxStoryNotes = 20;
-// Ảnh sau khi nén phải nhỏ để document Firestore dưới 1 MiB. Khi có thể,
-// thay bước nén bên dưới bằng hàm trong image_utils.dart (tối đa khoảng 160 KB).
-const kMaxPhotoBytes = 600 * 1024;
 
 class StoryCreateScreen extends StatefulWidget {
   const StoryCreateScreen({super.key});
@@ -26,11 +25,14 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
   final _titleCtrl = TextEditingController();
   final List<StorySource> _sources = [];
   StoryKind _kind = StoryKind.week;
-  bool _busy = false;
+  bool _busy = false; // đang dựng truyện
+  bool _picking = false; // đang nén ảnh
   String? _error;
   int _seq = 0;
 
   int _count(SourceType t) => _sources.where((s) => s.type == t).length;
+
+  String _msg(Object e) => e.toString().replaceFirst('Exception: ', '');
 
   @override
   void dispose() {
@@ -39,40 +41,42 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
   }
 
   Future<void> _addPhotos() async {
-    final files = await ImagePicker()
-        .pickMultiImage(maxWidth: 1280, imageQuality: 70);
+    final files = await ImagePicker().pickMultiImage();
     if (files.isEmpty || !mounted) return;
+    setState(() => _picking = true);
     var skipped = 0;
     for (final f in files) {
       if (_count(SourceType.photo) >= kMaxStoryPhotos) {
         skipped++;
         continue;
       }
-      final bytes = await f.readAsBytes();
-      if (bytes.length > kMaxPhotoBytes) {
-        skipped++;
-        continue;
-      }
-      DateTime date;
       try {
-        date = await f.lastModified();
+        // compressImage đã nén ảnh xuống tối đa 160 KB, vừa cho Firestore
+        // và cho việc gửi ảnh vào AI.
+        final c = await compressImage(await f.readAsBytes());
+        DateTime date;
+        try {
+          date = await f.lastModified();
+        } catch (_) {
+          date = DateTime.now();
+        }
+        _sources.add(StorySource(
+          id: 's${++_seq}',
+          type: SourceType.photo,
+          imageB64: base64Encode(c.bytes),
+          date: date,
+        ));
       } catch (_) {
-        date = DateTime.now();
+        skipped++;
       }
-      _sources.add(StorySource(
-        id: 's${++_seq}',
-        type: SourceType.photo,
-        imageB64: base64Encode(bytes),
-        date: date,
-      ));
     }
     if (!mounted) return;
-    setState(() {});
+    setState(() => _picking = false);
     if (skipped > 0) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(tr(
-          '$skipped ảnh bị bỏ qua (quá nhiều hoặc quá lớn)',
-          '$skipped photos skipped (too many or too large)',
+          '$skipped ảnh bị bỏ qua (quá nhiều hoặc không đọc được)',
+          '$skipped photos skipped (too many or unreadable)',
         )),
       ));
     }
@@ -96,10 +100,9 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
   }
 
   Future<void> _changeDate(int i) async {
-    final cur = _sources[i].date;
     final d = await showDatePicker(
       context: context,
-      initialDate: cur,
+      initialDate: _sources[i].date,
       firstDate: DateTime(2000),
       lastDate: DateTime.now().add(const Duration(days: 1)),
     );
@@ -113,7 +116,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
       _error = null;
     });
     try {
-      final draft = await StoryAiService.generate(
+      final draft = await StoryAi.generate(
         kind: _kind,
         userTitle: _titleCtrl.text,
         sources: _sources,
@@ -128,7 +131,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
         MaterialPageRoute(builder: (_) => StoryDetailScreen(storyId: id)),
       );
     } catch (e) {
-      if (mounted) setState(() => _error = '$e');
+      if (mounted) setState(() => _error = _msg(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -136,7 +139,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canGenerate = _sources.isNotEmpty && !_busy;
+    final locked = _busy || _picking;
     return Scaffold(
       appBar: AppBar(title: Text(tr('Tạo câu chuyện', 'Create a story'))),
       body: ListView(
@@ -151,7 +154,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
                   label: Text(storyKindLabel(k)),
                   selected: _kind == k,
                   selectedColor: AppColors.soft,
-                  onSelected: _busy ? null : (_) => setState(() => _kind = k),
+                  onSelected: locked ? null : (_) => setState(() => _kind = k),
                 ),
             ],
           ),
@@ -159,7 +162,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
           TextField(
             controller: _titleCtrl,
             maxLength: 60,
-            enabled: !_busy,
+            enabled: !locked,
             decoration: InputDecoration(
               labelText: tr('Tiêu đề (không bắt buộc)', 'Title (optional)'),
             ),
@@ -169,23 +172,30 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _busy ? null : _addPhotos,
+                  onPressed: locked ? null : _addPhotos,
                   icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: Text(tr('Ảnh (${_count(SourceType.photo)}/$kMaxStoryPhotos)',
+                  label: Text(tr(
+                      'Ảnh (${_count(SourceType.photo)}/$kMaxStoryPhotos)',
                       'Photos (${_count(SourceType.photo)}/$kMaxStoryPhotos)')),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _busy ? null : _addNote,
+                  onPressed: locked ? null : _addNote,
                   icon: const Icon(Icons.notes),
-                  label: Text(tr('Ghi chú (${_count(SourceType.note)}/$kMaxStoryNotes)',
+                  label: Text(tr(
+                      'Ghi chú (${_count(SourceType.note)}/$kMaxStoryNotes)',
                       'Notes (${_count(SourceType.note)}/$kMaxStoryNotes)')),
                 ),
               ),
             ],
           ),
+          if (_picking)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: LinearProgressIndicator(),
+            ),
           const SizedBox(height: 12),
           if (_sources.isEmpty)
             Padding(
@@ -220,11 +230,11 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
               subtitle: Text(
                   tr('Ngày ${fmtDate(_sources[i].date)} (chạm để đổi)',
                       'Date ${fmtDate(_sources[i].date)} (tap to change)')),
-              onTap: _busy ? null : () => _changeDate(i),
+              onTap: locked ? null : () => _changeDate(i),
               trailing: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed:
-                _busy ? null : () => setState(() => _sources.removeAt(i)),
+                locked ? null : () => setState(() => _sources.removeAt(i)),
               ),
             ),
           if (_error != null)
@@ -238,7 +248,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
               backgroundColor: AppColors.brand,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            onPressed: canGenerate ? _generate : null,
+            onPressed: (_sources.isNotEmpty && !locked) ? _generate : null,
             icon: _busy
                 ? const SizedBox(
               width: 18,
