@@ -73,13 +73,19 @@ class GroupService {
       String name, List<String> uids) async {
     final g = await create(name);
     final others = uids.where((u) => u != g.ownerId).toSet().toList();
-    if (others.isEmpty) return g;
-    await _col.doc(g.id).update({'memberIds': FieldValue.arrayUnion(others)});
+    final added = <String>[];
+    for (final u in others) {
+      try {
+        await _col.doc(g.id).update({
+          'memberIds': FieldValue.arrayUnion([u]),
+        });
+        added.add(u);
+      } catch (_) {
+        // không phải bạn bè hoặc lỗi mạng: bỏ qua người này
+      }
+    }
     return GroupInfo(
-        id: g.id,
-        name: g.name,
-        ownerId: g.ownerId,
-        memberIds: [g.ownerId, ...others]);
+        id: g.id, name: g.name, ownerId: g.ownerId, memberIds: [g.ownerId, ...added]);
   }
 
   static Future<void> addMember(String groupId, String uid) =>

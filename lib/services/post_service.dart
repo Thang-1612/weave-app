@@ -257,7 +257,6 @@ class PostService {
     if (!isQuestion && spaceId.isNotEmpty) InterestService.track(spaceId, 3);
     if (forkedFrom != null) forkTick.value++;
     await NotificationService.notifyPostCreated(postId: ref.id, text: preview);
-    await NotificationService.notifyPostCreated(postId: ref.id, text: preview);
     return ref.id;
   }
 
@@ -389,11 +388,23 @@ class PostService {
     final data = Map<String, dynamic>.from(snap.data() ?? {});
     if (data.isEmpty) throw Exception(msgPostGone);
 
-    // Chưa có bình luận nên chưa thể có đáp án; dọn cho chắc để luật tạo bài
-    // công khai không từ chối
+    // Kiểm tra theo dữ liệu thật vừa đọc, không theo đối tượng Post có thể đã cũ
+    if (((data['reactions'] as num?) ?? 0) > 0 ||
+        ((data['comments'] as num?) ?? 0) > 0) {
+      throw Exception(tr(
+        'Bài viết đã có cảm xúc hoặc bình luận nên không thể chuyển giữa công khai và không công khai. Hãy đăng lại bài viết.',
+        'This post already has reactions or comments, so it cannot be switched between public and non-public. Please publish it again.',
+      ));
+    }
+
     data.remove('acceptedCommentId');
     data.remove('acceptedAuthorId');
-
+    // Dọn các khóa giá trị 0 còn sót để qua luật tạo bài
+    data['reactions'] = 0;
+    data['comments'] = 0;
+    data['reactionSummary'] = <String, dynamic>{};
+    // Luật chỉ cho thêm gợi ý bằng lần cập nhật sau khi tạo bài
+    final hints = data.remove('hints');
     final DocumentReference<Map<String, dynamic>> targetRef;
     if (target == 'public') {
       data.remove('audience');
@@ -411,6 +422,9 @@ class PostService {
     batch.set(targetRef, data);
     batch.delete(post.ref);
     await batch.commit();
+    if (hints is List && hints.isNotEmpty) {
+      await targetRef.update({'hints': hints});
+    }
   }
 
   static Future<void> deletePost(Post post) => post.ref.delete();

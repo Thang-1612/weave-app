@@ -53,9 +53,11 @@ class StoryService {
     for (final s in sources) {
       batch.set(ref.collection('sources').doc(s.id), s.toMap());
     }
+// createFromDraft: khối do AI dựng (chủ truyện là người tạo)
     for (final b in draft.blocks) {
-      batch.set(ref.collection('blocks').doc(), b.toMap());
+      batch.set(ref.collection('blocks').doc(), {...b.toMap(), 'createdBy': uid});
     }
+
     await batch.commit();
     return ref.id;
   }
@@ -114,15 +116,19 @@ class StoryService {
       String text,
       int lastOrder,
       ) async {
-    await _col.doc(storyId).collection('blocks').add(StoryBlock(
-      id: '',
-      type: kBlockNarration,
-      text: text.trim(),
-      sourceIds: const [],
-      aiGenerated: false,
-      lastEditedBy: uid,
-      order: lastOrder + 1000,
-    ).toMap());
+// addUserBlock
+    await _col.doc(storyId).collection('blocks').add({
+      ...StoryBlock(
+        id: '',
+        type: kBlockNarration,
+        text: text.trim(),
+        sourceIds: const [],
+        aiGenerated: false,
+        lastEditedBy: uid,
+        order: lastOrder + 1000,
+      ).toMap(),
+      'createdBy': uid,
+    });
     await _touch(storyId);
   }
 
@@ -250,17 +256,21 @@ class StoryService {
       ) async {
     final ref = _col.doc(storyId);
     final batch = _db.batch();
+// answerMissing
     batch.set(
       ref.collection('blocks').doc(),
-      StoryBlock(
-        id: '',
-        type: kBlockNarration,
-        text: answer.trim(),
-        sourceIds: const [],
-        aiGenerated: false,
-        lastEditedBy: uid,
-        order: lastOrder + 1000,
-      ).toMap(),
+      {
+        ...StoryBlock(
+          id: '',
+          type: kBlockNarration,
+          text: answer.trim(),
+          sourceIds: const [],
+          aiGenerated: false,
+          lastEditedBy: uid,
+          order: lastOrder + 1000,
+        ).toMap(),
+        'createdBy': uid,
+      },
     );
     batch.update(ref, {
       'missing': FieldValue.arrayRemove([question]),
