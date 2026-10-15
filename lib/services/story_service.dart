@@ -126,6 +126,12 @@ class StoryService {
         'collaboratorIds': FieldValue.arrayUnion([friendUid]),
       });
 
+  /// Thành viên (không phải chủ) tự rời khỏi câu chuyện.
+  static Future<void> leaveStory(String storyId) =>
+      _col.doc(storyId).update({
+        'collaboratorIds': FieldValue.arrayRemove([uid]),
+      });
+
   static Future<void> deleteStory(String storyId) async {
     final ref = _col.doc(storyId);
     for (final sub in ['blocks', 'sources']) {

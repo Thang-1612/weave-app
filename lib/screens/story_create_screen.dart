@@ -7,12 +7,15 @@ import '../models/story_models.dart';
 import '../services/image_utils.dart';
 import '../services/l10n.dart';
 import '../services/story_service.dart';
+import '../services/usage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/story_widgets.dart';
 import 'story_detail_screen.dart';
 
 const kMaxStoryPhotos = 10;
 const kMaxStoryNotes = 20;
+/// Số lần dựng truyện bằng AI mỗi ngày trên thiết bị này.
+const kStoryDailyLimit = 5;
 
 class StoryCreateScreen extends StatefulWidget {
   const StoryCreateScreen({super.key});
@@ -111,6 +114,16 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
   }
 
   Future<void> _generate() async {
+    final used = await UsageService.instance.countToday('story');
+    if (used >= kStoryDailyLimit) {
+      if (mounted) {
+        setState(() => _error = tr(
+          'Hôm nay bạn đã dựng $kStoryDailyLimit câu chuyện. Hãy quay lại vào ngày mai nhé.',
+          'You have built $kStoryDailyLimit stories today. Come back tomorrow.',
+        ));
+      }
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -121,6 +134,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
         userTitle: _titleCtrl.text,
         sources: _sources,
       );
+      await UsageService.instance.bumpCount('story'); // chỉ tính khi AI thành công
       final id = await StoryService.createFromDraft(
         kind: _kind,
         draft: draft,

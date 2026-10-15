@@ -50,6 +50,64 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     if (ok == true) await StoryService.deleteBlock(widget.storyId, b.id);
   }
 
+  Future<bool> _confirm(String title, String action) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(tr('Hủy', 'Cancel')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(action),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
+  Future<void> _deleteStory() async {
+    if (!await _confirm(
+      tr('Xóa cả câu chuyện? Mọi người cùng sửa cũng sẽ mất nó.',
+          'Delete the whole story? Collaborators will lose it too.'),
+      tr('Xóa', 'Delete'),
+    )) {
+      return;
+    }
+    if (!mounted) return;
+    final nav = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await StoryService.deleteStory(widget.storyId);
+      nav.pop();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  Future<void> _leave() async {
+    if (!await _confirm(
+      tr('Rời khỏi câu chuyện này?', 'Leave this story?'),
+      tr('Rời khỏi', 'Leave'),
+    )) {
+      return;
+    }
+    if (!mounted) return;
+    final nav = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await StoryService.leaveStory(widget.storyId);
+      nav.pop();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   Future<void> _addBlock(int lastOrder) async {
     final text = await showStoryTextDialog(
       context,
@@ -59,22 +117,12 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     await StoryService.addUserBlock(widget.storyId, text, lastOrder);
   }
 
-  /// Tạm thời nhập UID bạn bè. Thay bằng bảng chọn bạn bè từ friend_service.dart
-  /// của bạn, chỉ cần trả về uid của người được chọn.
-  Future<String?> _pickFriendUid() async {
-    final v = await showStoryTextDialog(
-      context,
-      title: tr('Mời bạn cùng chỉnh sửa', 'Invite a friend to edit'),
-      hint: tr('UID của bạn bè', "Friend's UID"),
-      maxLength: 128,
-    );
-    final t = v?.trim();
-    return (t == null || t.isEmpty) ? null : t;
-  }
-
-  Future<void> _invite() async {
+  Future<void> _invite(Story story) async {
     final messenger = ScaffoldMessenger.of(context);
-    final friendUid = await _pickFriendUid();
+    final friendUid = await showStoryFriendPicker(
+      context,
+      exclude: story.collaboratorIds,
+    );
     if (friendUid == null) return;
     try {
       await StoryService.addCollaborator(widget.storyId, friendUid);
@@ -123,8 +171,23 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                 IconButton(
                   tooltip: tr('Mời bạn cùng sửa', 'Invite to edit'),
                   icon: const Icon(Icons.group_add_outlined),
-                  onPressed: _invite,
+                  onPressed: () => _invite(story),
                 ),
+              PopupMenuButton<String>(
+                onSelected: (v) => v == 'delete' ? _deleteStory() : _leave(),
+                itemBuilder: (_) => [
+                  if (isOwner)
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(tr('Xóa câu chuyện', 'Delete story')),
+                    )
+                  else
+                    PopupMenuItem(
+                      value: 'leave',
+                      child: Text(tr('Rời khỏi câu chuyện', 'Leave story')),
+                    ),
+                ],
+              ),
             ],
           ),
           body: StreamBuilder<Map<String, StorySource>>(

@@ -135,7 +135,23 @@ class UsageService with WidgetsBindingObserver {
         await secondsOn(now.subtract(Duration(days: i))),
     ];
   }
+  // ---------------------- Đếm lượt dùng tính năng AI -----------------------
 
+  /// Số lần [feature] đã dùng hôm nay trên thiết bị này.
+  Future<int> countToday(String feature) async {
+    final uid = _uid;
+    if (uid == null) return 0;
+    final p = await SharedPreferences.getInstance();
+    return p.getInt('count_${feature}_${uid}_${_dayKey(DateTime.now())}') ?? 0;
+  }
+
+  Future<void> bumpCount(String feature) async {
+    final uid = _uid;
+    if (uid == null) return;
+    final p = await SharedPreferences.getInstance();
+    final key = 'count_${feature}_${uid}_${_dayKey(DateTime.now())}';
+    await p.setInt(key, (p.getInt(key) ?? 0) + 1);
+  }
   // ------------------------- Nhắc và giới hạn ----------------------------
 
   Future<void> _onTick() async {

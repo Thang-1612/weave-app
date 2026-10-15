@@ -102,9 +102,6 @@ class _HomeScreenState extends State<HomeScreen> {
       navigator.push(
         MaterialPageRoute(builder: (_) => CommentsScreen(post: post)),
       );
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const StoryListScreen()),
-      );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('$e')));
     }

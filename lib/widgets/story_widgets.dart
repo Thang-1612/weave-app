@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/story_models.dart';
+import '../services/friend_service.dart';
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
 
@@ -321,6 +324,122 @@ class StoryMissingCard extends StatelessWidget {
               child: Text('• $q'),
             ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// Chọn một người bạn (đã chấp nhận kết bạn) chưa có trong [exclude].
+/// Trả về uid, hoặc null nếu đóng bảng.
+Future<String?> showStoryFriendPicker(
+    BuildContext context, {
+      required List<String> exclude,
+    }) {
+  return showModalBottomSheet<String>(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (ctx) {
+      final me = FirebaseAuth.instance.currentUser?.uid ?? '';
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                tr('Mời bạn cùng chỉnh sửa', 'Invite a friend to edit'),
+                style:
+                const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: StreamBuilder<List<Friendship>>(
+                  stream: FriendService.watchMine(),
+                  builder: (context, snap) {
+                    if (!snap.hasData) {
+                      return const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    final uids = [
+                      for (final f in snap.data!)
+                        if (f.accepted) f.otherUid(me),
+                    ].where((u) => u.isNotEmpty && !exclude.contains(u)).toList();
+                    if (uids.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          tr('Không còn người bạn nào để mời.',
+                              'No more friends to invite.'),
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      );
+                    }
+                    return ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final u in uids)
+                          _FriendTile(
+                            uid: u,
+                            onTap: () => Navigator.of(ctx).pop(u),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _FriendTile extends StatefulWidget {
+  final String uid;
+  final VoidCallback onTap;
+
+  const _FriendTile({required this.uid, required this.onTap});
+
+  @override
+  State<_FriendTile> createState() => _FriendTileState();
+}
+
+class _FriendTileState extends State<_FriendTile> {
+  late final Future<String> _name = _load();
+
+  // Đọc tên từ users/{uid}. Nếu hồ sơ của bạn lưu tên ở trường khác,
+  // đổi danh sách khóa bên dưới (hoặc gọi hàm trong user_service.dart).
+  Future<String> _load() async {
+    try {
+      final d = await FirebaseFirestore.instance.doc('users/${widget.uid}').get();
+      final m = d.data();
+      final n = '${m?['displayName'] ?? m?['name'] ?? ''}'.trim();
+      if (n.isNotEmpty) return n;
+    } catch (_) {}
+    return widget.uid;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _name,
+      builder: (context, snap) => ListTile(
+        leading: const CircleAvatar(
+          backgroundColor: AppColors.soft,
+          child: Icon(Icons.person_outline, color: AppColors.brand),
+        ),
+        title: Text(
+          snap.data ?? '...',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        onTap: widget.onTap,
       ),
     );
   }
