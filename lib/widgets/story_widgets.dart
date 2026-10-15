@@ -296,8 +296,17 @@ class StoryBlockCard extends StatelessWidget {
 /// Các câu AI cần người dùng bổ sung (thay vì tự đoán).
 class StoryMissingCard extends StatelessWidget {
   final List<String> questions;
+  final bool canEdit;
+  final ValueChanged<String>? onAnswer;
+  final ValueChanged<String>? onDismiss;
 
-  const StoryMissingCard({super.key, required this.questions});
+  const StoryMissingCard({
+    super.key,
+    required this.questions,
+    this.canEdit = false,
+    this.onAnswer,
+    this.onDismiss,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -317,18 +326,34 @@ class StoryMissingCard extends StatelessWidget {
                 'The AI needs more info and did not guess:'),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 6),
           for (final q in questions)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text('• $q'),
+              padding: const EdgeInsets.only(top: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(q),
+                  if (canEdit)
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: () => onAnswer?.call(q),
+                          child: Text(tr('Trả lời', 'Answer')),
+                        ),
+                        TextButton(
+                          onPressed: () => onDismiss?.call(q),
+                          child: Text(tr('Bỏ qua', 'Skip')),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
             ),
         ],
       ),
     );
   }
 }
-
 
 /// Chọn một người bạn (đã chấp nhận kết bạn) chưa có trong [exclude].
 /// Trả về uid, hoặc null nếu đóng bảng.

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_ai/firebase_ai.dart';
@@ -7,6 +8,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/story_models.dart';
 import 'ai_classifier.dart';
+import 'l10n.dart';
+import 'post_service.dart';
+import 'package:flutter/painting.dart';
+
+class StoryPublishResult {
+  final String postId;
+  final int skippedImages;
+  const StoryPublishResult(this.postId, this.skippedImages);
+}
 
 /// Cấu trúc Firestore (mỗi document nhỏ hơn 1 MiB, hợp gói Spark):
 ///   stories/{id}                 thông tin chung + collaboratorIds
@@ -124,6 +134,146 @@ class StoryService {
   static Future<void> addCollaborator(String storyId, String friendUid) =>
       _col.doc(storyId).update({
         'collaboratorIds': FieldValue.arrayUnion([friendUid]),
+      });
+
+  // Một document bài đăng tối đa 1 MiB: chừa chỗ cho chữ, chỉ nhận ảnh đến
+  // khoảng 800.000 ký tự base64 (khoảng 3 đến 4 ảnh đã nén 160 KB).
+  static const _maxImageChars = 800000;
+
+  static Future<List<double>> _imageSize(Uint8List bytes) async {
+    try {
+      final ui.Image img = await decodeImageFromList(bytes); // bỏ "ui." trước hàm
+      final r = [img.width.toDouble(), img.height.toDouble()];
+      img.dispose();
+      return r;
+    } catch (_) {
+      return [4, 3];
+    }
+  }
+
+  /// Đăng câu chuyện lên bảng tin thành một bài viết thật (bản chụp tại thời
+  /// điểm đăng). Chỉ chủ câu chuyện đăng được. Tư liệu gốc vẫn riêng tư nên
+  /// chip nguồn không đi theo bài đăng.
+  static Future<StoryPublishResult> publishAsPost({
+    required Story story,
+    required List<StoryBlock> blocks,
+    required Map<String, StorySource> sources,
+    required String visibility, // 'public' | 'friends' | 'me'
+  }) async {
+    if (story.ownerId != uid) {
+      throw Exception(tr('Chỉ chủ câu chuyện mới đăng được',
+          'Only the owner can publish this story'));
+    }
+    if (blocks.isEmpty) {
+      throw Exception(tr('Câu chuyện chưa có nội dung', 'The story is empty'));
+    }
+
+    final ordered = [...blocks]..sort((a, b) => a.order.compareTo(b.order));
+    final out = <Map<String, dynamic>>[
+      {'type': 'text', 'text': story.title},
+    ];
+    var used = 0;
+    var skipped = 0;
+
+    for (final b in ordered) {
+      switch (b.type) {
+        case kBlockMedia:
+          final src = b.sourceIds.isEmpty ? null : sources[b.sourceIds.first];
+          final data = src?.imageB64;
+          if (data != null) {
+            if (used + data.length > _maxImageChars) {
+              skipped++;
+            } else {
+              used += data.length;
+              final size = await _imageSize(src!.imageBytes!);
+              out.add({'type': 'image', 'data': data, 'w': size[0], 'h': size[1]});
+            }
+          }
+          if (b.text.trim().isNotEmpty) {
+            out.add({'type': 'text', 'text': b.text.trim()});
+          }
+          break;
+        case kBlockQuote:
+          out.add({'type': 'text', 'text': '\u201C${b.text.trim()}\u201D'});
+          break;
+        default:
+          if (b.text.trim().isNotEmpty) {
+            out.add({'type': 'text', 'text': b.text.trim()});
+          }
+      }
+    }
+    // Minh bạch với người đọc: còn đoạn do AI viết mà chưa ai sửa
+    if (blocks.any((b) => b.aiGenerated)) {
+      out.add({
+        'type': 'text',
+        'text': tr('Dựng từ tư liệu của tác giả với sự hỗ trợ của AI.',
+            "Built from the author's own material with AI assistance."),
+      });
+    }
+
+    // Chủ đề: nhờ AI chọn, không chắc thì để trống (bài không gắn chủ đề)
+    var spaceId = '';
+    var spaceSource = 'user';
+    try {
+      final plain = out
+          .where((b) => b['type'] == 'text')
+          .map((b) => '${b['text']}')
+          .join('\n');
+      final id = await AiClassifier.classify(text: plain);
+      if (id != null && id != 'none') {
+        spaceId = id;
+        spaceSource = 'ai';
+      }
+    } catch (_) {}
+
+    final postId = await PostService.createPost(
+      spaceId: spaceId,
+      spaceSource: spaceSource,
+      blocks: out,
+      visibility: visibility,
+    );
+    await _col.doc(story.id).update({
+      'publishedPostId': postId,
+      'publishedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    return StoryPublishResult(postId, skipped);
+  }
+
+  /// Trả lời một câu AI cần bổ sung: câu trả lời thành một đoạn do chính người
+  /// dùng viết (không gắn nhãn AI, không cần nguồn) và câu hỏi được gỡ đi.
+  static Future<void> answerMissing(
+      String storyId,
+      String question,
+      String answer,
+      int lastOrder,
+      ) async {
+    final ref = _col.doc(storyId);
+    final batch = _db.batch();
+    batch.set(
+      ref.collection('blocks').doc(),
+      StoryBlock(
+        id: '',
+        type: kBlockNarration,
+        text: answer.trim(),
+        sourceIds: const [],
+        aiGenerated: false,
+        lastEditedBy: uid,
+        order: lastOrder + 1000,
+      ).toMap(),
+    );
+    batch.update(ref, {
+      'missing': FieldValue.arrayRemove([question]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
+  }
+
+  /// Bỏ qua một câu hỏi của AI mà không trả lời.
+  static Future<void> dismissMissing(String storyId, String question) =>
+      _col.doc(storyId).update({
+        'missing': FieldValue.arrayRemove([question]),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
 
   /// Thành viên (không phải chủ) tự rời khỏi câu chuyện.

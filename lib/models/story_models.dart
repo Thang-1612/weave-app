@@ -130,6 +130,9 @@ class Story {
   final int droppedCount; // số đoạn AI bị loại vì không có nguồn
   final DateTime updatedAt;
 
+  /// Id bài đăng trên bảng tin nếu câu chuyện đã được đăng (null = chưa đăng).
+  final String? publishedPostId;
+
   const Story({
     required this.id,
     required this.ownerId,
@@ -141,6 +144,7 @@ class Story {
     required this.missing,
     required this.droppedCount,
     required this.updatedAt,
+    this.publishedPostId,
   });
 
   factory Story.fromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
@@ -156,6 +160,10 @@ class Story {
       missing: List<String>.from(m['missing'] ?? const []),
       droppedCount: (m['droppedCount'] ?? 0) as int,
       updatedAt: (m['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      publishedPostId: (m['publishedPostId'] is String &&
+          (m['publishedPostId'] as String).isNotEmpty)
+          ? m['publishedPostId'] as String
+          : null,
     );
   }
 }

@@ -161,7 +161,7 @@ class PostService {
   /// tác giả chọn một bình luận làm đáp án. Câu hỏi không có chủ đề
   /// ([spaceId] để rỗng).
   /// [pollClosesAt]: thời điểm khóa bình chọn (null = không giới hạn).
-  static Future<void> createPost({
+  static Future<String> createPost({
     String spaceId = '',
     required List<Map<String, dynamic>> blocks,
     String spaceSource = 'user', // user, keyword hoặc ai
@@ -257,6 +257,8 @@ class PostService {
     if (!isQuestion && spaceId.isNotEmpty) InterestService.track(spaceId, 3);
     if (forkedFrom != null) forkTick.value++;
     await NotificationService.notifyPostCreated(postId: ref.id, text: preview);
+    await NotificationService.notifyPostCreated(postId: ref.id, text: preview);
+    return ref.id;
   }
 
   // ---------------------------------------------------------------------
