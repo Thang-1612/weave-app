@@ -67,6 +67,21 @@ class GroupService {
     return GroupInfo(id: ref.id, name: clean, ownerId: me, memberIds: [me]);
   }
 
+  /// Tạo nhóm rồi thêm luôn các thành viên đã chọn (luật Firestore chỉ cho
+  /// tạo nhóm với một mình chủ nhóm, nên thêm người ở bước cập nhật sau đó).
+  static Future<GroupInfo> createWithMembers(
+      String name, List<String> uids) async {
+    final g = await create(name);
+    final others = uids.where((u) => u != g.ownerId).toSet().toList();
+    if (others.isEmpty) return g;
+    await _col.doc(g.id).update({'memberIds': FieldValue.arrayUnion(others)});
+    return GroupInfo(
+        id: g.id,
+        name: g.name,
+        ownerId: g.ownerId,
+        memberIds: [g.ownerId, ...others]);
+  }
+
   static Future<void> addMember(String groupId, String uid) =>
       _col.doc(groupId).update({
         'memberIds': FieldValue.arrayUnion([uid]),

@@ -4,6 +4,7 @@ import '../services/group_service.dart';
 import '../services/l10n.dart';
 import '../services/weave_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/group_create_sheet.dart';
 import '../widgets/weave_activity_widgets.dart';
 import 'weave_detail_screen.dart';
 
@@ -19,7 +20,7 @@ class WeaveCreateScreen extends StatefulWidget {
 class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
   final _title = TextEditingController();
   final _desc = TextEditingController();
-  late final Future<List<GroupInfo>> _groups = _loadGroups();
+  late Future<List<GroupInfo>> _groups = _loadGroups();
 
   GroupInfo? _group;
   DateTimeRange? _range;
@@ -51,6 +52,24 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
     } else {
       apply();
     }
+  }
+
+  Future<void> _createGroup() async {
+    final g = await showCreateGroupSheet(context);
+    if (g == null || !mounted) return;
+    // Tải lại danh sách rồi chọn nhóm theo id: DropdownButton so sánh theo
+    // đối tượng, nên phải dùng đúng phiên bản có trong danh sách mới.
+    final reload = _loadGroups();
+    final list = await reload;
+    if (!mounted) return;
+    GroupInfo? fresh;
+    for (final x in list) {
+      if (x.id == g.id) fresh = x;
+    }
+    setState(() {
+      _groups = Future.value(list);
+      if (fresh != null) _selectGroup(fresh, notify: false);
+    });
   }
 
   Future<void> _pickRange() async {
@@ -130,11 +149,24 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text(
-                  tr('Bạn chưa tham gia nhóm nào. Hãy tạo nhóm trước.',
-                      'You are not in any group yet. Create a group first.'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      tr('Bạn chưa tham gia nhóm nào. Hãy tạo nhóm trước.',
+                          'You are not in any group yet. Create a group first.'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.brand),
+                      onPressed: _createGroup,
+                      icon: const Icon(Icons.group_add_outlined),
+                      label: Text(tr('Tạo nhóm', 'Create group')),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -145,6 +177,14 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _createGroup,
+                      icon: const Icon(Icons.group_add_outlined),
+                      label: Text(tr('Tạo nhóm mới', 'New group')),
+                    ),
+                  ),
                   TextField(
                     controller: _title,
                     maxLength: 60,

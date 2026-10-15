@@ -7,6 +7,7 @@ import '../services/weave_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/weave_activity_widgets.dart';
 import '../widgets/weave_extras_widgets.dart';
+import '../widgets/weave_moments_tab.dart';
 
 class WeaveDetailScreen extends StatelessWidget {
   final String activityId;
@@ -57,10 +58,7 @@ class WeaveDetailScreen extends StatelessWidget {
               children: [
                 _OverviewTab(activity: a),
                 _PollsTab(activity: a),
-                _ComingSoon(
-                    icon: Icons.photo_library_outlined,
-                    text: tr('Ảnh chia sẻ trong hoạt động sẽ có ở bước sau.',
-                        'Shared photos come in a later step.')),
+                WeaveMomentsTab(activity: a),
                 _ComingSoon(
                     icon: Icons.flag_outlined,
                     text: tr('Nhiệm vụ nhỏ sẽ có ở bước sau.',
