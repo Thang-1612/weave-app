@@ -8,6 +8,8 @@ import '../theme/app_theme.dart';
 import '../widgets/weave_activity_widgets.dart';
 import '../widgets/weave_extras_widgets.dart';
 import '../widgets/weave_moments_tab.dart';
+import '../widgets/place_picker_screen.dart';
+import '../services/maps_launcher.dart';
 
 class WeaveDetailScreen extends StatelessWidget {
   final String activityId;
@@ -216,6 +218,47 @@ class _OverviewTabState extends State<_OverviewTab> {
                         : '${weaveRange(a.startAt, a.endAt)} (${tr('dự kiến', 'planned')})'),
                 _info(Icons.place, tr('Địa điểm', 'Place'),
                     a.lockedPlace?.name ?? notSet),
+                if ((a.lockedPlace?.address ?? '').isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 30, bottom: 8),
+                    child: Text(a.lockedPlace!.address!,
+                        style:
+                        const TextStyle(color: Colors.grey, fontSize: 12)),
+                  ),
+                if (a.lockedPlace?.lat != null && a.lockedPlace?.lng != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: WeaveMapPreview(place: a.lockedPlace!),
+                  ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    if (a.lockedPlace != null)
+                      OutlinedButton.icon(
+                        onPressed: () =>
+                            openInGoogleMaps(context, a.lockedPlace!),
+                        icon: const Icon(Icons.map_outlined),
+                        label: Text(tr('Mở Google Maps', 'Open in Google Maps')),
+                      ),
+                    if (_isHost && !a.isEnded)
+                      OutlinedButton.icon(
+                        onPressed: _busy
+                            ? null
+                            : () async {
+                          final p = await pickWeavePlace(context,
+                              initial: a.lockedPlace);
+                          if (p == null || !mounted) return;
+                          await _run(() => WeaveService.lockPlace(a.id, p),
+                              doneMsg: tr('Đã chọn địa điểm',
+                                  'Place saved'));
+                        },
+                        icon: const Icon(Icons.edit_location_alt_outlined),
+                        label: Text(a.lockedPlace == null
+                            ? tr('Chọn địa điểm', 'Choose place')
+                            : tr('Đổi địa điểm', 'Change place')),
+                      ),
+                  ],
+                ),
                 if (mine != null && !a.isEnded) ...[
                   _heading(tr('Bạn có tham gia không?', 'Are you in?')),
                   WeaveRsvpSelector(

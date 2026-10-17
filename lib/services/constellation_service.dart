@@ -149,6 +149,7 @@ class ConstellationService {
         final snap = await _db
             .collection('users')
             .where(FieldPath.documentId, whereIn: chunk)
+            .limit(10)
             .get();
         out.addAll(snap.docs.map((d) => UserProfile.fromMap(d.id, d.data())));
       } catch (_) {}

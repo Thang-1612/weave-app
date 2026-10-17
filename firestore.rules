@@ -1,0 +1,1503 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // BẢN ĐÃ SỬA THEO CHECKLIST BẢO MẬT. Các chỗ đổi được đánh dấu [SỬA].
+    // Chưa chạy thử trên Emulator: hãy chạy bộ test đi kèm trước khi deploy.
+    // ===============================================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // ---------------------------------------------------------------
+    // [SỬA] Hàm dùng chung cho bộ đếm (reactions / comments / reactionSummary)
+    // Client vẫn tự cập nhật bộ đếm, nên rules chỉ giới hạn mức thay đổi:
+    // mỗi lần ±1, không âm, reactionSummary đổi tối đa 2 khóa mỗi lần.
+    // Muốn bộ đếm đáng tin hoàn toàn: chuyển sang Cloud Functions.
+    // ---------------------------------------------------------------
+    function summaryOk(n, o) {
+      return !n.diff(o).affectedKeys().hasAny(['reactionSummary'])
+        || (
+          n.reactionSummary is map
+          && n.reactionSummary.size() <= 12
+          && n.reactionSummary.diff(o.get('reactionSummary', {})).affectedKeys().size() <= 2
+        );
+    }
+
+    // Bài viết, bài bạn bè, hộp thời gian: chỉ đổi bộ đếm
+    function counterChange() {
+      let n = request.resource.data;
+      let o = resource.data;
+      return n.diff(o).affectedKeys().hasOnly(['reactions', 'reactionSummary', 'comments'])
+        && (n.get('reactions', 0) - o.get('reactions', 0)) in [-1, 0, 1]
+        && (n.get('comments', 0) - o.get('comments', 0)) in [-1, 0, 1]
+        && n.get('reactions', 0) >= 0
+        && n.get('comments', 0) >= 0
+        && summaryOk(n, o);
+    }
+
+    // Bình luận: chỉ đổi bộ đếm cảm xúc
+    function commentCounterChange() {
+      let n = request.resource.data;
+      let o = resource.data;
+      return n.diff(o).affectedKeys().hasOnly(['reactions', 'reactionSummary'])
+        && (n.get('reactions', 0) - o.get('reactions', 0)) in [-1, 0, 1]
+        && n.get('reactions', 0) >= 0
+        && summaryOk(n, o);
+    }
+
+    // Khi tạo mới, bộ đếm phải bắt đầu từ 0
+    function countersStartAtZero(d) {
+      return d.get('reactions', 0) == 0
+        && d.get('comments', 0) == 0
+        && d.get('reactionSummary', {}) == {};
+    }
+
+    // Các trường không được tự ý đổi khi chuyển bài vào/ra thùng rác:
+    // bộ đếm, đáp án được chọn, gợi ý.
+    function sameLockedFields(a, b) {
+      return a.get('reactions', 0) == b.get('reactions', 0)
+        && a.get('comments', 0) == b.get('comments', 0)
+        && a.get('reactionSummary', {}) == b.get('reactionSummary', {})
+        && a.get('acceptedCommentId', null) == b.get('acceptedCommentId', null)
+        && a.get('acceptedAuthorId', null) == b.get('acceptedAuthorId', null)
+        && a.get('hints', []) == b.get('hints', []);
+    }
+
+    // ---------------------------------------------------------------
+    // Weave Layers: hàm dùng chung
+    // ---------------------------------------------------------------
+
+    // Hai người đã là bạn bè chưa. Id tài liệu friendships là hai uid
+    // xếp theo thứ tự (khớp với luật tạo lời mời ở cuối tệp).
+    function isFriendOf(a, b) {
+      let fid = /databases/$(database)/documents/friendships/$(a < b ? a + '_' + b : b + '_' + a);
+      return exists(fid) && get(fid).data.status == 'accepted';
+    }
+
+    // Người đang đăng nhập có được xem lớp này không (dùng cho từng lớp)
+    function layerVisible(d) {
+      return d.authorId == request.auth.uid
+        || d.audienceType == 'public'
+        || (d.audienceType == 'friends' && isFriendOf(request.auth.uid, d.authorId))
+        || (d.audienceType == 'close'
+            && exists(/databases/$(database)/documents/users/$(d.authorId)/closeFriends/$(request.auth.uid)))
+        || (d.audienceType == 'group'
+            && request.auth.uid in get(/databases/$(database)/documents/groups/$(d.audienceGroupId)).data.memberIds);
+    }
+
+    // Hình dạng hợp lệ của một lớp khi tạo hoặc sửa
+    function layerShapeOk(d) {
+      return d.audienceType in ['public', 'friends', 'close', 'group', 'me']
+        && (d.audienceType != 'group'
+            || (d.audienceGroupId is string && d.audienceGroupId != ''))
+        && d.name is string
+        && d.name.size() <= 100
+        && d.blocks is list;
+    }
+
+    // Đọc xuyên mọi bài viết (Lịch sử hoạt động): chỉ đọc phần của chính mình
+    match /{path=**}/reactions/{uid} {
+      allow read: if signedIn()
+                  && resource.data.get('userId', '') == request.auth.uid;
+    }
+    match /{path=**}/comments/{commentId} {
+      allow read: if signedIn()
+                  && resource.data.get('authorId', '') == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------------
+    // Bài công khai
+    // ---------------------------------------------------------------
+    match /posts/{postId} {
+
+      // --- Đáp án của câu hỏi -------------------------------------
+      function answerTouched() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+                 .hasAny(['acceptedCommentId', 'acceptedAuthorId']);
+      }
+
+      function answerComment(cid) {
+        return get(/databases/$(database)/documents/posts/$(postId)/comments/$(cid)).data;
+      }
+
+      function answerOk() {
+        let d = request.resource.data;
+        let cid = d.get('acceptedCommentId', null);
+        return (
+          (cid == null || cid == '')
+          && d.get('acceptedAuthorId', null) in [null, '']
+        ) || (
+          d.get('isQuestion', false) == true
+          && cid is string
+          && answerComment(cid).get('parentId', '') == ''
+          && answerComment(cid).authorId != request.auth.uid
+          && (answerComment(cid).authorId == 'ai'
+              ? d.get('acceptedAuthorId', '') == ''
+              : d.get('acceptedAuthorId', '') == answerComment(cid).authorId)
+        );
+      }
+
+      // --- Gợi ý bổ sung của câu hỏi ------------------------------
+      function hintsOk() {
+        let d = request.resource.data;
+        return !d.diff(resource.data).affectedKeys().hasAny(['hints'])
+          || (
+            d.get('isQuestion', false) == true
+            && d.hints is list
+            && d.hints.size() <= 10
+          );
+      }
+
+      allow read: if signedIn();
+
+      // [SỬA] Không cho tạo bài đã gắn sẵn đáp án, gợi ý hoặc bộ đếm khác 0
+      // Khôi phục từ thùng rác: giữ đúng bộ đếm, đáp án, gợi ý của bản đã
+      // chuyển vào thùng rác (bản đó đã được kiểm tra khi tạo, xem /trash).
+      function restoredFromTrash() {
+        let t = /databases/$(database)/documents/trash/$(postId);
+        return exists(t)
+          && get(t).data.authorId == request.auth.uid
+          && get(t).data.originalCollection == 'posts'
+          && sameLockedFields(request.resource.data, get(t).data);
+      }
+
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && (
+          (
+            request.resource.data.get('acceptedCommentId', null) in [null, '']
+            && request.resource.data.get('acceptedAuthorId', null) in [null, '']
+            && request.resource.data.get('hints', []) == []
+            && countersStartAtZero(request.resource.data)
+          )
+          || restoredFromTrash()
+        );
+
+      // [SỬA] Tác giả không được đổi authorId và không được tự sửa bộ đếm;
+      // mọi thay đổi bộ đếm (kể cả của tác giả) đi qua counterChange().
+      allow update: if signedIn() && (
+        (
+          resource.data.authorId == request.auth.uid
+          && request.resource.data.authorId == resource.data.authorId
+          && !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['reactions', 'reactionSummary', 'comments'])
+          && (!answerTouched() || answerOk())
+          && hintsOk()
+        )
+        || counterChange()
+      );
+      allow delete: if signedIn()
+                    && resource.data.authorId == request.auth.uid;
+
+      // Các lớp của bài (Weave Layers).
+      match /layers/{layerId} {
+        allow get: if signedIn() && layerVisible(resource.data);
+        allow list: if signedIn()
+          && get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+               == request.auth.uid;
+        allow create: if signedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+               == request.auth.uid
+          && layerShapeOk(request.resource.data);
+        allow update: if signedIn()
+          && resource.data.authorId == request.auth.uid
+          && request.resource.data.authorId == request.auth.uid
+          && layerShapeOk(request.resource.data);
+        allow delete: if signedIn()
+          && resource.data.authorId == request.auth.uid;
+      }
+
+      match /reactions/{uid} {
+        allow read: if signedIn();
+        allow create, update, delete: if signedIn() && request.auth.uid == uid;
+      }
+
+      // Bình chọn trong bài: mỗi người một phiếu (id = uid người bỏ phiếu).
+      match /poll_votes/{uid} {
+
+        function pollPost() {
+          return get(/databases/$(database)/documents/posts/$(postId)).data;
+        }
+
+        function pollOpen() {
+          let p = pollPost();
+          return p.get('pollClosesAt', null) == null
+              || p.pollClosesAt > request.time;
+        }
+
+        function voteOk() {
+          let p = pollPost();
+          let c = request.resource.data;
+          return c.keys().hasOnly(['choices', 'createdAt'])
+            && c.choices is list
+            && c.choices.size() >= 1
+            && c.choices.size() <= 20
+            && c.choices.hasOnly(p.get('pollOptionIds', []))
+            && (p.get('pollMultiple', false) == true
+                || c.choices.size() == 1);
+        }
+
+        allow read: if signedIn();
+        allow create, update: if signedIn()
+          && request.auth.uid == uid
+          && pollOpen()
+          && voteOk();
+        allow delete: if signedIn()
+          && request.auth.uid == uid
+          && pollOpen();
+      }
+
+      // Phản hồi có cấu trúc theo chủ đề: mỗi người một phản hồi
+      match /responses/{uid} {
+        allow read: if signedIn();
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['type', 'userId', 'createdAt'])
+          && request.resource.data.type is string
+          && request.resource.data.type.size() <= 20
+          && request.resource.data.userId == request.auth.uid;
+        allow delete: if signedIn() && request.auth.uid == uid;
+      }
+
+      // Góp ý: công khai ai cũng đọc; riêng tư chỉ người viết và tác giả bài đọc.
+      match /feedback/{fid} {
+
+        function parentFb(id) {
+          return get(/databases/$(database)/documents/posts/$(postId)/feedback/$(id)).data;
+        }
+
+        function replyOk() {
+          let c = request.resource.data;
+          let p = parentFb(c.parentId);
+          return c.visibility == p.visibility
+            && c.parentAuthorId == p.authorId
+            && p.get('parentId', '') == ''
+            && (
+              p.visibility == 'public'
+              || p.authorId == request.auth.uid
+              || get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+                   == request.auth.uid
+            );
+        }
+
+        allow read: if signedIn() && (
+          resource.data.visibility == 'public'
+          || resource.data.authorId == request.auth.uid
+          || resource.data.get('parentAuthorId', '') == request.auth.uid
+          || get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+               == request.auth.uid
+        );
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(
+               ['authorId', 'authorName', 'text', 'visibility', 'createdAt',
+                'parentId', 'parentAuthorId', 'replyToName'])
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.visibility in ['public', 'private']
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500
+          && (
+            request.resource.data.get('parentId', '') == ''
+            || replyOk()
+          );
+        allow delete: if signedIn()
+          && resource.data.authorId == request.auth.uid;
+        allow update: if false;
+      }
+
+      // Bài sống: chỉ tác giả thêm cập nhật.
+      match /updates/{updateId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+               == request.auth.uid
+          && request.resource.data.keys().hasOnly(
+               ['text', 'kind', 'authorId', 'createdAt'])
+          && request.resource.data.get('kind', 'manual')
+               in ['manual', 'merge', 'proposal', 'restore']
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 600;
+        allow delete: if signedIn()
+          && get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+               == request.auth.uid;
+      }
+
+      // Lịch sử phiên bản: chỉ tác giả bài đọc, lưu và xóa
+      match /versions/{versionId} {
+        allow read, delete: if signedIn()
+          && get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+               == request.auth.uid;
+        allow create: if signedIn()
+          && get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+               == request.auth.uid
+          && request.resource.data.keys().hasOnly(
+               ['blocks', 'text', 'savedAt', 'reason'])
+          && request.resource.data.blocks is list
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() <= 200;
+      }
+
+      // Ghi chú theo khối
+      match /block_notes/{noteId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(
+               ['blockIndex', 'authorId', 'authorName', 'text', 'createdAt'])
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.blockIndex is int
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 300;
+        allow delete: if signedIn() && (
+          resource.data.authorId == request.auth.uid
+          || get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+               == request.auth.uid
+        );
+      }
+
+      match /comments/{commentId} {
+        allow read: if signedIn();
+
+        // [SỬA] Bình luận mới phải bắt đầu với 0 cảm xúc
+        // Lưu ý: nhánh 'ai' do client tự gửi nên vẫn có thể bị giả mạo;
+        // muốn chặn hẳn thì tạo bình luận AI từ Cloud Functions.
+        allow create: if signedIn()
+          && request.resource.data.get('reactions', 0) == 0
+          && (
+            request.resource.data.authorId == request.auth.uid
+            || (
+              request.resource.data.authorId == 'ai'
+              && request.resource.data.get('isAi', false) == true
+              && request.resource.data.get('requestedBy', '') == request.auth.uid
+            )
+          );
+
+        // [SỬA] Tác giả không được đổi authorId (chống mạo danh) và không
+        // được tự sửa bộ đếm; bộ đếm đi qua commentCounterChange().
+        allow update: if signedIn() && (
+          (
+            resource.data.authorId == request.auth.uid
+            && request.resource.data.authorId == resource.data.authorId
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                 .hasAny(['reactions', 'reactionSummary'])
+          )
+          || commentCounterChange()
+        );
+
+        allow delete: if signedIn() && (
+            resource.data.authorId == request.auth.uid
+            || resource.data.get('requestedBy', '') == request.auth.uid
+          )
+          && (
+            !exists(/databases/$(database)/documents/posts/$(postId))
+            || get(/databases/$(database)/documents/posts/$(postId)).data
+                 .get('acceptedCommentId', '') != commentId
+          );
+
+        match /reactions/{uid} {
+          allow read: if signedIn();
+          allow create, update, delete: if signedIn() && request.auth.uid == uid;
+        }
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // Bài chỉ-bạn-bè: chỉ tác giả và người có tên trong "audience" đọc được
+    // ---------------------------------------------------------------
+    match /friend_posts/{postId} {
+
+      function inAudience() {
+        return signedIn() && (
+          resource.data.authorId == request.auth.uid
+          || request.auth.uid in resource.data.audience
+        );
+      }
+
+      function parentReadable() {
+        let p = get(/databases/$(database)/documents/friend_posts/$(postId)).data;
+        return signedIn() && (
+          p.authorId == request.auth.uid || request.auth.uid in p.audience
+        );
+      }
+
+      allow read: if inAudience();
+
+      // [SỬA] Thêm kiểm tra bộ đếm bắt đầu từ 0
+      function restoredFromTrash() {
+        let t = /databases/$(database)/documents/trash/$(postId);
+        return exists(t)
+          && get(t).data.authorId == request.auth.uid
+          && get(t).data.originalCollection == 'friend_posts'
+          && sameLockedFields(request.resource.data, get(t).data);
+      }
+
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.audience is list
+        && request.resource.data.audience.size() <= 500
+        && (countersStartAtZero(request.resource.data) || restoredFromTrash());
+
+      // [SỬA] Tác giả sửa nội dung và audience nhưng: không đổi authorId,
+      // audience phải là danh sách ≤ 500, không tự sửa bộ đếm.
+      // Bộ đếm (±1) do tác giả hoặc người trong audience đi qua counterChange().
+      allow update: if signedIn() && (
+        (
+          resource.data.authorId == request.auth.uid
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.audience is list
+          && request.resource.data.audience.size() <= 500
+          && !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['reactions', 'reactionSummary', 'comments'])
+        )
+        || (
+          (resource.data.authorId == request.auth.uid
+            || request.auth.uid in resource.data.audience)
+          && counterChange()
+        )
+      );
+
+      allow delete: if signedIn()
+                    && resource.data.authorId == request.auth.uid;
+
+      match /layers/{layerId} {
+        allow get: if parentReadable() && layerVisible(resource.data);
+        allow list: if signedIn()
+          && get(/databases/$(database)/documents/friend_posts/$(postId)).data.authorId
+               == request.auth.uid;
+        allow create: if signedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && get(/databases/$(database)/documents/friend_posts/$(postId)).data.authorId
+               == request.auth.uid
+          && layerShapeOk(request.resource.data);
+        allow update: if signedIn()
+          && resource.data.authorId == request.auth.uid
+          && request.resource.data.authorId == request.auth.uid
+          && layerShapeOk(request.resource.data);
+        allow delete: if signedIn()
+          && resource.data.authorId == request.auth.uid;
+      }
+
+      match /reactions/{uid} {
+        allow read: if parentReadable();
+        allow create, update, delete: if parentReadable()
+                                      && request.auth.uid == uid;
+      }
+
+      match /poll_votes/{uid} {
+
+        function pollPost() {
+          return get(/databases/$(database)/documents/friend_posts/$(postId)).data;
+        }
+
+        function pollOpen() {
+          let p = pollPost();
+          return p.get('pollClosesAt', null) == null
+              || p.pollClosesAt > request.time;
+        }
+
+        function voteOk() {
+          let p = pollPost();
+          let c = request.resource.data;
+          return c.keys().hasOnly(['choices', 'createdAt'])
+            && c.choices is list
+            && c.choices.size() >= 1
+            && c.choices.size() <= 20
+            && c.choices.hasOnly(p.get('pollOptionIds', []))
+            && (p.get('pollMultiple', false) == true
+                || c.choices.size() == 1);
+        }
+
+        allow read: if parentReadable();
+        allow create, update: if parentReadable()
+          && request.auth.uid == uid
+          && pollOpen()
+          && voteOk();
+        allow delete: if parentReadable()
+          && request.auth.uid == uid
+          && pollOpen();
+      }
+
+      match /responses/{uid} {
+        allow read: if parentReadable();
+        allow create, update: if parentReadable() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['type', 'userId', 'createdAt'])
+          && request.resource.data.type is string
+          && request.resource.data.type.size() <= 20
+          && request.resource.data.userId == request.auth.uid;
+        allow delete: if parentReadable() && request.auth.uid == uid;
+      }
+
+      match /comments/{commentId} {
+        allow read: if parentReadable();
+
+        allow create: if parentReadable()
+          && request.resource.data.get('reactions', 0) == 0
+          && (
+            request.resource.data.authorId == request.auth.uid
+            || (
+              request.resource.data.authorId == 'ai'
+              && request.resource.data.get('isAi', false) == true
+              && request.resource.data.get('requestedBy', '') == request.auth.uid
+            )
+          );
+
+        // [SỬA] Cùng luật với bình luận bài công khai
+        allow update: if parentReadable() && (
+          (
+            resource.data.authorId == request.auth.uid
+            && request.resource.data.authorId == resource.data.authorId
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                 .hasAny(['reactions', 'reactionSummary'])
+          )
+          || commentCounterChange()
+        );
+
+        allow delete: if signedIn() && (
+          resource.data.authorId == request.auth.uid
+          || resource.data.get('requestedBy', '') == request.auth.uid
+        );
+
+        match /reactions/{uid} {
+          allow read: if parentReadable();
+          allow create, update, delete: if parentReadable()
+                                        && request.auth.uid == uid;
+        }
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // Hộp thời gian: tác giả đọc ngay, người nhận chỉ đọc khi đã tới hạn mở
+    // ---------------------------------------------------------------
+    match /capsules/{postId} {
+
+      function parentReadable() {
+        let p = get(/databases/$(database)/documents/capsules/$(postId)).data;
+        return signedIn() && (
+          p.authorId == request.auth.uid
+          || (request.auth.uid in p.audience && p.openAt <= request.time)
+        );
+      }
+
+      allow read: if signedIn() && (
+        resource.data.authorId == request.auth.uid
+        || (request.auth.uid in resource.data.audience
+            && resource.data.openAt <= request.time)
+      );
+
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.audience is list
+        && request.resource.data.audience.size() <= 500
+        && request.resource.data.openAt is timestamp
+        && request.resource.data.openAt > request.time
+        && request.resource.data.openAt < request.time + duration.value(1830, 'd')
+        && countersStartAtZero(request.resource.data);
+
+      // [SỬA] Tác giả: không đổi authorId, audience hợp lệ, không tự sửa bộ đếm.
+      // openAt chỉ được đổi khi hộp còn khóa, và giá trị mới vẫn ở tương lai.
+      // Người nhận (đã tới hạn mở) và tác giả chỉ đổi bộ đếm qua counterChange().
+      allow update: if signedIn() && (
+        (
+          resource.data.authorId == request.auth.uid
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.audience is list
+          && request.resource.data.audience.size() <= 500
+          && !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['reactions', 'reactionSummary', 'comments'])
+          && (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['openAt'])
+            || (
+              resource.data.openAt > request.time
+              && request.resource.data.openAt is timestamp
+              && request.resource.data.openAt > request.time
+              && request.resource.data.openAt < request.time + duration.value(1830, 'd')
+            )
+          )
+        )
+        || (
+          (
+            resource.data.authorId == request.auth.uid
+            || (request.auth.uid in resource.data.audience
+                && resource.data.openAt <= request.time)
+          )
+          && counterChange()
+        )
+      );
+
+      allow delete: if signedIn() && resource.data.authorId == request.auth.uid;
+
+      match /reactions/{uid} {
+        allow read: if parentReadable();
+        allow create, update, delete: if parentReadable() && request.auth.uid == uid;
+      }
+
+      match /responses/{uid} {
+        allow read: if parentReadable();
+        allow create, update: if parentReadable() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['type', 'userId', 'createdAt'])
+          && request.resource.data.type is string
+          && request.resource.data.type.size() <= 20
+          && request.resource.data.userId == request.auth.uid;
+        allow delete: if parentReadable() && request.auth.uid == uid;
+      }
+
+      match /comments/{commentId} {
+        allow read: if parentReadable();
+        allow create: if parentReadable()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.get('reactions', 0) == 0;
+        allow update: if parentReadable() && (
+          (
+            resource.data.authorId == request.auth.uid
+            && request.resource.data.authorId == resource.data.authorId
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                 .hasAny(['reactions', 'reactionSummary'])
+          )
+          || commentCounterChange()
+        );
+        allow delete: if signedIn() && resource.data.authorId == request.auth.uid;
+
+        match /reactions/{uid} {
+          allow read: if parentReadable();
+          allow create, update, delete: if parentReadable() && request.auth.uid == uid;
+        }
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // Thùng rác
+    // ---------------------------------------------------------------
+    match /trash/{postId} {
+      allow read, delete: if signedIn()
+                          && resource.data.authorId == request.auth.uid;
+
+      function origPath() {
+        return /databases/$(database)/documents/$(request.resource.data.originalCollection)/$(postId);
+      }
+
+      // [SỬA] Thùng rác chỉ nhận bản sao của một bài CÓ THẬT của chính mình,
+      // với bộ đếm, đáp án, gợi ý y nguyên. Nếu không, có thể tạo "bài giả"
+      // trong thùng rác rồi khôi phục để lách luật bộ đếm.
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.originalCollection in ['posts', 'friend_posts']
+        && request.resource.data.deletedAt == request.time
+        && exists(origPath())
+        && get(origPath()).data.authorId == request.auth.uid
+        && sameLockedFields(request.resource.data, get(origPath()).data);
+
+      allow update: if false;
+    }
+
+    // Báo cáo: ai cũng gửi được, chỉ quản trị viên xem trong Console
+    match /reports/{reportId} {
+      allow create: if signedIn()
+                    && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // Phản hồi và báo lỗi từ mục Trợ giúp
+    match /feedback/{feedbackId} {
+      allow create: if signedIn()
+                    && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------
+    // Nhóm riêng (Weave Layers): chỉ thành viên đọc, chủ nhóm quản lý
+    // ---------------------------------------------------------------
+    match /groups/{groupId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.memberIds;
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.memberIds == [request.auth.uid];
+
+      // [SỬA] Chủ nhóm không còn sửa tùy ý:
+      //  - không đổi ownerId, chủ phải còn trong memberIds, tối đa 200 người;
+      //  - bớt thành viên thì tự do; thêm thì mỗi lần đúng MỘT người và phải
+      //    là bạn bè của chủ nhóm (arrayUnion nhiều người một lúc sẽ bị từ chối).
+      allow update: if signedIn()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.memberIds is list
+        && request.resource.data.memberIds.size() <= 200
+        && request.auth.uid in request.resource.data.memberIds
+        && (
+          request.resource.data.memberIds.toSet()
+            .difference(resource.data.memberIds.toSet()).size() == 0
+          || (
+            request.resource.data.memberIds.size() == resource.data.memberIds.size() + 1
+            && request.resource.data.memberIds[0:resource.data.memberIds.size()]
+                 == resource.data.memberIds
+            && isFriendOf(request.auth.uid,
+                 request.resource.data.memberIds[resource.data.memberIds.size()])
+          )
+        );
+
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------------
+    // Weave Together: hoạt động nhóm
+    // ---------------------------------------------------------------
+    match /weave_activities/{activityId} {
+
+      function actPath() {
+        return /databases/$(database)/documents/weave_activities/$(activityId);
+      }
+      function isMemberNow() {
+        return signedIn() && request.auth.uid in get(actPath()).data.memberIds;
+      }
+      function isHostNow() {
+        return signedIn() && get(actPath()).data.hostId == request.auth.uid;
+      }
+      function isHostAfter() {
+        return signedIn() && getAfter(actPath()).data.hostId == request.auth.uid;
+      }
+      function isMemberAfter() {
+        return signedIn() && request.auth.uid in getAfter(actPath()).data.memberIds;
+      }
+
+      allow read: if signedIn() && request.auth.uid in resource.data.memberIds;
+
+      allow create: if signedIn()
+        && request.resource.data.hostId == request.auth.uid
+        && request.auth.uid in request.resource.data.memberIds
+        && request.auth.uid in get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.memberIds
+        && request.resource.data.memberIds.hasOnly(
+             get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.memberIds);
+
+      allow update: if signedIn() && (
+        // [SỬA] host sửa nhưng: không đổi chủ/nhóm; host phải còn trong
+        // memberIds; người MỚI được thêm phải thuộc nhóm của hoạt động;
+        // hoạt động đã 'ended' thì không mở lại.
+        (
+          resource.data.hostId == request.auth.uid
+          && request.resource.data.hostId == resource.data.hostId
+          && request.resource.data.groupId == resource.data.groupId
+          && request.resource.data.memberIds is list
+          && request.resource.data.memberIds.size() <= 256
+          && request.auth.uid in request.resource.data.memberIds
+          && (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['memberIds'])
+            || request.resource.data.memberIds.toSet()
+                 .difference(resource.data.memberIds.toSet())
+                 .difference(get(/databases/$(database)/documents/groups/$(resource.data.groupId))
+                               .data.memberIds.toSet()).size() == 0
+          )
+          && (
+            resource.data.get('status', 'planning') != 'ended'
+            || request.resource.data.get('status', 'planning') == 'ended'
+          )
+        )
+        // thành viên tự rời: chỉ bỏ chính mình khỏi memberIds
+        || (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
+          && request.auth.uid in resource.data.memberIds
+          && !(request.auth.uid in request.resource.data.memberIds)
+          && request.resource.data.memberIds.size() == resource.data.memberIds.size() - 1
+        )
+      );
+
+      allow delete: if signedIn() && resource.data.hostId == request.auth.uid;
+
+      match /members/{uid} {
+        allow read: if isMemberNow();
+
+        // [SỬA] host chỉ thêm được người đã nằm trong memberIds sau batch
+        allow create: if signedIn() && (
+          (isHostAfter() && uid in getAfter(actPath()).data.memberIds)
+          || (uid == request.auth.uid && isMemberAfter())
+        );
+
+        allow update: if signedIn() && (
+          isHostAfter()
+          || (
+            uid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvp'])
+            && request.resource.data.rsvp in ['pending', 'going', 'maybe', 'no']
+          )
+        );
+
+        allow delete: if signedIn() && (uid == request.auth.uid || isHostNow());
+      }
+
+      match /polls/{pollId} {
+        function pollDoc() {
+          return get(/databases/$(database)/documents/weave_activities/$(activityId)/polls/$(pollId)).data;
+        }
+        function pollOpenNow() {
+          let p = pollDoc();
+          return p.get('closed', false) == false
+            && (p.get('closesAt', null) == null || p.closesAt > request.time);
+        }
+
+        allow read: if isMemberNow();
+
+        allow create: if isMemberNow()
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.options is list
+          && request.resource.data.options.size() >= 2
+          && request.resource.data.options.size() <= 6;
+
+        // [SỬA] host chốt poll nhưng không đổi người tạo hay danh sách lựa chọn
+        allow update: if isHostNow()
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.options == resource.data.options;
+        allow delete: if isHostNow();
+
+        match /votes/{uid} {
+          allow read: if isMemberNow();
+          allow create, update: if isMemberNow()
+            && uid == request.auth.uid
+            && pollOpenNow()
+            && request.resource.data.keys().hasOnly(['optionIds', 'at'])
+            && request.resource.data.optionIds is list
+            && request.resource.data.optionIds.size() <= 6;
+          allow delete: if isMemberNow() && uid == request.auth.uid && pollOpenNow();
+        }
+      }
+
+      match /moments/{momentId} {
+        allow read: if isMemberNow();
+
+        allow create: if isMemberNow()
+          && get(actPath()).data.get('status', 'planning') != 'ended'
+          && request.resource.data.keys().hasOnly(
+               ['authorId', 'caption', 'image', 'createdAt'])
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.caption is string
+          && request.resource.data.caption.size() <= 500
+          && request.resource.data.createdAt == request.time
+          && (
+            request.resource.data.caption.size() > 0
+            || request.resource.data.get('image', null) != null
+          )
+          && (
+            request.resource.data.get('image', null) == null
+            || (request.resource.data.image is string
+                && request.resource.data.image.size() < 400000)
+          );
+
+        allow update: if false;
+
+        allow delete: if signedIn() && (
+          resource.data.authorId == request.auth.uid
+          || isHostNow()
+        );
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // Chat (tin nhắn riêng và nhóm chat)
+    // ---------------------------------------------------------------
+    match /chats/{chatId} {
+
+      function chatPath() {
+        return /databases/$(database)/documents/chats/$(chatId);
+      }
+      function isChatMember() {
+        return signedIn() && request.auth.uid in get(chatPath()).data.members;
+      }
+      function selfOnlyChange(a, b) {
+        return a.toSet().difference(b.toSet()).difference([request.auth.uid].toSet()).size() == 0
+          && b.toSet().difference(a.toSet()).difference([request.auth.uid].toSet()).size() == 0;
+      }
+      function onlyAdds(a, b) {
+        return a.toSet().difference(b.toSet()).size() == 0;
+      }
+
+      function chatCreateOk(d) {
+        let uid = request.auth.uid;
+        return d.keys().hasOnly(
+              ['type', 'name', 'members', 'admins', 'createdBy', 'acceptedBy',
+               'mutedBy', 'pinnedBy', 'blockedBy', 'unread', 'lastRead', 'typing',
+               'lastMessage', 'lastMessageAt', 'createdAt', 'disappearAfterSec'])
+          && d.createdBy == uid
+          && d.members is list
+          && uid in d.members
+          && d.members.size() >= 2
+          && d.members.size() <= 256
+          && d.name is string
+          && d.name.size() <= 100
+          && d.createdAt == request.time
+          && d.lastMessageAt == request.time
+          && d.disappearAfterSec == 0
+          && (
+            (
+              d.type == 'direct'
+              && d.members.size() == 2
+              && d.admins.size() == 0
+              && chatId == (d.members[0] < d.members[1]
+                   ? d.members[0] + '_' + d.members[1]
+                   : d.members[1] + '_' + d.members[0])
+              && uid in d.acceptedBy
+              && d.acceptedBy.toSet().difference(d.members.toSet()).size() == 0
+              && (d.acceptedBy.size() == 1 || isFriendOf(d.members[0], d.members[1]))
+            )
+            || (
+              d.type == 'group'
+              && d.admins == [uid]
+              && d.acceptedBy.toSet().difference(d.members.toSet()).size() == 0
+              && d.members.toSet().difference(d.acceptedBy.toSet()).size() == 0
+            )
+          );
+      }
+
+      function chatUpdateOk() {
+        let o = resource.data;
+        let n = request.resource.data;
+        let uid = request.auth.uid;
+        let changed = n.diff(o).affectedKeys();
+        let isAdmin = uid in o.get('admins', []);
+        let isGroup = o.type == 'group';
+        return uid in o.members
+          && changed.hasOnly(
+               ['lastMessage', 'lastMessageAt', 'lastRead', 'unread', 'typing',
+                'acceptedBy', 'mutedBy', 'pinnedBy', 'blockedBy', 'name',
+                'disappearAfterSec', 'members', 'admins'])
+          // đã đọc, đang soạn: chỉ đổi khóa của chính mình
+          && (!changed.hasAny(['lastRead'])
+              || n.lastRead.diff(o.get('lastRead', {})).affectedKeys().hasOnly([uid]))
+          && (!changed.hasAny(['typing'])
+              || n.typing.diff(o.get('typing', {})).affectedKeys().hasOnly([uid]))
+          // tin cuối: giờ máy chủ
+          && (!changed.hasAny(['lastMessageAt']) || n.lastMessageAt == request.time)
+          // [SỬA] tin cuối: phải là map, senderId là chính mình, text hợp lệ
+          && (!changed.hasAny(['lastMessage'])
+              || (
+                n.lastMessage is map
+                && n.lastMessage.get('senderId', '') == uid
+                && n.lastMessage.get('text', '') is string
+                && n.lastMessage.get('text', '').size() <= 10000
+              ))
+          // [SỬA] chưa đọc: bình thường chỉ đổi khóa của chính mình (đánh dấu
+          // đã đọc). Chỉ khi kèm một tin nhắn mới (lastMessage đổi cùng lúc)
+          // mới được tăng bộ đếm của các thành viên khác, và vẫn chỉ trong
+          // phạm vi thành viên phòng.
+          && (!changed.hasAny(['unread'])
+              || (
+                n.unread is map
+                && n.unread.diff(o.get('unread', {})).affectedKeys()
+                     .hasOnly(changed.hasAny(['lastMessage']) ? o.members : [uid])
+              ))
+          // tắt thông báo, ghim, chặn: chỉ thêm hoặc bớt chính mình
+          && (!changed.hasAny(['mutedBy']) || selfOnlyChange(o.mutedBy, n.mutedBy))
+          && (!changed.hasAny(['pinnedBy']) || selfOnlyChange(o.pinnedBy, n.pinnedBy))
+          && (!changed.hasAny(['blockedBy']) || selfOnlyChange(o.blockedBy, n.blockedBy))
+          // chấp nhận tin chờ: chính mình; quản trị viên thêm người vào nhóm
+          && (!changed.hasAny(['acceptedBy'])
+              || selfOnlyChange(o.acceptedBy, n.acceptedBy)
+              || (isGroup && isAdmin && onlyAdds(o.acceptedBy, n.acceptedBy)))
+          // đổi tên nhóm: quản trị viên
+          && (!changed.hasAny(['name'])
+              || (isGroup && isAdmin && n.name is string && n.name.size() <= 100))
+          // tin tự hủy
+          && (!changed.hasAny(['disappearAfterSec'])
+              || ((!isGroup || isAdmin)
+                  && n.disappearAfterSec is int
+                  && n.disappearAfterSec >= 0))
+          // thành viên: tự rời nhóm, hoặc quản trị viên thêm người
+          && (!changed.hasAny(['members'])
+              || (isGroup && (
+                    (
+                      o.members.toSet().difference(n.members.toSet())
+                        .difference([uid].toSet()).size() == 0
+                      && onlyAdds(n.members, o.members)
+                    )
+                    || (isAdmin && onlyAdds(o.members, n.members) && n.members.size() <= 256)
+                 )))
+          // quản trị viên
+          && (!changed.hasAny(['admins'])
+              || (isAdmin
+                  && n.admins.toSet().difference(n.members.toSet()).size() == 0));
+      }
+
+      allow get: if signedIn() && (
+        resource == null
+          ? request.auth.uid in chatId.split('_')
+          : request.auth.uid in resource.data.members
+      );
+      allow list: if signedIn() && request.auth.uid in resource.data.members;
+      allow create: if signedIn() && chatCreateOk(request.resource.data);
+      allow update: if signedIn() && chatUpdateOk();
+      allow delete: if false;
+
+      match /messages/{msgId} {
+
+        // [SỬA] Chặt thêm: loại tin phải khớp trường đi kèm, expireAt ở tương lai
+        function msgCreateOk(d) {
+          return d.keys().hasOnly(
+                ['text', 'replyTo', 'imageB64', 'postId', 'postTitle', 'senderId',
+                 'type', 'createdAt', 'reactions', 'deleted', 'expireAt'])
+            && d.senderId == request.auth.uid
+            && d.type in ['text', 'image', 'post', 'system']
+            && d.createdAt == request.time
+            && d.deleted == false
+            && d.reactions.size() == 0
+            && d.text is string
+            && d.text.size() <= 10000
+            && (d.get('imageB64', null) == null
+                || (d.imageB64 is string && d.imageB64.size() <= 700000))
+            && (d.type != 'image' || d.get('imageB64', null) != null)
+            && (d.get('postId', null) == null || d.postId is string)
+            && (d.type != 'post' || d.get('postId', null) is string)
+            && (d.get('postTitle', null) == null
+                || (d.postTitle is string && d.postTitle.size() <= 500))
+            // expireAt do app tính theo giờ máy nên cho lệch đồng hồ tối đa 10 phút
+            && (d.get('expireAt', null) == null
+                || (d.expireAt is timestamp
+                    && d.expireAt > request.time - duration.value(10, 'm')));
+        }
+
+        function msgUpdateOk() {
+          let o = resource.data;
+          let n = request.resource.data;
+          let uid = request.auth.uid;
+          let changed = n.diff(o).affectedKeys();
+          return (
+            o.senderId == uid && (
+              (
+                changed.hasOnly(['text', 'editedAt'])
+                && o.get('deleted', false) == false
+                && n.text is string
+                && n.text.size() <= 10000
+                && n.editedAt == request.time
+              )
+              || (
+                changed.hasOnly(['deleted', 'text', 'imageB64'])
+                && n.deleted == true
+                && n.text == ''
+              )
+            )
+          )
+          || (
+            changed.hasOnly(['reactions'])
+            && n.reactions.diff(o.get('reactions', {})).affectedKeys().hasOnly([uid])
+            && n.reactions.get(uid, '') is string
+            && n.reactions.get(uid, '').size() <= 16
+          );
+        }
+
+        allow read: if isChatMember();
+        allow create: if isChatMember() && msgCreateOk(request.resource.data);
+        allow update: if isChatMember() && msgUpdateOk();
+        // [SỬA] người gửi xóa tin của mình, nhưng phải còn là thành viên phòng
+        allow delete: if isChatMember() && resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // [SỬA] Hồ sơ người dùng
+    // ---------------------------------------------------------------
+
+    // Các trường liên quan quyền hạn, vai trò, độ tin cậy: người dùng KHÔNG
+    // được tự tạo hoặc tự sửa. Hãy đối chiếu danh sách này với tên trường
+    // thực tế trong app và bổ sung nếu thiếu. Những trường này chỉ ghi được
+    // bằng Admin SDK / Cloud Functions.
+    function userProtectedKeys() {
+      return ['role', 'roles', 'isAdmin', 'admin', 'isModerator', 'moderator',
+              'verified', 'isVerified', 'trusted', 'trustLevel', 'trustScore',
+              'badges', 'banned', 'isBanned', 'disabled', 'plan', 'isPremium',
+              'premium', 'permissions', 'claims'];
+    }
+
+    match /users/{userId} {
+      // Đọc một hồ sơ: còn mở cho mọi tài khoản đăng nhập để hiện tên/ảnh.
+      // => Dữ liệu riêng tư (email, số điện thoại, ngày sinh, token...) KHÔNG
+      //    được nằm trong document này: chuyển sang users/{uid}/private.
+      // Sau khi chuyển xong, đổi thành hồ sơ công khai riêng, ví dụ:
+      //   match /public/profile { allow read: if signedIn(); ... }
+      //   và đổi dòng get bên dưới thành: request.auth.uid == userId
+      allow get: if signedIn();
+
+      // Liệt kê: bắt buộc có limit ≤ 30 để không ai quét được toàn bộ người dùng
+      allow list: if signedIn() && request.query.limit <= 30;
+
+      allow create: if signedIn() && request.auth.uid == userId
+        && !request.resource.data.keys().hasAny(userProtectedKeys());
+      allow update: if signedIn() && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(userProtectedKeys());
+      allow delete: if false;
+
+      match /private/{docId} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /closeFriends/{friendId} {
+        allow read: if signedIn()
+          && (request.auth.uid == userId || request.auth.uid == friendId);
+        allow write: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /public/{docId} {
+        allow read: if signedIn();
+        allow create, update: if signedIn()
+          && request.auth.uid == userId
+          && docId == 'edges'
+          && request.resource.data.keys().hasOnly(['friends', 'updatedAt'])
+          && request.resource.data.friends is list
+          && request.resource.data.friends.size() <= 500;
+        allow delete: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /saved/{id} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
+      match /blocked/{id} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
+      match /shares/{id} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /following_posts/{id} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /thanks_inbox/{id} {
+        allow read, delete: if signedIn() && request.auth.uid == userId;
+        allow create: if signedIn()
+          && request.auth.uid != userId
+          && request.resource.data.keys().hasOnly(
+               ['fromUserId', 'fromName', 'postId', 'postPreview', 'note', 'createdAt'])
+          && request.resource.data.fromUserId == request.auth.uid
+          && id == request.resource.data.postId + '_' + request.auth.uid
+          && request.resource.data.note is string
+          && request.resource.data.note.size() <= 200;
+        allow update: if signedIn()
+          && resource.data.fromUserId == request.auth.uid
+          && request.resource.data.fromUserId == request.auth.uid
+          && request.resource.data.keys().hasOnly(
+               ['fromUserId', 'fromName', 'postId', 'postPreview', 'note', 'createdAt'])
+          && request.resource.data.note is string
+          && request.resource.data.note.size() <= 200;
+      }
+
+      match /proposals_inbox/{id} {
+        allow read, delete: if signedIn() && request.auth.uid == userId;
+        allow create: if signedIn()
+          && request.auth.uid != userId
+          && request.resource.data.keys().hasOnly(
+               ['fromUserId', 'fromName', 'forkId', 'originalId', 'note', 'createdAt'])
+          && request.resource.data.fromUserId == request.auth.uid
+          && id == request.resource.data.forkId
+          && request.resource.data.note is string
+          && request.resource.data.note.size() <= 300
+          && get(/databases/$(database)/documents/posts/$(request.resource.data.forkId))
+               .data.authorId == request.auth.uid
+          && get(/databases/$(database)/documents/posts/$(request.resource.data.originalId))
+               .data.authorId == userId;
+        allow update: if signedIn()
+          && resource.data.fromUserId == request.auth.uid
+          && request.resource.data.fromUserId == request.auth.uid
+          && request.resource.data.forkId == resource.data.forkId
+          && request.resource.data.originalId == resource.data.originalId
+          && request.resource.data.keys().hasOnly(
+               ['fromUserId', 'fromName', 'forkId', 'originalId', 'note', 'createdAt'])
+          && request.resource.data.note is string
+          && request.resource.data.note.size() <= 300;
+      }
+
+      match /my_box/{id} {
+        allow read, delete: if signedIn() && request.auth.uid == userId;
+        allow create, update: if signedIn() && request.auth.uid == userId
+          && request.resource.data.keys().hasOnly(
+               ['text', 'pinned', 'posted', 'createdAt', 'updatedAt'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000;
+      }
+
+      match /proposal_results/{id} {
+        allow read, delete: if signedIn() && request.auth.uid == userId;
+        allow create, update: if signedIn()
+          && request.auth.uid != userId
+          && request.resource.data.keys().hasOnly(
+               ['status', 'byUserId', 'byName', 'originalId', 'createdAt'])
+          && request.resource.data.status in ['accepted', 'declined']
+          && request.resource.data.byUserId == request.auth.uid
+          && request.resource.data.originalId is string
+          && get(/databases/$(database)/documents/posts/$(request.resource.data.originalId))
+               .data.authorId == request.auth.uid;
+      }
+
+      // [SỬA] Giới hạn số trường để người khác không nhồi dữ liệu rác vào
+      // thông báo của bạn (kiểm tra sâu hơn cần biết cấu trúc thông báo).
+      match /notifications/{nid} {
+        allow read, update, delete: if signedIn() && request.auth.uid == userId;
+        allow create: if signedIn()
+                      && request.resource.data.fromUserId == request.auth.uid
+                      && request.resource.data.keys().size() <= 20;
+      }
+    }
+
+    match /friendships/{id} {
+      allow read: if signedIn() && request.auth.uid in resource.data.users;
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(
+             ['users', 'requesterId', 'status', 'createdAt'])
+        && request.resource.data.users.size() == 2
+        && request.resource.data.users[0] < request.resource.data.users[1]
+        && id == request.resource.data.users[0] + '_'
+                 + request.resource.data.users[1]
+        && request.auth.uid in request.resource.data.users
+        && request.resource.data.requesterId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && (
+          !exists(/databases/$(database)/documents/users/$(
+            request.resource.data.users[0] == request.auth.uid
+              ? request.resource.data.users[1]
+              : request.resource.data.users[0]))
+          || get(/databases/$(database)/documents/users/$(
+            request.resource.data.users[0] == request.auth.uid
+              ? request.resource.data.users[1]
+              : request.resource.data.users[0]))
+               .data.get('allowFriendRequests', true) == true
+        );
+
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.users
+        && resource.data.requesterId != request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status == 'accepted';
+
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.users
+        && resource.data.status == 'accepted'
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['visibility', 'updatedAt'])
+        && request.resource.data.visibility
+             .diff(resource.data.get('visibility', {})).affectedKeys()
+             .hasOnly([request.auth.uid])
+        && request.resource.data.visibility[request.auth.uid]
+             in ['public', 'hidden'];
+
+      allow delete: if signedIn() && request.auth.uid in resource.data.users;
+    }
+
+    // ---------------------------------------------------------------
+    // Weave Storymaker
+    // ---------------------------------------------------------------
+    match /stories/{storyId} {
+
+      function storyPath() {
+        return /databases/$(database)/documents/stories/$(storyId);
+      }
+      function isMemberNow() {
+        return signedIn() && request.auth.uid in get(storyPath()).data.collaboratorIds;
+      }
+      function isOwnerNow() {
+        return signedIn() && get(storyPath()).data.ownerId == request.auth.uid;
+      }
+      function isMemberAfter() {
+        return signedIn() && request.auth.uid in getAfter(storyPath()).data.collaboratorIds;
+      }
+      function isOwnerAfter() {
+        return signedIn() && getAfter(storyPath()).data.ownerId == request.auth.uid;
+      }
+
+      function storyShapeOk(d) {
+        return d.keys().hasOnly(
+              ['ownerId', 'title', 'kind', 'mood', 'layout', 'collaboratorIds',
+               'missing', 'droppedCount', 'createdAt', 'updatedAt'])
+          && d.title is string
+          && d.title.size() <= 200
+          && d.kind in ['week', 'trip', 'learning']
+          && d.mood in ['calm', 'joyful', 'adventurous', 'reflective', 'nostalgic', 'energetic']
+          && d.layout in ['timeline', 'chapters', 'highlight']
+          && d.missing is list
+          && d.missing.size() <= 4
+          && d.droppedCount is int
+          && d.createdAt == request.time
+          && d.updatedAt == request.time;
+      }
+
+      // [SỬA] publishedPostId phải trỏ tới một bài có thật, do chính chủ truyện
+      // đăng (posts hoặc friend_posts). Dùng existsAfter/getAfter để vẫn hợp lệ
+      // khi ghi bài và cập nhật truyện trong cùng một batch.
+      function ownPublishedPost(pid) {
+        let uid = request.auth.uid;
+        return pid is string
+          && pid.size() > 0
+          && pid.size() <= 100
+          && (
+            (existsAfter(/databases/$(database)/documents/posts/$(pid))
+              && getAfter(/databases/$(database)/documents/posts/$(pid)).data.authorId == uid)
+            || (existsAfter(/databases/$(database)/documents/friend_posts/$(pid))
+              && getAfter(/databases/$(database)/documents/friend_posts/$(pid)).data.authorId == uid)
+          );
+      }
+
+      // [SỬA] Chủ mời thêm đúng một người, là bạn bè của chủ, chưa có trong danh sách
+      function collaboratorAddOk() {
+        let o = resource.data.collaboratorIds;
+        let n = request.resource.data.collaboratorIds;
+        return n.size() == o.size() + 1
+          && n.size() <= 20
+          && n[0:o.size()] == o
+          && !(n[o.size()] in o)
+          && isFriendOf(request.auth.uid, n[o.size()]);
+      }
+
+      allow read: if signedIn() && request.auth.uid in resource.data.collaboratorIds;
+
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.collaboratorIds == [request.auth.uid]
+        && storyShapeOk(request.resource.data);
+
+      allow update: if signedIn()
+        && request.resource.data.ownerId == resource.data.ownerId
+        && (
+          (
+            request.auth.uid in resource.data.collaboratorIds
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['updatedAt'])
+            && request.resource.data.updatedAt == request.time
+          )
+          || (
+            request.auth.uid in resource.data.collaboratorIds
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['missing', 'updatedAt'])
+            && request.resource.data.missing.size() < resource.data.missing.size()
+            && request.resource.data.missing.hasOnly(resource.data.missing)
+            && request.resource.data.updatedAt == request.time
+          )
+          // chủ truyện mời thêm bạn bè
+          || (
+            resource.data.ownerId == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['collaboratorIds', 'updatedAt'])
+            && collaboratorAddOk()
+          )
+          // [SỬA] chủ truyện gỡ đúng một cộng tác viên khác (không gỡ chính mình)
+          || (
+            resource.data.ownerId == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['collaboratorIds', 'updatedAt'])
+            && request.resource.data.updatedAt == request.time
+            && request.resource.data.collaboratorIds.size()
+                 == resource.data.collaboratorIds.size() - 1
+            && request.resource.data.collaboratorIds.hasOnly(resource.data.collaboratorIds)
+            && request.auth.uid in request.resource.data.collaboratorIds
+          )
+          // [SỬA] chủ truyện ghi nhận bài đã đăng: publishedPostId được xác thực
+          || (
+            resource.data.ownerId == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['publishedPostId', 'publishedAt', 'updatedAt'])
+            && ownPublishedPost(request.resource.data.publishedPostId)
+            && request.resource.data.publishedAt == request.time
+            && request.resource.data.updatedAt == request.time
+          )
+          // thành viên (không phải chủ) tự rời
+          || (
+            resource.data.ownerId != request.auth.uid
+            && request.auth.uid in resource.data.collaboratorIds
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['collaboratorIds'])
+            && !(request.auth.uid in request.resource.data.collaboratorIds)
+            && request.resource.data.collaboratorIds.size()
+                 == resource.data.collaboratorIds.size() - 1
+            && request.resource.data.collaboratorIds
+                 .hasOnly(resource.data.collaboratorIds)
+          )
+        );
+
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+
+      match /blocks/{blockId} {
+
+        // [SỬA] Thêm trường createdBy (tùy chọn khi tạo, nếu có phải là chính
+        // mình) để biết ai là người tạo khối.
+        function blockShapeOk(b) {
+          return b.keys().hasOnly(
+                ['type', 'text', 'sourceIds', 'aiGenerated', 'lastEditedBy', 'order',
+                 'createdBy'])
+            && b.type in ['narration', 'media', 'quote']
+            && b.text is string
+            && b.text.size() <= 2000
+            && b.sourceIds is list
+            && b.sourceIds.size() <= 20
+            && b.aiGenerated is bool
+            && b.order is int
+            && (!('createdBy' in b) || b.createdBy == request.auth.uid);
+        }
+
+        allow read: if isMemberNow();
+
+        allow create: if isMemberAfter()
+          && blockShapeOk(request.resource.data)
+          && (
+            (
+              !exists(storyPath())
+              && isOwnerAfter()
+              && request.resource.data.aiGenerated == true
+            )
+            || (
+              request.resource.data.aiGenerated == false
+              && request.resource.data.lastEditedBy == request.auth.uid
+              && request.resource.data.type == 'narration'
+              && request.resource.data.sourceIds.size() == 0
+            )
+          );
+
+        allow update: if isMemberNow()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['text', 'aiGenerated', 'lastEditedBy'])
+          && request.resource.data.aiGenerated == false
+          && request.resource.data.lastEditedBy == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000;
+
+        // [SỬA] Quyền xóa khối: chủ truyện xóa được mọi khối; cộng tác viên chỉ
+        // xóa khối do chính mình tạo (createdBy). Mệnh đề cuối là chế độ chuyển
+        // tiếp cho khối cũ chưa có createdBy (người sửa gần nhất, không phải
+        // khối AI); xóa mệnh đề này sau khi app đã ghi createdBy cho khối mới.
+        allow delete: if isOwnerNow()
+          || (
+            isMemberNow()
+            && (
+              resource.data.get('createdBy', '') == request.auth.uid
+              || (
+                !('createdBy' in resource.data)
+                && resource.data.get('lastEditedBy', '') == request.auth.uid
+                && resource.data.aiGenerated == false
+              )
+            )
+          );
+      }
+
+      match /sources/{sourceId} {
+        allow read: if isMemberNow();
+
+        allow create: if !exists(storyPath())
+          && isOwnerAfter()
+          && request.resource.data.keys().hasOnly(['type', 'text', 'image', 'date'])
+          && request.resource.data.type in ['photo', 'note', 'voice']
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 2000
+          && (
+            request.resource.data.image == null
+            || (request.resource.data.image is string
+                && request.resource.data.image.size() <= 400000)
+          )
+          && request.resource.data.date is timestamp;
+
+        allow update: if false;
+        allow delete: if isOwnerNow();
+      }
+    }
+  }
+}

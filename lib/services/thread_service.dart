@@ -354,6 +354,7 @@ class ThreadService {
       final users = await FirebaseFirestore.instance
           .collection('users')
           .where(FieldPath.documentId, whereIn: chunk)
+          .limit(10)
           .get();
       for (final u in users.docs) {
         final p = UserProfile.fromMap(u.id, u.data());

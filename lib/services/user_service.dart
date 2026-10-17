@@ -130,9 +130,9 @@ class UserService {
     if (tags.isEmpty) return [];
 
     final byInterest =
-    await _users.where('interests', arrayContainsAny: tags).limit(40).get();
+    await _users.where('interests', arrayContainsAny: tags).limit(30).get();
     final byGoal =
-    await _users.where('goalTags', arrayContainsAny: tags).limit(40).get();
+    await _users.where('goalTags', arrayContainsAny: tags).limit(30).get();
 
     final seen = <String>{};
     final scored = <MapEntry<UserProfile, int>>[];

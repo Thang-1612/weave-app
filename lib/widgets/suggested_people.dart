@@ -25,7 +25,7 @@ class _SuggestedPeopleState extends State<SuggestedPeople> {
 
   Future<List<UserProfile>> _load() async {
     final snap =
-    await FirebaseFirestore.instance.collection('users').limit(40).get();
+    await FirebaseFirestore.instance.collection('users').limit(30).get();
     return snap.docs
         .map((d) => UserProfile.fromMap(d.id, d.data()))
         .where((p) => p.name.isNotEmpty)

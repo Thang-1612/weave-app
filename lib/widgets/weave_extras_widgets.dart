@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../models/weave_activity.dart';
 import '../models/weave_poll.dart';
+import '../services/maps_launcher.dart';
 import '../services/l10n.dart';
 import '../services/weave_service.dart';
 import '../theme/app_theme.dart';
 import 'weave_activity_widgets.dart';
+import 'place_picker_screen.dart';
 
 // ======================================================================
 // POLL
@@ -163,6 +166,19 @@ class WeavePollCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (o.lat != null && o.lng != null)
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          tooltip: tr('Mở Google Maps', 'Open in Google Maps'),
+                          icon: const Icon(Icons.map_outlined, size: 20),
+                          onPressed: () => openInGoogleMaps(
+                              context,
+                              WeavePlace(
+                                  name: o.label,
+                                  address: o.address,
+                                  lat: o.lat,
+                                  lng: o.lng)),
+                        ),
                       if (voters.isNotEmpty)
                         WeaveAvatarStack(uids: voters, max: 3),
                       const SizedBox(width: 8),
@@ -288,6 +304,8 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
     TextEditingController(),
     TextEditingController(),
   ];
+  // Vị trí đã ghim cho từng ô địa điểm (khóa theo ô nhập, không theo chỉ số).
+  final Map<TextEditingController, WeavePlace> _pins = {};
   final List<DateTime> _dates = [];
   bool _multi = false;
   int? _closeHours; // null = không hạn
@@ -296,6 +314,17 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
   String get _defaultQuestion => _kind == PollKind.place
       ? tr('Mình đi đâu?', 'Where should we go?')
       : tr('Mình đi ngày nào?', 'Which day works?');
+
+  Future<void> _pin(int i) async {
+    final c = _places[i];
+    final p = await pickWeavePlace(context,
+        initial: _pins[c], initialName: c.text.trim());
+    if (p == null || !mounted) return;
+    setState(() {
+      _pins[c] = p;
+      if (c.text.trim().isEmpty) c.text = p.name;
+    });
+  }
 
   Future<void> _addDate() async {
     final now = DateTime.now();
@@ -316,15 +345,21 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
 
     final List<WeavePollOption> options;
     if (_kind == PollKind.place) {
-      final names = _places
-          .map((c) => c.text.trim())
-          .where((t) => t.isNotEmpty)
-          .toSet()
-          .toList();
-      options = [
-        for (var i = 0; i < names.length; i++)
-          WeavePollOption(id: 'o$i', label: names[i]),
-      ];
+      final seen = <String>{};
+      final opts = <WeavePollOption>[];
+      for (final c in _places) {
+        final t = c.text.trim();
+        if (t.isEmpty || !seen.add(t)) continue;
+        final pin = _pins[c];
+        opts.add(WeavePollOption(
+          id: 'o${opts.length}',
+          label: t,
+          address: pin?.address,
+          lat: pin?.lat,
+          lng: pin?.lng,
+        ));
+      }
+      options = opts;
     } else {
       final ds = List<DateTime>.of(_dates)..sort();
       options = [
@@ -415,14 +450,32 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
                     decoration: InputDecoration(
                       labelText: '${tr('Địa điểm', 'Place')} ${i + 1}',
                       border: const OutlineInputBorder(),
-                      suffixIcon: _places.length > 2
-                          ? IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => setState(() {
-                          _places.removeAt(i).dispose();
-                        }),
-                      )
-                          : null,
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: tr('Ghim trên bản đồ', 'Pin on map'),
+                            icon: Icon(
+                              _pins.containsKey(_places[i])
+                                  ? Icons.location_on
+                                  : Icons.add_location_alt_outlined,
+                              color: _pins.containsKey(_places[i])
+                                  ? AppColors.brand
+                                  : null,
+                            ),
+                            onPressed: () => _pin(i),
+                          ),
+                          if (_places.length > 2)
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => setState(() {
+                                final c = _places.removeAt(i);
+                                _pins.remove(c);
+                                c.dispose();
+                              }),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
