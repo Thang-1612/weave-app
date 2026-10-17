@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/post.dart';
@@ -123,7 +124,7 @@ class _WeaveLayersViewState extends State<WeaveLayersView> {
         else if (current.blocks.isEmpty)
           Text(
             tr('Lớp này chưa có nội dung', 'This layer has no content yet'),
-            style: const TextStyle(color: Colors.grey),
+            style: const TextStyle(color: AppColors.textSecondary),
           )
         else
           PostBlocks.layer(

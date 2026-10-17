@@ -20,11 +20,16 @@ class FeedScreen extends StatefulWidget {
   final SpaceGroup? group; // xem cả một chủ đề lớn
   final bool favorites; // true = bài của người yêu thích
 
+  /// Chiều rộng tối đa của cột bài viết. Mặc định 600 như cũ; HomeScreen
+  /// truyền double.infinity vì khung responsive đã tự giới hạn độ rộng.
+  final double maxWidth;
+
   const FeedScreen({
     super.key,
     this.space,
     this.group,
     this.favorites = false,
+    this.maxWidth = 600,
   });
 
   @override
@@ -115,7 +120,9 @@ class _FeedScreenState extends State<FeedScreen> {
     await showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(WeaveRadius.card),
+        ),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -125,8 +132,11 @@ class _FeedScreenState extends State<FeedScreen> {
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Text(
                 tr('Công thức bảng tin', 'Feed recipe'),
-                style:
-                const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
             ListTile(
@@ -196,30 +206,65 @@ class _FeedScreenState extends State<FeedScreen> {
     return s;
   }
 
+  // Chip kiểu Weave: nền trắng + viền mảnh; đang chọn thì nền Soft Indigo,
+  // viền và chữ Brand Indigo.
+  TextStyle _chipLabel(bool selected) => TextStyle(
+    fontSize: 13,
+    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+    color: selected ? AppColors.brand : AppColors.textPrimary,
+  );
+
   Widget _toolbar() {
     final rec = _recipes.active;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 2),
+      padding: const EdgeInsets.fromLTRB(
+        WeaveSpacing.lg,
+        WeaveSpacing.xs,
+        WeaveSpacing.lg,
+        WeaveSpacing.xs,
+      ),
       child: Wrap(
-        spacing: 6,
+        spacing: WeaveSpacing.sm,
+        runSpacing: WeaveSpacing.xs,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           for (final m in const [0, 5, 15])
             ChoiceChip(
               visualDensity: VisualDensity.compact,
-              avatar: m == 0 ? null : const Icon(Icons.timer_outlined, size: 16),
+              showCheckmark: false,
+              avatar: m == 0
+                  ? null
+                  : Icon(
+                Icons.timer_outlined,
+                size: 16,
+                color: _budgetMin == m
+                    ? AppColors.brand
+                    : AppColors.textSecondary,
+              ),
               label: Text(
                 m == 0 ? tr('Thoải mái', 'Relaxed') : tr('$m phút', '$m min'),
               ),
+              labelStyle: _chipLabel(_budgetMin == m),
               selected: _budgetMin == m,
+              selectedColor: AppColors.soft,
+              backgroundColor: AppColors.surface,
+              side: BorderSide(
+                color: _budgetMin == m ? AppColors.brand : AppColors.border,
+              ),
+              shape: const StadiumBorder(),
               onSelected: (_) => setState(() => _budgetMin = m),
             ),
           if (_plainFeed)
             ActionChip(
               visualDensity: VisualDensity.compact,
-              avatar: const Icon(Icons.tune, size: 16),
-              backgroundColor: rec != null ? AppColors.soft : null,
+              avatar: const Icon(Icons.tune, size: 16, color: AppColors.brand),
+              backgroundColor: rec != null ? AppColors.soft : AppColors.surface,
+              side: BorderSide(
+                color: rec != null ? AppColors.brand : AppColors.border,
+              ),
+              shape: const StadiumBorder(),
               label: Text(rec?.name ?? tr('Công thức', 'Recipe')),
+              labelStyle: _chipLabel(rec != null),
               onPressed: _openRecipeSheet,
             ),
         ],
@@ -336,12 +381,18 @@ class _FeedScreenState extends State<FeedScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 2),
           Text(
             sub,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
         ],
       ),
@@ -353,11 +404,16 @@ class _FeedScreenState extends State<FeedScreen> {
         .map((s) => '${s.emoji} ${tr(s.name, s.nameEn ?? s.name)}')
         .join(', ');
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+      margin: const EdgeInsets.fromLTRB(
+        WeaveSpacing.lg,
+        WeaveSpacing.xs,
+        WeaveSpacing.lg,
+        WeaveSpacing.sm,
+      ),
       padding: const EdgeInsets.fromLTRB(14, 6, 4, 6),
       decoration: BoxDecoration(
         color: AppColors.soft,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
       ),
       child: Row(
         children: [
@@ -366,7 +422,10 @@ class _FeedScreenState extends State<FeedScreen> {
           Expanded(
             child: Text(
               '${tr('Ưu tiên cho bạn', 'Prioritized for you')}: $names',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           IconButton(
@@ -541,7 +600,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                   message,
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
-                                      color: Colors.grey, height: 1.4),
+                                      color: AppColors.textSecondary, height: 1.4),
                                 ),
                                 if (showSeed)
                                   TextButton(
@@ -587,7 +646,7 @@ class _FeedScreenState extends State<FeedScreen> {
                   onRefresh: _refresh,
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 600),
+                      constraints: BoxConstraints(maxWidth: widget.maxWidth),
                       child: ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.symmetric(vertical: 8),

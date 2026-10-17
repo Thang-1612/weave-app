@@ -132,7 +132,7 @@ class WeavePollCard extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     widthFactor: pct,
                     child:
-                    Container(color: AppColors.brand.withOpacity(0.12)),
+                    Container(color: AppColors.brand.withValues(alpha: 0.12)),
                   ),
                 ),
                 Padding(
@@ -149,7 +149,7 @@ class WeavePollCard extends StatelessWidget {
                         size: 20,
                         color: selected || winner
                             ? AppColors.brand
-                            : Colors.grey,
+                            : AppColors.textSecondary,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -162,7 +162,7 @@ class WeavePollCard extends StatelessWidget {
                             if ((o.address ?? '').isNotEmpty)
                               Text(o.address!,
                                   style: const TextStyle(
-                                      fontSize: 12, color: Colors.grey)),
+                                      fontSize: 12, color: AppColors.textSecondary)),
                           ],
                         ),
                       ),
@@ -246,7 +246,7 @@ class WeavePollCard extends StatelessWidget {
                     if (poll.closesAt != null && !poll.closed)
                       '${tr('hạn', 'ends')} ${weaveDate(poll.closesAt!)}',
                   ].join(' · '),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 10),
                 for (final o in poll.options)

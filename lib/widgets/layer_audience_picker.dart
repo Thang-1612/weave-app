@@ -162,7 +162,7 @@ class _GroupPickerSheetState extends State<_GroupPickerSheet> {
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         tr('Bạn chưa có nhóm nào.', 'You have no groups yet.'),
-                        style: const TextStyle(color: Colors.grey),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     );
                   }

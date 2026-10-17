@@ -1,3 +1,4 @@
+import '../../theme/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -233,7 +234,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
               'Lưu ý: bài viết mặc định là công khai. Khi đăng bài, chọn "Chỉ bạn bè" để giới hạn người xem.',
               'Note: posts are public by default. Choose "Friends only" when posting to limit who can see it.',
                     ),
-                    style: const TextStyle(color: Colors.grey, height: 1.4),
+                    style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                   ),
                 ),
               ]);

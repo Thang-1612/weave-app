@@ -102,7 +102,7 @@ class _VersionsScreenState extends State<VersionsScreen> {
                     'No saved versions yet.\nAn old version is saved whenever you accept an edit proposal.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey, height: 1.4),
+                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                 ),
               ),
             );
@@ -121,7 +121,7 @@ class _VersionsScreenState extends State<VersionsScreen> {
                         tr('Chỉ giữ ${VersionService.keep} phiên bản gần nhất.',
                             'Only the latest ${VersionService.keep} versions are kept.'),
                         style:
-                        const TextStyle(color: Colors.grey, fontSize: 12),
+                        const TextStyle(color: AppColors.textSecondary, fontSize: 12),
                       ),
                     );
                   }
@@ -152,7 +152,7 @@ class _VersionsScreenState extends State<VersionsScreen> {
                           const SizedBox(height: 2),
                           Text(v.reason,
                               style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey)),
+                                  fontSize: 12, color: AppColors.textSecondary)),
                         ],
                         const SizedBox(height: 8),
                         Text(_preview(v), style: const TextStyle(height: 1.35)),
@@ -161,7 +161,7 @@ class _VersionsScreenState extends State<VersionsScreen> {
                           Text(
                             '${tr('Ảnh', 'Images')}: $images · ${tr('Liên kết', 'Links')}: $links',
                             style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
+                                fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ],
                         Align(

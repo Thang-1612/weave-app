@@ -131,7 +131,7 @@ class _SpacePickerSheetState extends State<_SpacePickerSheet> {
           child: Center(
             child: Text(
               tr('Không tìm thấy chủ đề phù hợp', 'No matching topics'),
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
           ),
         ),
@@ -199,7 +199,7 @@ class _SpacePickerSheetState extends State<_SpacePickerSheet> {
                 child: Text(
                   widget.subtitle!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
               ),
             const SizedBox(height: 8),

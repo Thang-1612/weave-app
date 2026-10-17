@@ -156,7 +156,7 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
                       tr('Bạn chưa tham gia nhóm nào. Hãy tạo nhóm trước.',
                           'You are not in any group yet. Create a group first.'),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.grey),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 16),
                     FilledButton.icon(
@@ -237,7 +237,7 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
                       Text(
                         tr('Nhóm này chưa có thành viên nào khác.',
                             'No other members in this group.'),
-                        style: const TextStyle(color: Colors.grey),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     for (final uid in _group!.memberIds
                         .where((u) => u != WeaveService.me))

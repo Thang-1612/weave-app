@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../screens/chat_room_screen.dart';
 import '../services/chat_service.dart';
@@ -38,7 +39,7 @@ class FriendsStrip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Colors.grey,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),

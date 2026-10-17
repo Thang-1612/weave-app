@@ -7,6 +7,8 @@ import '../services/l10n.dart';
 import '../services/user_prefs.dart';
 import '../theme/app_theme.dart';
 import '../widgets/account_switcher.dart';
+import '../widgets/weave_responsive_shell.dart';
+import '../widgets/home_side_widgets.dart';
 import 'create_post_screen.dart';
 import 'feed_screen.dart';
 import 'friends_screen.dart';
@@ -57,10 +59,10 @@ class _HomeScreenState extends State<HomeScreen> {
     UserPrefs.instance.addListener(_onPrefs);
     // Đo thời gian dùng ứng dụng (thống kê, giới hạn, nhắc nghỉ)
     UsageService.instance.start(() => mounted ? context : null);
-    // Mở bài viết khi vào từ liên kết dạng /post/<mã> (bản web)
     // Giữ danh sách người xem của bài chỉ-bạn-bè khớp với danh sách bạn bè
     FriendPostSync.start();
     TrashService.purgeExpired(); // dọn bài trong thùng rác quá 30 ngày
+    // Mở bài viết khi vào từ liên kết dạng /post/<mã> (bản web)
     WidgetsBinding.instance.addPostFrameCallback((_) => _openDeepLink());
   }
 
@@ -80,7 +82,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (s != null && UserPrefs.instance.isRestricted(s.id)) _space = null;
     });
   }
-  /// Mở bài viết khi vào từ liên kết dạng /post/<mã> (bản web).
+
+  /// Mở bài viết khi vào từ liên kết dạng `/post/<mã>` (bản web).
   Future<void> _openDeepLink() async {
     final id = DeepLink.takePostId();
     if (id == null || !mounted) return;
@@ -139,41 +142,56 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _selectAll() {
+  // Menu chủ đề dùng chung cho Drawer (mobile, tablet) và sidebar (desktop).
+  // Trong Drawer thì đóng menu sau khi chọn; trong sidebar thì không.
+  void _closeMenu(bool inDrawer) {
+    if (inDrawer) Navigator.of(context).pop();
+  }
+
+  void _selectAll(bool inDrawer) {
     setState(() {
       _space = null;
       _favorites = false;
       _page = 0;
     });
-    Navigator.of(context).pop(); // đóng menu
+    _closeMenu(inDrawer);
   }
 
-  void _selectFavorites() {
+  void _selectFavorites(bool inDrawer) {
     setState(() {
       _space = null;
       _favorites = true;
       _page = 0;
     });
-    Navigator.of(context).pop();
+    _closeMenu(inDrawer);
   }
 
-  void _selectSpace(Space s) {
+  void _selectSpace(Space s, bool inDrawer) {
     InterestService.track(s.id, 3); // ghi nhận sở thích
     setState(() {
       _space = s;
       _favorites = false;
       _page = 0;
     });
-    Navigator.of(context).pop();
+    _closeMenu(inDrawer);
   }
 
-  void _pushFromDrawer(Widget page) {
-    Navigator.of(context).pop();
+  void _openFromMenu(Widget page, bool inDrawer) {
+    _closeMenu(inDrawer);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
+
+  String _homeTitle() {
+    if (_favorites) return '⭐ ${tr('Yêu thích', 'Favorites')}';
+    final s = _space;
+    if (s == null) return tr('Tất cả bài đăng', 'All posts');
+    return '${s.emoji} ${tr(s.name, s.nameEn ?? s.name)}';
   }
 
   String _pageTitle() {
     switch (_page) {
+      case 0:
+        return _homeTitle();
       case 1:
         return tr('Bạn bè', 'Friends');
       case 2:
@@ -183,19 +201,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  // AppBar phẳng theo theme. Mobile có thêm nút "+" tạo bài vì thanh dưới
+  // không còn nút giữa; tablet có nút nổi, desktop có nút ở sidebar.
+  PreferredSizeWidget _buildAppBar(BuildContext context, WeaveLayoutInfo info) {
+    final createAction = IconButton(
+      tooltip: tr('Tạo bài', 'Create post'),
+      icon: const Icon(Icons.add_circle_outline_rounded),
+      onPressed: _openCreate,
+    );
+
     if (_page == 0) {
-      final String title;
-      if (_favorites) {
-        title = '⭐ ${tr('Yêu thích', 'Favorites')}';
-      } else if (_space == null) {
-        title = tr('Tất cả bài đăng', 'All posts');
-      } else {
-        title = '${_space!.emoji} ${tr(_space!.name, _space!.nameEn ?? _space!.name)}';
-      }
       return AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
-        title: Text(title),
+        title: Text(
+          _homeTitle(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
           IconButton(
@@ -212,12 +233,16 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (_) => const StoryListScreen()),
             ),
           ),
+          if (info.isMobile) createAction,
         ],
       );
     }
     return AppBar(
-      flexibleSpace: const GradientAppBarBackground(),
-      title: Text(_pageTitle()),
+      title: Text(
+        _pageTitle(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       automaticallyImplyLeading: false,
       actions: [
         if (_page == 3) ...[
@@ -232,10 +257,12 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _openAccountSwitcher,
           ),
         ],
+        if (info.isMobile) createAction,
       ],
     );
   }
 
+  // Header menu là điểm nhấn gradient duy nhất của màn hình này.
   Widget _buildDrawerHeader() {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.userChanges(),
@@ -248,10 +275,10 @@ class _HomeScreenState extends State<HomeScreen> {
         return Container(
           width: double.infinity,
           padding: EdgeInsets.fromLTRB(
-            20,
-            MediaQuery.of(context).padding.top + 24,
-            20,
-            20,
+            WeaveSpacing.xl,
+            MediaQuery.of(context).padding.top + WeaveSpacing.xl,
+            WeaveSpacing.xl,
+            WeaveSpacing.lg,
           ),
           decoration: const BoxDecoration(gradient: AppColors.gradient),
           child: Column(
@@ -269,7 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: WeaveSpacing.md),
               Text(
                 name ?? email,
                 maxLines: 1,
@@ -296,9 +323,120 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDrawer() {
+  /// Các mục của menu chủ đề. Dùng trong Drawer (inDrawer = true)
+  /// và trong sidebar desktop (inDrawer = false): một nguồn, không nhân đôi.
+  List<Widget> _menuItems({required bool inDrawer}) {
     final prefs = UserPrefs.instance;
 
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          WeaveSpacing.lg,
+          WeaveSpacing.lg,
+          WeaveSpacing.lg,
+          WeaveSpacing.xs,
+        ),
+        child: Text(
+          tr('CHỦ ĐỀ', 'TOPICS'),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ),
+      ListTile(
+        leading: const Icon(Icons.dashboard_outlined),
+        title: Text(tr('Tất cả', 'All')),
+        selected: _page == 0 && _space == null && !_favorites,
+        onTap: () => _selectAll(inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.star_border),
+        title: Text(tr('Yêu thích', 'Favorites')),
+        selected: _page == 0 && _favorites,
+        onTap: () => _selectFavorites(inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.delete_outline),
+        title: Text(tr('Thùng rác', 'Trash')),
+        onTap: () => _openFromMenu(const TrashScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.chat_bubble_outline),
+        title: Text(tr('Tin nhắn', 'Messages')),
+        onTap: () => _openFromMenu(const ChatListScreen(), inDrawer),
+      ),
+      const Divider(),
+      SpaceMenu(
+        selectedSpaceId: _page == 0 ? _space?.id : null,
+        favoriteIds: prefs.favoriteSpaces.toSet(),
+        isHidden: prefs.isRestricted,
+        onSpaceSelected: (s) => _selectSpace(s, inDrawer),
+      ),
+      const Divider(),
+      ListTile(
+        leading: const Icon(Icons.bookmark_border),
+        title: Text(tr('Đã lưu', 'Saved')),
+        onTap: () => _openFromMenu(const SavedScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.settings_outlined),
+        title: Text(tr('Cài đặt và hoạt động', 'Settings and activity')),
+        onTap: () => _openFromMenu(const SettingsHubScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.mail_outline),
+        title: Text(tr('Lời cảm ơn', 'Thank-yous')),
+        onTap: () => _openFromMenu(const ThanksInboxScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.hourglass_bottom),
+        title: Text(tr('Hộp thời gian', 'Time capsules')),
+        onTap: () => _openFromMenu(const CapsulesScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.call_merge),
+        title: Text(tr('Đề xuất sửa bài', 'Edit proposals')),
+        onTap: () => _openFromMenu(const ProposalsScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.tune),
+        title: Text(tr('Công thức bảng tin', 'Feed recipes')),
+        onTap: () => _openFromMenu(const RecipesScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.inbox_outlined),
+        title: Text(tr('Hộp thư của tôi', 'My box')),
+        onTap: () => _openFromMenu(const MyBoxScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.groups),
+        title: const Text('Weave Together'),
+        onTap: () => _openFromMenu(const WeaveListScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.emoji_events_outlined),
+        title: Text(tr('Dấu vết đóng góp', 'Contribution trail')),
+        onTap: () {
+          _closeMenu(inDrawer);
+          final u = FirebaseAuth.instance.currentUser;
+          if (u == null) return;
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ContributionScreen(
+                userId: u.uid,
+                name: u.displayName ?? '',
+              ),
+            ),
+          );
+        },
+      ),
+    ];
+  }
+
+  Widget _buildDrawer() {
     return Drawer(
       child: Column(
         children: [
@@ -306,126 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                  child: Text(
-                    tr('CHỦ ĐỀ', 'TOPICS'),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.dashboard_outlined),
-                  title: Text(tr('Tất cả', 'All')),
-                  selected: _space == null && !_favorites,
-                  onTap: _selectAll,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.star_border),
-                  title: Text(tr('Yêu thích', 'Favorites')),
-                  selected: _favorites,
-                  onTap: _selectFavorites,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.delete_outline),
-                  title: Text(tr('Thùng rác', 'Trash')),
-                  onTap: () => _pushFromDrawer(const TrashScreen()),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.chat_bubble_outline),
-                  title: Text(tr('Tin nhắn', 'Messages')),
-                  onTap: () => _pushFromDrawer(const ChatListScreen()),
-                ),
-                const Divider(),
-                SpaceMenu(
-                  selectedSpaceId: _space?.id,
-                  favoriteIds: prefs.favoriteSpaces.toSet(),
-                  isHidden: prefs.isRestricted,
-                  onSpaceSelected: _selectSpace,
-                ),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.bookmark_border),
-                  title: Text(tr('Đã lưu', 'Saved')),
-                  onTap: () => _pushFromDrawer(const SavedScreen()),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: Text(tr('Cài đặt và hoạt động', 'Settings and activity')),
-                  onTap: () => _pushFromDrawer(const SettingsHubScreen()),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.mail_outline),
-                  title: Text(tr('Lời cảm ơn', 'Thank-yous')),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const ThanksInboxScreen()));
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.hourglass_bottom),
-                  title: Text(tr('Hộp thời gian', 'Time capsules')),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const CapsulesScreen()));
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.call_merge),
-                  title: Text(tr('Đề xuất sửa bài', 'Edit proposals')),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const ProposalsScreen()));
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.tune),
-                  title: Text(tr('Công thức bảng tin', 'Feed recipes')),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const RecipesScreen()));
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.inbox_outlined),
-                  title: Text(tr('Hộp thư của tôi', 'My box')),
-                  onTap: () => _pushFromDrawer(const MyBoxScreen()),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.groups),
-                  title: const Text('Weave Together'),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const WeaveListScreen()),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.emoji_events_outlined),
-                  title: Text(tr('Dấu vết đóng góp', 'Contribution trail')),
-                  onTap: () {
-                    Navigator.pop(context);
-                    final u = FirebaseAuth.instance.currentUser;
-                    if (u == null) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ContributionScreen(
-                          userId: u.uid,
-                          name: u.displayName ?? '',
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+              children: _menuItems(inDrawer: true),
             ),
           ),
         ],
@@ -433,107 +452,147 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _navItem({
-    required IconData icon,
-    required IconData activeIcon,
-    required int page,
-    bool unread = false,
-  }) {
-    final selected = _page == page;
-    Widget iconWidget = Icon(
-      selected ? activeIcon : icon,
-      size: 28,
-      color: selected ? AppColors.brand : Colors.grey.shade600,
-    );
-    if (unread) {
-      iconWidget = UnreadBadge(
-        key: ValueKey(FirebaseAuth.instance.currentUser?.uid),
-        child: iconWidget,
-      );
-    }
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _page = page),
-        child: SizedBox(height: 56, child: Center(child: iconWidget)),
-      ),
+  // Cùng menu đó nhưng đặt trong sidebar desktop.
+  Widget _buildSidebarMenu() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(height: WeaveSpacing.xl),
+        ..._menuItems(inDrawer: false),
+      ],
     );
   }
 
-  Widget _createButton() {
-    return Expanded(
-      child: SizedBox(
-        height: 56,
-        child: Center(
-          child: GestureDetector(
-            onTap: _openCreate,
-            child: Container(
-              width: 54,
-              height: 36,
-              decoration: BoxDecoration(
-                gradient: AppColors.gradient,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.add, color: Colors.white, size: 26),
-            ),
-          ),
+  // Trang chủ: trên tablet/desktop có thêm lời chào + ô tạo bài phía trên
+  // bảng tin; mobile chỉ có bảng tin (nút "+" đã nằm trên AppBar).
+  Widget _homeTab(String? uid) {
+    // Builder để có context nằm dưới shell (đọc được WeaveLayout).
+    return Builder(
+      builder: (context) {
+        final showHeader = !WeaveLayout.of(context).isMobile;
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return Column(
+              children: [
+                if (showHeader)
+                  HomeFeedHeader(
+                    name: nameOf(FirebaseAuth.instance.currentUser),
+                    onCreate: _openCreate,
+                    // Cửa sổ thấp thì bỏ lời chào để nhường chỗ cho bảng tin.
+                    showGreeting: constraints.maxHeight >= 720,
+                  ),
+                // Key cố định: đổi cỡ cửa sổ không làm mất vị trí cuộn của feed.
+                Expanded(
+                  key: const ValueKey('home-feed'),
+                  child: FeedScreen(
+                    key: ValueKey(uid),
+                    space: _space,
+                    favorites: _favorites,
+                    // Shell đã giới hạn độ rộng cột; không cắt thêm 600 px
+                    maxWidth: double.infinity,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Cột phải (desktop rộng, chỉ ở trang chủ): lối tắt tới các màn hình có thật.
+  Widget? _buildSecondaryPanel() {
+    if (_page != 0) return null;
+    return HomeShortcutsPanel(
+      title: tr('Lối tắt', 'Shortcuts'),
+      shortcuts: [
+        HomeShortcut(
+          icon: Icons.hourglass_bottom,
+          title: tr('Hộp thời gian', 'Time capsules'),
+          onTap: () => _openFromMenu(const CapsulesScreen(), false),
+        ),
+        HomeShortcut(
+          icon: Icons.mail_outline,
+          title: tr('Lời cảm ơn', 'Thank-yous'),
+          onTap: () => _openFromMenu(const ThanksInboxScreen(), false),
+        ),
+        HomeShortcut(
+          icon: Icons.groups,
+          title: 'Weave Together',
+          onTap: () => _openFromMenu(const WeaveListScreen(), false),
+        ),
+        HomeShortcut(
+          icon: Icons.auto_awesome,
+          title: 'Weave Storymaker',
+          onTap: () => _openFromMenu(const StoryListScreen(), false),
+        ),
+      ],
+    );
+  }
+
+  List<WeaveDestination> _destinations(String? uid) {
+    return [
+      WeaveDestination(
+        label: tr('Trang chủ', 'Home'),
+        icon: Icons.home_outlined,
+        selectedIcon: Icons.home_rounded,
+      ),
+      WeaveDestination(
+        label: tr('Bạn bè', 'Friends'),
+        icon: Icons.people_outline,
+        selectedIcon: Icons.people,
+      ),
+      WeaveDestination(
+        label: tr('Thông báo', 'Notifications'),
+        icon: Icons.mail_outline,
+        selectedIcon: Icons.mail,
+        // key theo uid để huy hiệu chưa đọc tự làm mới khi đổi tài khoản
+        iconWrapper: (icon, selected) => UnreadBadge(
+          key: ValueKey('$uid-$selected'),
+          child: icon,
         ),
       ),
-    );
+      WeaveDestination(
+        label: tr('Cá nhân', 'Profile'),
+        icon: Icons.person_outline,
+        selectedIcon: Icons.person,
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
-    return Scaffold(
-      appBar: _buildAppBar(),
+    return WeaveResponsiveShell(
+      title: _pageTitle(),
+      destinations: _destinations(uid),
+      selectedIndex: _page,
+      onDestinationSelected: (i) => setState(() => _page = i),
+      appBarBuilder: _buildAppBar,
+      // Mobile, tablet: menu trượt (chỉ ở trang chủ). Desktop: menu nằm trong sidebar.
       drawer: _page == 0 ? _buildDrawer() : null,
-      body: IndexedStack(
-        index: _page,
-        children: [
-          FeedScreen(
-            key: ValueKey(uid),
-            space: _space,
-            favorites: _favorites,
-          ),
-          // key theo uid để các trang tự làm mới khi đổi tài khoản
-          FriendsScreen(key: ValueKey(uid)),
-          NotificationsScreen(key: ValueKey(uid)),
-          ProfileScreen(key: ValueKey(uid)),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: AppColors.border)),
-          ),
-          child: Row(
-            children: [
-              _navItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home_rounded,
-                page: 0,
-              ),
-              _navItem(
-                icon: Icons.people_outline,
-                activeIcon: Icons.people,
-                page: 1,
-              ),
-              _createButton(),
-              _navItem(
-                icon: Icons.mail_outline,
-                activeIcon: Icons.mail,
-                page: 2,
-                unread: true,
-              ),
-              _navItem(
-                icon: Icons.person_outline,
-                activeIcon: Icons.person,
-                page: 3,
-              ),
-            ],
-          ),
+      sidebarExtra: _buildSidebarMenu(),
+      onCreate: _openCreate,
+      createLabel: tr('Tạo bài', 'Create post'),
+      sidebarCreateLabel: tr('Tạo bài', 'Create post'),
+      // Các màn hình bên trong tự lo phần đệm lề; cột bảng tin hẹp cho dễ đọc.
+      contentPadding: EdgeInsets.zero,
+      maxContentWidth: _page == 0 ? 880 : 960,
+      secondaryPanel: _buildSecondaryPanel(),
+      // SizedBox.expand + StackFit.expand: ép trang lấp đầy khung, vì shell
+      // bọc body trong Align nên mặc định body chỉ nhận ràng buộc lỏng.
+      body: SizedBox.expand(
+        child: IndexedStack(
+          index: _page,
+          sizing: StackFit.expand,
+          children: [
+            _homeTab(uid),
+            // key theo uid để các trang tự làm mới khi đổi tài khoản
+            FriendsScreen(key: ValueKey(uid)),
+            NotificationsScreen(key: ValueKey(uid)),
+            ProfileScreen(key: ValueKey(uid)),
+          ],
         ),
       ),
     );

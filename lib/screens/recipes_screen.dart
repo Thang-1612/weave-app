@@ -117,7 +117,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     'Write your own rules for the "All" feed: topics, post length, living posts only, images only... Tap a recipe to use it, tap again to turn it off.',
                   ),
                   style: const TextStyle(
-                      color: Colors.grey, height: 1.4),
+                      color: AppColors.textSecondary, height: 1.4),
                 ),
               ),
               for (final r in s.items)
@@ -173,7 +173,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   child: Text(
                     tr('Chưa có công thức nào.', 'No recipes yet.'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
             ],

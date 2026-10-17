@@ -166,7 +166,7 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                         'Là nội dung bài đăng. Đổi đối tượng ở menu ⋯ của bài.',
                         'This is the post itself. Change its audience from the post ⋯ menu.',
                       ),
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -184,7 +184,7 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
             )
                 : tr('Kéo ⠿ để sắp xếp thứ tự các lớp',
                 'Drag ⠿ to reorder layers'),
-            style: const TextStyle(fontSize: 12.5, color: Colors.grey),
+            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
           ),
         ),
       ],
@@ -205,7 +205,7 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                   index: i,
                   child: const Padding(
                     padding: EdgeInsets.only(top: 2, right: 8),
-                    child: Icon(Icons.drag_indicator, color: Colors.grey),
+                    child: Icon(Icons.drag_indicator, color: AppColors.textSecondary),
                   ),
                 ),
                 Expanded(
@@ -228,7 +228,7 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Colors.grey,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -280,7 +280,7 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                 const SizedBox(width: 8),
                 Text(
                   tr('Bình luận', 'Comments'),
-                  style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
                 Switch(
                   value: l.commentsEnabled,

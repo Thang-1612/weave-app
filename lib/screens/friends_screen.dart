@@ -77,7 +77,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         style: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: Colors.grey,
+          color: AppColors.textSecondary,
         ),
       ),
     );
@@ -111,7 +111,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
             child: Column(
               children: [
-                const Icon(Icons.people_outline, size: 56, color: Colors.grey),
+                const Icon(Icons.people_outline, size: 56, color: AppColors.textSecondary),
                 const SizedBox(height: 8),
                 Text(
                   tr(
@@ -119,7 +119,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     'You have no friends yet.\nSearch by name above, or pick from the suggestions below.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey, height: 1.4),
+                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                 ),
               ],
             ),
@@ -171,7 +171,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             'Không tìm thấy "${_search.text.trim()}"',
             'No results for "${_search.text.trim()}"',
           ),
-          style: const TextStyle(color: Colors.grey),
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
       );
     }
@@ -336,7 +336,7 @@ class _PersonRowState extends State<_PersonRow> {
                       bio,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                 ],
               ),

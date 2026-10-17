@@ -69,7 +69,7 @@ class LayerTabBar extends StatelessWidget {
             avatar: Icon(
               it.icon,
               size: 16,
-              color: selected ? AppColors.brand : Colors.grey.shade700,
+              color: selected ? AppColors.brand : AppColors.textSecondary,
             ),
             label: Text(it.label),
             selected: selected,

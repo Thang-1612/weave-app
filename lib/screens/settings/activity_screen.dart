@@ -394,7 +394,7 @@ class _ActivityTabState<T> extends State<_ActivityTab<T>>
           const SizedBox(height: 8),
           SelectableText(
             text,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -425,12 +425,12 @@ class _ActivityTabState<T> extends State<_ActivityTab<T>>
             return ListView(
               children: [
                 const SizedBox(height: 100),
-                Icon(widget.emptyIcon, size: 64, color: Colors.grey),
+                Icon(widget.emptyIcon, size: 64, color: AppColors.textSecondary),
                 const SizedBox(height: 12),
                 Text(
                   widget.emptyText,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
               ],
             );
@@ -449,7 +449,7 @@ class _ActivityTabState<T> extends State<_ActivityTab<T>>
                       child: Text(
                         '${items.length} ${tr('mục', 'items')}',
                         style: const TextStyle(
-                          color: Colors.grey,
+                          color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

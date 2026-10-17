@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,7 @@ class ProposalStatus extends StatelessWidget {
         if (data == null) return const SizedBox.shrink();
         final accepted = data['status'] == 'accepted';
         final by = data['byName'] as String? ?? '';
-        final color = accepted ? Colors.green.shade700 : Colors.grey.shade700;
+        final color = accepted ? Colors.green.shade700 : AppColors.textSecondary;
         return Container(
           margin: const EdgeInsets.only(top: 6),
           padding: const EdgeInsets.fromLTRB(10, 4, 2, 4),

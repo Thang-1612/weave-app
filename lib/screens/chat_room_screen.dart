@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -303,7 +304,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 if (isRequest)
                   Container(
                     width: double.infinity,
-                    color: Colors.amber.withOpacity(.2),
+                    color: Colors.amber.withValues(alpha: .2),
                     padding: const EdgeInsets.all(10),
                     child: Column(children: [
                       const Text('Người này chưa có trong danh sách của bạn. Trả lời hoặc chấp nhận để trò chuyện.'),
@@ -318,7 +319,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 if (chat.disappearAfterSec > 0)
                   Container(
                     width: double.infinity,
-                    color: Colors.grey.withOpacity(.15),
+                    color: Colors.grey.withValues(alpha: .15),
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text('⏱ Tin nhắn tự hủy sau ${disappearLabel(chat.disappearAfterSec)}',
                         textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
@@ -373,7 +374,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           const SizedBox(height: 14),
           ChatTitle(chat, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
-          const Text('Hãy gửi lời chào đầu tiên', style: TextStyle(color: Colors.grey)),
+          const Text('Hãy gửi lời chào đầu tiên', style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           ActionChip(
             avatar: const Text('👋'),
@@ -425,11 +426,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(.06),
+                    color: Colors.black.withValues(alpha: .06),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(dayLabel(m.createdAt),
-                      style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                 ),
               ),
             )
@@ -440,7 +441,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 if (dayChip != null) dayChip,
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 20),
-                  child: Text(m.text, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  child: Text(m.text, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ),
               ]);
             }
@@ -472,7 +473,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   Padding(
                     padding: const EdgeInsets.only(right: 16, top: 1),
                     child: Text(_seenText(chat, m) ?? '',
-                        textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                        textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
                   ),
               ],
             );
@@ -527,7 +528,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           Container(
             margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
             decoration: BoxDecoration(
-              color: cs.primary.withOpacity(.08),
+              color: cs.primary.withValues(alpha: .08),
               borderRadius: BorderRadius.circular(10),
               border: Border(left: BorderSide(color: cs.primary, width: 3)),
             ),

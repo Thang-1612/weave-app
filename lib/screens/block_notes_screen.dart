@@ -137,7 +137,7 @@ class BlockNotesScreen extends StatelessWidget {
                                         '${n.authorName} · ${extrasAgo(n.createdAt)}',
                                         style: const TextStyle(
                                           fontSize: 11.5,
-                                          color: Colors.grey,
+                                          color: AppColors.textSecondary,
                                         ),
                                       ),
                                       const SizedBox(height: 2),

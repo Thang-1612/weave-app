@@ -83,7 +83,7 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
               ),
             ),
             Text(tr('Chọn bạn bè để thêm vào nhóm', 'Choose friends to add'),
-                style: const TextStyle(color: Colors.grey)),
+                style: const TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: 4),
             Flexible(
               child: FutureBuilder<List<ChatUser>>(
@@ -106,7 +106,7 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
                       child: Text(
                           tr('Bạn chưa có bạn bè nào. Hãy kết bạn trước.',
                               'You have no friends yet. Add friends first.'),
-                          style: const TextStyle(color: Colors.grey)),
+                          style: const TextStyle(color: AppColors.textSecondary)),
                     );
                   }
                   return ListView(

@@ -34,7 +34,7 @@ class _PollCardState extends State<PollCard> {
   bool _peek = false; // tác giả xem kết quả khi chưa bình chọn
   Timer? _closeTimer;
 
-  static const _grey = TextStyle(fontSize: 12, color: Colors.grey);
+  static const _grey = TextStyle(fontSize: 12, color: AppColors.textSecondary);
 
   @override
   void initState() {
@@ -181,7 +181,7 @@ class _PollCardState extends State<PollCard> {
                   : (picked
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked),
-              color: picked ? AppColors.brand : Colors.grey,
+              color: picked ? AppColors.brand : AppColors.textSecondary,
               size: 22,
             ),
             const SizedBox(width: 10),
@@ -408,7 +408,7 @@ class _PollCardState extends State<PollCard> {
                 const SizedBox(height: 2),
                 Text(
                   detail.length > 140 ? '${detail.substring(0, 140)}...' : detail,
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
                 ),
               ],
             );

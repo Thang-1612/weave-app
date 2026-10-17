@@ -147,7 +147,7 @@ class _TrashScreenState extends State<TrashScreen> {
           if (spaceLabel.isNotEmpty)
             Text(
               spaceLabel,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           const SizedBox(height: 6),
           Text(
@@ -159,14 +159,14 @@ class _TrashScreenState extends State<TrashScreen> {
             style: TextStyle(
               fontSize: 15,
               height: 1.35,
-              color: preview.isEmpty ? Colors.grey : null,
+              color: preview.isEmpty ? AppColors.textSecondary : null,
             ),
           ),
           if (extras.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               extras.join(' · '),
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
           const SizedBox(height: 8),
@@ -175,7 +175,7 @@ class _TrashScreenState extends State<TrashScreen> {
               'Đã xóa ${_ago(item.deletedAt)} · còn ${item.daysLeft} ngày',
               'Deleted ${_ago(item.deletedAt)} · ${item.daysLeft} day(s) left',
             ),
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -221,7 +221,7 @@ class _TrashScreenState extends State<TrashScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.delete_outline, size: 56, color: Colors.grey),
+              const Icon(Icons.delete_outline, size: 56, color: AppColors.textSecondary),
               const SizedBox(height: 12),
               Text(
                 tr(
@@ -229,7 +229,7 @@ class _TrashScreenState extends State<TrashScreen> {
                   'Trash is empty.\nDeleted posts are kept here for 30 days.',
                 ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey, height: 1.4),
+                style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
               ),
             ],
           ),

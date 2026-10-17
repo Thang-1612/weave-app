@@ -36,7 +36,7 @@ class AboutScreen extends StatelessWidget {
         Center(
           child: Text(
             '${tr('Phiên bản', 'Version')} $_appVersion',
-            style: const TextStyle(color: Colors.grey),
+            style: const TextStyle(color: AppColors.textSecondary),
           ),
         ),
         Padding(
@@ -77,7 +77,7 @@ class AboutScreen extends StatelessWidget {
           child: Center(
             child: Text(
               '© ${DateTime.now().year} $_appName',
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
           ),
         ),

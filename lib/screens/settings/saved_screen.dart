@@ -1,3 +1,4 @@
+import '../../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../../models/post.dart';
 import '../../services/l10n.dart';
@@ -34,7 +35,7 @@ class _SavedScreenState extends State<SavedScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.bookmark_border, size: 64, color: Colors.grey),
+            const Icon(Icons.bookmark_border, size: 64, color: AppColors.textSecondary),
             const SizedBox(height: 12),
             Text(
               tr(
@@ -42,7 +43,7 @@ class _SavedScreenState extends State<SavedScreen> {
                 'No saved posts yet.\nTap the bookmark icon under a post to save it.',
               ),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey, height: 1.4),
+              style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
             ),
           ],
         ),

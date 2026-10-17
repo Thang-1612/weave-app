@@ -44,7 +44,7 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
       padding: const EdgeInsets.all(32),
       children: [
         const SizedBox(height: 60),
-        const Icon(Icons.history, size: 56, color: Colors.grey),
+        const Icon(Icons.history, size: 56, color: AppColors.textSecondary),
         const SizedBox(height: 16),
         Text(
           tr(
@@ -61,7 +61,7 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
             'What you post today will show up here in the years to come.',
           ),
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.grey),
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
       ],
     );
@@ -83,7 +83,7 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
         Text(
           detail.length > 200 ? '${detail.substring(0, 200)}...' : detail,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 12),
         Center(
@@ -106,7 +106,7 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
             child: Row(
               children: [
-                const Icon(Icons.history, size: 18, color: Colors.grey),
+                const Icon(Icons.history, size: 18, color: AppColors.textSecondary),
                 const SizedBox(width: 6),
                 Text(
                   tr(
@@ -121,7 +121,7 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
                 const SizedBox(width: 8),
                 Text(
                   _fmtDate(g.date),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),

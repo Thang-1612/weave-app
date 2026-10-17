@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../models/chat_models.dart';
 import '../services/chat_service.dart';
@@ -242,13 +243,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
     if (id == null) {
       return Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: const [
-          Icon(Icons.chat_bubble_outline, size: 72, color: Colors.grey),
+          Icon(Icons.chat_bubble_outline, size: 72, color: AppColors.textSecondary),
           SizedBox(height: 16),
           Text('Chào mừng đến với Tin nhắn',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           SizedBox(height: 6),
           Text('Chọn một cuộc trò chuyện bên trái để bắt đầu',
-              style: TextStyle(color: Colors.grey)),
+              style: TextStyle(color: AppColors.textSecondary)),
         ]),
       );
     }
@@ -266,10 +267,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
         child: Padding(
           padding: const EdgeInsets.only(top: 48, left: 16, right: 16),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey),
+            const Icon(Icons.chat_bubble_outline, size: 48, color: AppColors.textSecondary),
             const SizedBox(height: 12),
             Text(empty,
-                textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+                textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSecondary)),
           ]),
         ),
       );
@@ -317,7 +318,7 @@ class _ChatTile extends StatelessWidget {
             (chat.lastSenderId == me && chat.lastType != 'system' ? 'Bạn: ' : '') + chat.lastText;
         return ListTile(
           selected: selected,
-          selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(.1),
+          selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: .1),
           leading: ChatAvatar(chat),
           title: Text(name,
               maxLines: 1,
@@ -332,17 +333,17 @@ class _ChatTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(listTime(chat.lastMessageAt),
-                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
               const SizedBox(height: 4),
               Row(mainAxisSize: MainAxisSize.min, children: [
-                if (pinned) const Icon(Icons.push_pin, size: 14, color: Colors.grey),
-                if (muted) const Icon(Icons.notifications_off, size: 14, color: Colors.grey),
+                if (pinned) const Icon(Icons.push_pin, size: 14, color: AppColors.textSecondary),
+                if (muted) const Icon(Icons.notifications_off, size: 14, color: AppColors.textSecondary),
                 if (unread > 0)
                   Container(
                     margin: const EdgeInsets.only(left: 4),
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                     decoration: BoxDecoration(
-                        color: muted ? Colors.grey : Colors.red,
+                        color: muted ? AppColors.textSecondary : Colors.red,
                         borderRadius: BorderRadius.circular(10)),
                     child: Text(unread > 99 ? '99+' : '$unread',
                         style: const TextStyle(color: Colors.white, fontSize: 11)),

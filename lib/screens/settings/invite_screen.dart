@@ -43,7 +43,7 @@ class _InviteScreenState extends State<InviteScreen> {
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
         ],
       ),
     );
@@ -107,7 +107,7 @@ class _InviteScreenState extends State<InviteScreen> {
                       'Liên kết sẽ mở được khi bản web đã được triển khai lên Firebase Hosting.',
                       'The link will work once the web app is deployed to Firebase Hosting.',
                     ),
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
                   ),
                 ],
               ),

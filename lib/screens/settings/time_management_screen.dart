@@ -95,7 +95,7 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
                 children: [
                   Text(
                     _week[i] >= 60 ? '${_week[i] ~/ 60}' : '',
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 4),
                   Container(
@@ -189,7 +189,7 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
           padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
           child: Text(
             '${tr('Trung bình mỗi ngày', 'Daily average')}: ${formatDuration(avg)}',
-            style: const TextStyle(color: Colors.grey),
+            style: const TextStyle(color: AppColors.textSecondary),
           ),
         ),
         SectionLabel(tr('Giới hạn mỗi ngày', 'Daily limit')),
@@ -225,7 +225,7 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
               'Thời gian chỉ tính khi ứng dụng đang mở trên thiết bị này. Khi đạt giới hạn hoặc đến lúc nghỉ, ứng dụng sẽ hiện một lời nhắc.',
               'Time is counted only while the app is open on this device. When you reach your limit or a break is due, the app shows a reminder.',
             ),
-            style: const TextStyle(color: Colors.grey, height: 1.4),
+            style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
           ),
         ),
       ]),

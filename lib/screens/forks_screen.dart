@@ -171,7 +171,7 @@ class _ForksScreenState extends State<ForksScreen> {
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         tr('Chưa có nhánh nào.', 'No forks yet.'),
-                        style: const TextStyle(color: Colors.grey),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                   for (final n in nodes) _tile(n.post, n.depth),
@@ -182,7 +182,7 @@ class _ForksScreenState extends State<ForksScreen> {
                         tr('Chỉ hiện 40 bài đầu tiên.',
                             'Showing the first 40 posts only.'),
                         style:
-                        const TextStyle(color: Colors.grey, fontSize: 12),
+                        const TextStyle(color: AppColors.textSecondary, fontSize: 12),
                       ),
                     ),
                 ],

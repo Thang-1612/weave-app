@@ -460,7 +460,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
           child: Text(
             tr('Bình luận gốc đã bị xóa', 'The original comment was deleted'),
             style: const TextStyle(
-              color: Colors.grey,
+              color: AppColors.textSecondary,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -564,7 +564,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Colors.grey,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ),
@@ -679,7 +679,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 'Bài viết này đã bị xóa',
                                 'This post has been deleted',
                               ),
-                              style: const TextStyle(color: Colors.grey),
+                              style: const TextStyle(color: AppColors.textSecondary),
                             ),
                           );
                         }
@@ -717,7 +717,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                       'No comments yet.\nBe the first!',
                                     ),
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(color: Colors.grey),
+                                    style: const TextStyle(color: AppColors.textSecondary),
                                   ),
                                 )
                               else
@@ -742,7 +742,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                         'The AI assistant is writing a reply...',
                                       ),
                                       style: const TextStyle(
-                                        color: Colors.grey,
+                                        color: AppColors.textSecondary,
                                         fontSize: 12,
                                       ),
                                     ),
@@ -836,7 +836,7 @@ class _CommentTile extends StatelessWidget {
       ),
       child: Text(
         '${top.isEmpty ? '👍' : top} ${comment.reactions}',
-        style: const TextStyle(fontSize: 12, color: Colors.grey),
+        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
       ),
     );
   }
@@ -955,7 +955,7 @@ class _CommentTile extends StatelessWidget {
                               formatTimeAgo(comment.createdAt),
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                             CommentReactionButton(
@@ -975,7 +975,7 @@ class _CommentTile extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.grey.shade700,
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ),
@@ -1089,7 +1089,7 @@ class _CommentReactionButtonState extends State<CommentReactionButton> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: mine != null ? AppColors.brand : Colors.grey.shade700,
+              color: mine != null ? AppColors.brand : AppColors.textSecondary,
             ),
           ),
         );
@@ -1181,7 +1181,7 @@ class _ReportDialogState extends State<_ReportDialog> {
                     _reason == r
                         ? Icons.radio_button_checked
                         : Icons.radio_button_unchecked,
-                    color: _reason == r ? AppColors.brand : Colors.grey,
+                    color: _reason == r ? AppColors.brand : AppColors.textSecondary,
                   ),
                   title: Text(reportReasonLabel(r)),
                   onTap: () => setState(() => _reason = r),

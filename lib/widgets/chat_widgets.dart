@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -119,7 +120,7 @@ class MessageBubble extends StatelessWidget {
     // Tin của mình: màu chủ đạo, chữ trắng. Tin của người khác: nền trắng + bóng nhẹ.
     final bg = mine ? cs.primary : (dark ? Colors.grey.shade800 : Colors.white);
     final fg = mine ? cs.onPrimary : (dark ? Colors.white : Colors.black87);
-    final sub = mine ? cs.onPrimary.withOpacity(.75) : Colors.grey;
+    final sub = mine ? cs.onPrimary.withValues(alpha: .75) : AppColors.textSecondary;
     final maxW =
     (MediaQuery.of(context).size.width * 0.75).clamp(200.0, 460.0).toDouble();
     final grouped = <String, int>{};
@@ -154,7 +155,7 @@ class MessageBubble extends StatelessWidget {
                         ? null
                         : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(.07),
+                        color: Colors.black.withValues(alpha: .07),
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),
@@ -173,8 +174,8 @@ class MessageBubble extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: msg.reactions[me] == e.key
-                                  ? cs.primary.withOpacity(.2)
-                                  : (dark ? Colors.grey.shade700 : Colors.white),
+                                  ? cs.primary.withValues(alpha: .2)
+                                  : (dark ? AppColors.textSecondary : Colors.white),
                               border: Border.all(
                                 color: msg.reactions[me] == e.key
                                     ? cs.primary

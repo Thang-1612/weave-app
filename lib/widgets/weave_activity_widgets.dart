@@ -159,7 +159,7 @@ class WeaveAvatarStack extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 6),
             child: Text('+$extra',
-                style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           ),
       ],
     );
@@ -249,26 +249,26 @@ class WeaveActivityCard extends StatelessWidget {
                 Text(a.description!,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.grey, height: 1.3)),
+                    style: const TextStyle(color: AppColors.textSecondary, height: 1.3)),
               ],
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.event, size: 16, color: Colors.grey),
+                  const Icon(Icons.event, size: 16, color: AppColors.textSecondary),
                   const SizedBox(width: 6),
                   Flexible(
                       child: Text(when,
                           style: const TextStyle(
-                              fontSize: 13, color: Colors.grey))),
+                              fontSize: 13, color: AppColors.textSecondary))),
                   if (a.lockedPlace != null) ...[
                     const SizedBox(width: 12),
-                    const Icon(Icons.place, size: 16, color: Colors.grey),
+                    const Icon(Icons.place, size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Flexible(
                         child: Text(a.lockedPlace!.name,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                fontSize: 13, color: Colors.grey))),
+                                fontSize: 13, color: AppColors.textSecondary))),
                   ],
                 ],
               ),

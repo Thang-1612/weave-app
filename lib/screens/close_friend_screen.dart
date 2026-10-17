@@ -46,7 +46,7 @@ class CloseFriendsScreen extends StatelessWidget {
                         'You have no friends yet. Add friends first, then choose close friends here.',
                       ),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.grey),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
                 );
@@ -68,7 +68,7 @@ class CloseFriendsScreen extends StatelessWidget {
                           ),
                           style: const TextStyle(
                             fontSize: 12.5,
-                            color: Colors.grey,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),

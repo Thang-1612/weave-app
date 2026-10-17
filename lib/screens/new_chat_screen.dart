@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
@@ -115,7 +116,7 @@ class _NewChatScreenState extends State<NewChatScreen> {
     if (res != null) {
       if (res.isEmpty) {
         return const Center(
-            child: Text('Không tìm thấy ai', style: TextStyle(color: Colors.grey)));
+            child: Text('Không tìm thấy ai', style: TextStyle(color: AppColors.textSecondary)));
       }
       return ListView(children: [for (final u in res) _row(u.uid, multi)]);
     }
@@ -128,7 +129,7 @@ class _NewChatScreenState extends State<NewChatScreen> {
             child: Padding(
               padding: EdgeInsets.all(24),
               child: Text('Chưa có bạn bè.\nHãy gõ tên ở ô trên để tìm người.',
-                  textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+                  textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
             ),
           );
         }
@@ -136,7 +137,7 @@ class _NewChatScreenState extends State<NewChatScreen> {
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: Text('Bạn bè',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.grey)),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
           ),
           for (final id in ids) _row(id, multi),
         ]);

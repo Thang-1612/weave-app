@@ -253,7 +253,7 @@ class StoryBlockCard extends StatelessWidget {
               Icon(
                 block.aiGenerated ? Icons.auto_awesome : Icons.edit_outlined,
                 size: 14,
-                color: Colors.grey.shade600,
+                color: AppColors.textSecondary,
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -264,7 +264,7 @@ class StoryBlockCard extends StatelessWidget {
                       : block.lastEditedBy == currentUid
                       ? tr('Bạn đã chỉnh sửa', 'Edited by you')
                       : tr('Đã được chỉnh sửa', 'Edited by a collaborator'),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ),
               if (canEdit) ...[
@@ -401,7 +401,7 @@ Future<String?> showStoryFriendPicker(
                         child: Text(
                           tr('Không còn người bạn nào để mời.',
                               'No more friends to invite.'),
-                          style: const TextStyle(color: Colors.grey),
+                          style: const TextStyle(color: AppColors.textSecondary),
                         ),
                       );
                     }

@@ -161,7 +161,7 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
                     Text(
                       extrasAgo(n.createdAt),
                       style:
-                      const TextStyle(fontSize: 11.5, color: Colors.grey),
+                      const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                     ),
                     if (n.pinned)
                       Text(
@@ -257,7 +257,7 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
                           'A private place for ideas, links and drafts.\nOnly you can see it; when ready, tap ⋮ to post it.',
                         ),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey, height: 1.4),
+                        style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                       ),
                     ),
                   );
@@ -359,7 +359,7 @@ class _PostDialogState extends State<_PostDialog> {
                 child: Text(
                   tr('Chủ đề được gợi ý tự động, bạn có thể đổi.',
                       'Topic suggested automatically, you can change it.'),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ),
             DropdownButtonFormField<SpaceGroup>(

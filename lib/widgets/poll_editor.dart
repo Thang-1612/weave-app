@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../services/l10n.dart';
 import '../services/post_service.dart';
@@ -130,7 +131,7 @@ class PollEditor extends StatelessWidget {
                     'Tối đa ${PostService.maxPollOptions} lựa chọn. Người xem phải bình chọn mới thấy kết quả.',
                     'Up to ${PostService.maxPollOptions} options. Viewers must vote to see the results.',
                   ),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 for (var i = 0; i < n; i++)
@@ -197,7 +198,7 @@ class PollEditor extends StatelessWidget {
                     'Sau khi khóa, không ai bỏ phiếu, đổi hay rút phiếu được nữa và mọi người đều xem được kết quả.',
                     'Once closed, nobody can vote, change or remove a vote, and everyone can see the results.',
                   ),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(

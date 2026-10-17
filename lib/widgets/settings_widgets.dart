@@ -58,7 +58,7 @@ class SectionLabel extends StatelessWidget {
         style: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: Colors.grey,
+          color: AppColors.textSecondary,
         ),
       ),
     );
@@ -147,7 +147,7 @@ class SettingsTile extends StatelessWidget {
       subtitle: subtitle == null ? null : Text(subtitle!),
       trailing: trailing ??
           (onTap != null
-              ? const Icon(Icons.chevron_right, color: Colors.grey)
+              ? const Icon(Icons.chevron_right, color: AppColors.textSecondary)
               : null),
       onTap: onTap,
     );

@@ -40,7 +40,7 @@ class StoryListScreen extends StatelessWidget {
                   tr('Chưa có câu chuyện nào. Chọn ảnh và ghi chú để AI kể lại trải nghiệm của bạn.',
                       'No stories yet. Pick photos and notes and let the AI retell your experience.'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
               ),
             );

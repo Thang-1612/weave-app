@@ -87,11 +87,11 @@ class _ComingSoon extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: Colors.grey),
+            Icon(icon, size: 48, color: AppColors.textSecondary),
             const SizedBox(height: 12),
             Text(text,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey, height: 1.4)),
+                style: const TextStyle(color: AppColors.textSecondary, height: 1.4)),
           ],
         ),
       ),
@@ -167,7 +167,7 @@ class _OverviewTabState extends State<_OverviewTab> {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.grey),
+        Icon(icon, size: 20, color: AppColors.textSecondary),
         const SizedBox(width: 10),
         Expanded(
           child: Text.rich(TextSpan(children: [
@@ -223,7 +223,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                     padding: const EdgeInsets.only(left: 30, bottom: 8),
                     child: Text(a.lockedPlace!.address!,
                         style:
-                        const TextStyle(color: Colors.grey, fontSize: 12)),
+                        const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                   ),
                 if (a.lockedPlace?.lat != null && a.lockedPlace?.lng != null)
                   Padding(
@@ -380,7 +380,7 @@ class _PollsTab extends StatelessWidget {
                       tr('Chưa có bình chọn nào.\nTạo một bình chọn để cùng chọn địa điểm hoặc ngày.',
                           'No polls yet.\nCreate one to pick a place or a date together.'),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.grey, height: 1.4),
+                      style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                     ),
                   ),
                 for (final p in polls)

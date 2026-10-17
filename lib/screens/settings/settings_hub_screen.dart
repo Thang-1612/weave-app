@@ -264,7 +264,7 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
               child: Center(
                 child: Text(
                   tr('Không tìm thấy mục nào', 'No settings found'),
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
               ),
             ),

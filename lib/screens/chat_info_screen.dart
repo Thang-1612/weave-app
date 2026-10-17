@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../models/chat_models.dart';
 import '../services/chat_service.dart';
@@ -137,7 +138,7 @@ class ChatInfoScreen extends StatelessWidget {
                     builder: (c, s) => Text((s.data?.name ?? '…') + (u == me ? ' (bạn)' : '')),
                   ),
                   trailing: chat.admins.contains(u)
-                      ? const Text('Quản trị', style: TextStyle(fontSize: 12, color: Colors.grey))
+                      ? const Text('Quản trị', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))
                       : null,
                 ),
               const Divider(),

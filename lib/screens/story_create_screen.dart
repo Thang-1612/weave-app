@@ -218,7 +218,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
                 tr('Chọn ảnh hoặc viết vài ghi chú. AI chỉ kể lại những gì có trong đó.',
                     'Pick photos or write a few notes. The AI only retells what is in them.'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey),
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
             ),
           for (var i = 0; i < _sources.length; i++)

@@ -81,7 +81,7 @@ class WeaveListScreen extends StatelessWidget {
                     'No activities yet.\nCreate one to plan with friends, pick a place and keep the memories.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey, height: 1.4),
+                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                 ),
               ),
             );

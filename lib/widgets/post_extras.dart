@@ -154,7 +154,7 @@ class PostExtras extends StatelessWidget {
       icon: Icon(icon, size: 16),
       label: Text(label, style: const TextStyle(fontSize: 12.5)),
       style: TextButton.styleFrom(
-        foregroundColor: Colors.grey.shade700,
+        foregroundColor: AppColors.textSecondary,
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 8),
       ),
@@ -166,12 +166,12 @@ class PostExtras extends StatelessWidget {
       padding: const EdgeInsets.only(top: 6),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: Colors.grey.shade700),
+          Icon(icon, size: 15, color: AppColors.textSecondary),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
             ),
           ),
         ],
@@ -326,7 +326,7 @@ class _LiveTimelineState extends State<LiveTimeline> {
             text,
             style: TextStyle(
               height: 1.35,
-              color: dim ? Colors.grey : null,
+              color: dim ? AppColors.textSecondary : null,
             ),
           ),
         ],
@@ -389,7 +389,7 @@ class _LiveTimelineState extends State<LiveTimeline> {
                       Icon(
                         _open ? Icons.expand_less : Icons.expand_more,
                         size: 18,
-                        color: Colors.grey,
+                        color: AppColors.textSecondary,
                       ),
                     ],
                   ),
@@ -407,7 +407,7 @@ class _LiveTimelineState extends State<LiveTimeline> {
                       ? Icons.notifications_active
                       : Icons.notifications_none,
                   size: 20,
-                  color: following ? AppColors.brand : Colors.grey.shade700,
+                  color: following ? AppColors.brand : AppColors.textSecondary,
                 ),
                 onPressed: () async {
                   final messenger = ScaffoldMessenger.of(context);

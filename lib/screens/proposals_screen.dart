@@ -61,7 +61,7 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
                     'No proposals yet.\nWhen someone forks your post and sends a proposal, it shows up here.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey, height: 1.4),
+                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                 ),
               ),
             );
@@ -269,7 +269,7 @@ class _CompareScreenState extends State<_CompareScreen> {
                   const SizedBox(height: 6),
                   if (after.isEmpty)
                     Text(tr('(không có chữ)', '(no text)'),
-                        style: const TextStyle(color: Colors.grey)),
+                        style: const TextStyle(color: AppColors.textSecondary)),
                   for (final l in after)
                     _line(l, added: !beforeSet.contains(l)),
                   if (removed.isNotEmpty) ...[
@@ -286,7 +286,7 @@ class _CompareScreenState extends State<_CompareScreen> {
                       'Khi nhận, bài gốc sẽ lấy toàn bộ nội dung của bản đề xuất (kể cả ảnh và liên kết) và ghi tên người đóng góp.',
                       'Accepting replaces the original with the whole proposed version (images and links included) and credits the contributor.',
                     ),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 12),
                   Row(

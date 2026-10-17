@@ -266,7 +266,7 @@ class _EmojiEntrySheetState extends State<_EmojiEntrySheet> {
               'Open your emoji keyboard and pick one.\nOn Windows: press Windows + period (.).',
             ),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey, height: 1.4),
+            style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -555,7 +555,7 @@ class _ReactionButtonState extends State<ReactionButton> {
       mine: _mine,
       onApply: (emoji) => ReactionService.setReaction(widget.post, emoji),
       builder: (context, mine) {
-        final color = mine != null ? AppColors.brand : Colors.grey.shade700;
+        final color = mine != null ? AppColors.brand : AppColors.textSecondary;
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(

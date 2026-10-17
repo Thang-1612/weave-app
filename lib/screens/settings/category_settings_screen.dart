@@ -74,7 +74,7 @@ class CategorySettingsScreen extends StatelessWidget {
             tr('$visible/$total đang hiện', '$visible/$total visible'),
             style: TextStyle(
               fontSize: 12.5,
-              color: visible == total ? Colors.grey : AppColors.brand,
+              color: visible == total ? AppColors.textSecondary : AppColors.brand,
             ),
           ),
           children: [
@@ -120,7 +120,7 @@ class CategorySettingsScreen extends StatelessWidget {
                   'Chủ đề bị tắt sẽ không hiện trong mục Tất cả, trong menu chủ đề và trong đề xuất. Bài bạn đăng vào chủ đề đó vẫn được lưu bình thường.',
                   'Turned-off topics do not appear in All posts, the topic menu or recommendations. Your posts in those topics are still saved normally.',
                 ),
-                style: const TextStyle(color: Colors.grey, height: 1.4),
+                style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
               ),
             ),
             SectionLabel(tr('Chủ đề được hiện', 'Visible topics')),

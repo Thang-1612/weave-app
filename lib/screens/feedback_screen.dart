@@ -124,7 +124,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     : (byPostAuthor
                     ? '🔒 ${tr('Chỉ tác giả thấy', 'Author only')}'
                     : '🔒 ${tr('Riêng tư', 'Private')}'),
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
               if (canDelete)
                 IconButton(
@@ -152,7 +152,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           Row(
             children: [
               Text(_ago(f.createdAt),
-                  style: const TextStyle(fontSize: 11.5, color: Colors.grey)),
+                  style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
               if (me != null) ...[
                 const SizedBox(width: 12),
                 InkWell(
@@ -227,7 +227,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   return Center(
                     child: Text(
                       tr('Chưa có góp ý nào', 'No feedback yet'),
-                      style: const TextStyle(color: Colors.grey),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   );
                 }
@@ -309,7 +309,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               : tr('Chỉ tác giả bài và bạn thấy',
                               'Only the author and you can see this'),
                           style:
-                          const TextStyle(fontSize: 12, color: Colors.grey),
+                          const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                         ),
                       ),
                     ],

@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../services/l10n.dart';
 
@@ -16,7 +17,7 @@ class LayerLockedHint extends StatelessWidget {
       padding: const EdgeInsets.only(top: 10),
       child: Row(
         children: [
-          Icon(Icons.lock_outline, size: 14, color: Colors.grey.shade600),
+          Icon(Icons.lock_outline, size: 14, color: AppColors.textSecondary),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -26,7 +27,7 @@ class LayerLockedHint extends StatelessWidget {
                     ? '1 more private layer'
                     : '$count more private layers',
               ),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ),
         ],

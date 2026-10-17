@@ -73,7 +73,9 @@ class PostCard extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(WeaveRadius.card),
+        ),
         title: Text(title),
         content: content == null ? null : Text(content),
         actions: [
@@ -337,7 +339,10 @@ class PostCard extends StatelessWidget {
           ),
         PopupMenuItem<String>(
           value: 'delete',
-          child: Text(tr('Xóa bài viết', 'Delete post')),
+          child: Text(
+            tr('Xóa bài viết', 'Delete post'),
+            style: const TextStyle(color: AppColors.danger),
+          ),
         ),
       ];
     }
@@ -384,7 +389,9 @@ class PostCard extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(WeaveRadius.card),
+        ),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -397,6 +404,7 @@ class PostCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -436,13 +444,19 @@ class PostCard extends StatelessWidget {
           if (post.reactions > 0)
             Text(
               '${top.isEmpty ? '👍' : top} ${post.reactions}',
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             ),
           const Spacer(),
           if (post.comments > 0)
             Text(
               '${post.comments} ${tr('bình luận', 'comments')}',
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             ),
         ],
       ),
@@ -460,8 +474,9 @@ class PostCard extends StatelessWidget {
       margin: const EdgeInsets.only(top: 4, bottom: 4),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
       decoration: BoxDecoration(
+        // Màu vàng nhạt giữ nguyên: là màu ngữ nghĩa "gợi ý", không thuộc bảng màu thương hiệu
         color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(WeaveRadius.control),
         border: Border.all(color: const Color(0xFFFDE68A)),
       ),
       child: Column(
@@ -489,7 +504,7 @@ class PostCard extends StatelessWidget {
                               text: '  ${formatTimeAgo(h.createdAt)}',
                               style: const TextStyle(
                                 fontSize: 11,
-                                color: Colors.grey,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],
@@ -540,25 +555,28 @@ class PostCard extends StatelessWidget {
       topicLabel =
       '${space.emoji} ${tr(space.name, space.nameEn ?? space.name)}';
     }
-    final subtitle =
-        '$pinTag$topicLabel · ${formatTimeAgo(post.createdAt)}$audienceTag';
 
     return Card(
-      color: isFork ? const Color(0xFFF6F7FF) : Colors.white,
+      color: isFork ? AppColors.soft : AppColors.surface,
       elevation: 0,
       margin: isFork
-          ? const EdgeInsets.fromLTRB(32, 2, 12, 6)
-          : const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          ? const EdgeInsets.fromLTRB(40, 2, WeaveSpacing.lg, 6)
+          : const EdgeInsets.symmetric(
+        horizontal: WeaveSpacing.lg,
+        vertical: WeaveSpacing.sm,
+      ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(isFork ? 12 : 16),
+        borderRadius: BorderRadius.circular(
+          isFork ? WeaveRadius.control : WeaveRadius.card,
+        ),
         side: BorderSide(
           color: isFork
-              ? AppColors.brand.withOpacity(0.35)
+              ? AppColors.brand.withValues(alpha: 0.35)
               : AppColors.border,
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.all(isFork ? 10 : 14),
+        padding: EdgeInsets.all(isFork ? WeaveSpacing.md : WeaveSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -567,7 +585,7 @@ class PostCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(WeaveRadius.control),
                     onTap: () => _openProfile(context),
                     child: Row(
                       children: [
@@ -582,7 +600,7 @@ class PostCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: WeaveSpacing.md),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -591,14 +609,32 @@ class PostCard extends StatelessWidget {
                                 post.authorName,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
-                              Text(
-                                subtitle,
+                              // Chủ đề nhấn màu thương hiệu, phần còn lại là metadata
+                              Text.rich(
+                                TextSpan(
+                                  children: [
+                                    if (pinTag.isNotEmpty) TextSpan(text: pinTag),
+                                    TextSpan(
+                                      text: topicLabel,
+                                      style: const TextStyle(
+                                        color: AppColors.brand,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text:
+                                      ' · ${formatTimeAgo(post.createdAt)}$audienceTag',
+                                    ),
+                                  ],
+                                ),
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -609,7 +645,10 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_horiz),
+                  icon: const Icon(
+                    Icons.more_horiz,
+                    color: AppColors.textSecondary,
+                  ),
                   onSelected: (v) => _onMenu(context, v),
                   itemBuilder: (_) => _menuItems(isMine),
                 ),
@@ -632,7 +671,7 @@ class PostCard extends StatelessWidget {
                   '✅ ${tr('Đã có đáp án được chọn', 'An answer has been picked')}',
                   style: const TextStyle(
                     fontSize: 12.5,
-                    color: Color(0xFF15803D),
+                    color: AppColors.teal,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -668,7 +707,8 @@ class PostCard extends StatelessWidget {
                         : tr('Bình luận', 'Comment'),
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.grey.shade700,
+                    foregroundColor: AppColors.textSecondary,
+                    minimumSize: const Size(64, WeaveSizes.buttonHeightCompact),
                   ),
                 ),
                 const Spacer(),
@@ -683,7 +723,7 @@ class PostCard extends StatelessWidget {
                       icon: Icon(
                         saved ? Icons.bookmark : Icons.bookmark_border,
                         size: 22,
-                        color: saved ? AppColors.brand : Colors.grey.shade700,
+                        color: saved ? AppColors.brand : AppColors.textSecondary,
                       ),
                       onPressed: () => UserPrefs.instance.toggleSaved(post),
                     );
@@ -692,7 +732,11 @@ class PostCard extends StatelessWidget {
                 // Bài không công khai: liên kết chỉ mở được với người có quyền xem
                 IconButton(
                   tooltip: tr('Chia sẻ', 'Share'),
-                  icon: const Icon(Icons.share_outlined, size: 20),
+                  icon: const Icon(
+                    Icons.share_outlined,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
                   onPressed: () => _share(context),
                 ),
               ],
@@ -724,7 +768,9 @@ class _HintDialogState extends State<_HintDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
+      ),
       title: Text(tr('Bổ sung gợi ý', 'Add a hint')),
       content: SizedBox(
         width: 360,
@@ -748,7 +794,6 @@ class _HintDialogState extends State<_HintDialog> {
           child: Text(tr('Hủy', 'Cancel')),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
           onPressed: () => Navigator.of(context).pop(_controller.text),
           child: Text(tr('Thêm', 'Add')),
         ),

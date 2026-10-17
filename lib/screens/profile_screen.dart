@@ -26,10 +26,20 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
         ),
-        const SizedBox(height: 2),
-        Text(label, style: const TextStyle(color: Colors.grey)),
+        const SizedBox(height: WeaveSpacing.xs),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
       ],
     );
   }
@@ -117,7 +127,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   constraints: const BoxConstraints(maxWidth: 600),
                   child: Column(
                     children: [
-                      const SizedBox(height: 24),
+                      const SizedBox(height: WeaveSpacing.xl),
+                      // Avatar gradient là điểm nhấn của trang hồ sơ.
                       Container(
                         width: 96,
                         height: 96,
@@ -135,33 +146,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: WeaveSpacing.md),
                       Text(
                         title,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       if (name.isNotEmpty && email.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.only(top: WeaveSpacing.xs),
                           child: Text(
                             email,
-                            style: const TextStyle(color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       if (bio.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+                          padding: const EdgeInsets.fromLTRB(
+                            WeaveSpacing.xl,
+                            WeaveSpacing.md,
+                            WeaveSpacing.xl,
+                            0,
+                          ),
                           child: Text(
                             bio,
                             textAlign: TextAlign.center,
                             style: const TextStyle(height: 1.4),
                           ),
                         ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: WeaveSpacing.xl),
                       StreamBuilder<List<Friendship>>(
                         stream: _friendsStream,
                         builder: (context, friendsSnap) {
@@ -189,8 +208,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ],
                               ),
                               Padding(
-                                padding:
-                                const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                                padding: const EdgeInsets.fromLTRB(
+                                  WeaveSpacing.lg,
+                                  WeaveSpacing.lg,
+                                  WeaveSpacing.lg,
+                                  0,
+                                ),
                                 child: _isMe
                                     ? SizedBox(
                                   width: double.infinity,
@@ -220,10 +243,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           );
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: WeaveSpacing.lg),
                       const Divider(height: 1),
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: WeaveSpacing.md,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -232,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               size: 20,
                               color: AppColors.brand,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: WeaveSpacing.sm),
                             Text(
                               tr('Bài viết', 'Posts'),
                               style:
@@ -243,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       if (postsSnap.hasError)
                         Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(WeaveSpacing.xl),
                           child: Text(
                             '${tr('Không tải được bài viết.', 'Could not load posts.')}\n${postsSnap.error}',
                             textAlign: TextAlign.center,
@@ -251,15 +276,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         )
                       else if (!postsSnap.hasData)
                         const Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: EdgeInsets.all(WeaveSpacing.xl),
                           child: CircularProgressIndicator(),
                         )
                       else if (posts.isEmpty)
                           Padding(
-                            padding: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(WeaveSpacing.xl),
                             child: Text(
                               tr('Chưa có bài viết nào', 'No posts yet'),
-                              style: const TextStyle(color: Colors.grey),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           )
                         else
@@ -269,7 +296,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               openProfileOnTap: false,
                               showPinnedTag: true,
                             ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: WeaveSpacing.xl),
                     ],
                   ),
                 ),

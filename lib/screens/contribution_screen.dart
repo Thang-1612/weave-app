@@ -128,7 +128,7 @@ class _ContributionScreenState extends State<ContributionScreen> {
             label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12.5, color: Colors.grey),
+            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -204,7 +204,7 @@ class _ContributionScreenState extends State<ContributionScreen> {
                       'Post stats are counted over the account\'s latest $_cap public posts at most. Accepted answers only count on public questions. Thank-yous are private, so only the account owner sees that number.',
                     ),
                     style: const TextStyle(
-                        fontSize: 12, color: Colors.grey, height: 1.4),
+                        fontSize: 12, color: AppColors.textSecondary, height: 1.4),
                   ),
                 ],
               ),

@@ -53,7 +53,7 @@ class WeaveMomentsTab extends StatelessWidget {
                       tr('Chưa có khoảnh khắc nào.\nChia sẻ ảnh hoặc vài dòng để cả nhóm cùng nhớ.',
                           'No moments yet.\nShare a photo or a few words so the group remembers.'),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.grey, height: 1.4),
+                      style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                     ),
                   ),
                 for (final m in moments)
@@ -140,14 +140,14 @@ class _MomentCardState extends State<_MomentCard> {
             leading: _former
                 ? const CircleAvatar(
                 radius: 16,
-                backgroundColor: Colors.grey,
+                backgroundColor: AppColors.textSecondary,
                 child: Icon(Icons.person_outline,
                     size: 18, color: Colors.white))
                 : WeaveUserAvatar(uid: m.authorId),
             title: _former
                 ? Text(tr('Thành viên cũ', 'Former member'),
                 style: const TextStyle(
-                    fontWeight: FontWeight.w600, color: Colors.grey))
+                    fontWeight: FontWeight.w600, color: AppColors.textSecondary))
                 : WeaveUserName(
                 uid: m.authorId,
                 style: const TextStyle(fontWeight: FontWeight.w600)),

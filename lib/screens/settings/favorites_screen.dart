@@ -52,7 +52,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   'Bài của người yêu thích hiện trong mục ⭐ Yêu thích ở menu. Chủ đề yêu thích được ghim lên đầu danh sách chủ đề.',
                   'Posts from favorite people appear under ⭐ Favorites in the menu. Favorite topics are pinned to the top of the topic list.',
                 ),
-                style: const TextStyle(color: Colors.grey, height: 1.4),
+                style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
               ),
             ),
             SectionLabel(tr('Chủ đề yêu thích', 'Favorite topics')),
@@ -76,7 +76,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     'Chưa có ai. Thêm từ danh sách bạn bè bên dưới, hoặc từ menu ba chấm trên bài viết.',
                     'Nobody yet. Add from your friends below, or from the ⋯ menu on a post.',
                   ),
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
               )
             else

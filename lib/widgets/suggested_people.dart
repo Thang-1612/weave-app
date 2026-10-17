@@ -63,7 +63,7 @@ class _SuggestedPeopleState extends State<SuggestedPeople> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Colors.grey,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
@@ -113,7 +113,7 @@ class _SuggestedPeopleState extends State<SuggestedPeople> {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                           ],

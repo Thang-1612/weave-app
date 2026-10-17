@@ -342,13 +342,13 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                   if (_resolving)
                     Text(tr('Đang tra địa chỉ…', 'Looking up address…'),
                         style:
-                        const TextStyle(color: Colors.grey, fontSize: 12))
+                        const TextStyle(color: AppColors.textSecondary, fontSize: 12))
                   else if ((_address ?? '').isNotEmpty)
                     Text(_address!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style:
-                        const TextStyle(color: Colors.grey, fontSize: 12)),
+                        const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                   const SizedBox(height: 8),
                   Row(
                     children: [

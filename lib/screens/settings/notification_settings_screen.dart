@@ -1,3 +1,4 @@
+import '../../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../../services/l10n.dart';
 import '../../services/user_prefs.dart';
@@ -51,7 +52,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                   'Thông báo bị tắt sẽ không hiện trong danh sách và không tính vào số chưa đọc.',
                   'Turned-off notifications are hidden from the list and not counted as unread.',
                 ),
-                style: const TextStyle(color: Colors.grey, height: 1.4),
+                style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
               ),
             ),
           ]);

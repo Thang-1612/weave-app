@@ -153,7 +153,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.mail_outline, size: 64, color: Colors.grey),
+                  const Icon(Icons.mail_outline, size: 64, color: AppColors.textSecondary),
                   const SizedBox(height: 12),
                   Text(
                     tr(
@@ -161,7 +161,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       'No notifications yet.\nWhen someone interacts with you, it will show up here.',
                     ),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ],
               ),

@@ -51,7 +51,7 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
                     'No thank-yous yet.\nWhen someone taps "Thank" under your post, it shows up here.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey, height: 1.4),
+                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                 ),
               ),
             );
@@ -103,7 +103,7 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey,
+                                      color: AppColors.textSecondary,
                                     ),
                                   ),
                                 ],

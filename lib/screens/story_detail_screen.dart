@@ -383,7 +383,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                               '${story.droppedCount} AI-written parts were removed because they had no valid source.',
                             ),
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade600),
+                                fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ),
                       for (final b in blocks)
