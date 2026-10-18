@@ -20,6 +20,9 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
+  /// Độ rộng tối đa của cột danh sách (canh giữa trên màn rộng).
+  static const double _maxContentWidth = 720;
+
   late final Stream<List<Friendship>> _stream = FriendService.watchMine();
   final _search = TextEditingController();
   Timer? _debounce;
@@ -199,11 +202,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
+        constraints: const BoxConstraints(maxWidth: _maxContentWidth),
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              // Viền, bo góc 12 và màu focus lấy từ theme (khớp mọi ô nhập khác)
               child: TextField(
                 controller: _search,
                 onChanged: _onChanged,
@@ -218,21 +222,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       _search.clear();
                       _onChanged('');
                     },
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide:
-                    const BorderSide(color: AppColors.brand, width: 1.5),
                   ),
                 ),
               ),
@@ -329,7 +318,10 @@ class _PersonRowState extends State<_PersonRow> {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   if (bio.isNotEmpty)
                     Text(

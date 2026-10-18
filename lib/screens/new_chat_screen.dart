@@ -96,6 +96,38 @@ class _NewChatScreenState extends State<NewChatScreen> {
     }
   }
 
+  // Ô tìm kiếm: nền Background, bo 12, không viền; viền Brand Indigo khi focus.
+  // (Theme có viền cho mọi ô nhập nên phải đặt rõ enabledBorder / focusedBorder.)
+  Widget _searchField() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      child: TextField(
+        controller: _search,
+        onChanged: _onQuery,
+        decoration: InputDecoration(
+          hintText: 'Tìm người theo tên',
+          prefixIcon: const Icon(Icons.search, size: 20),
+          isDense: true,
+          filled: true,
+          fillColor: AppColors.background,
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(WeaveRadius.control),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(WeaveRadius.control),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(WeaveRadius.control),
+            borderSide: const BorderSide(color: AppColors.brand),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _row(String uid, bool multi) {
     return FutureBuilder<ChatUser>(
       future: svc.user(uid),
@@ -153,12 +185,12 @@ class _NewChatScreenState extends State<NewChatScreen> {
           controller: _name,
           maxLength: 50,
           onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
+          // Viền, bo góc và màu focus lấy từ theme
+          decoration: const InputDecoration(
             labelText: 'Tên nhóm',
-            prefixIcon: const Icon(Icons.groups_outlined),
+            prefixIcon: Icon(Icons.groups_outlined),
             counterText: '',
             isDense: true,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
       ),
@@ -173,6 +205,8 @@ class _NewChatScreenState extends State<NewChatScreen> {
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: InputChip(
+                    backgroundColor: AppColors.surface,
+                    side: const BorderSide(color: AppColors.border),
                     label: Text(svc.cached(u)?.name ?? '…'),
                     onDeleted: () => _toggle(u),
                   ),
@@ -193,7 +227,7 @@ class _NewChatScreenState extends State<NewChatScreen> {
                   ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2))
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : Text(_picked.length < 2
                   ? 'Chọn ít nhất 2 người'
                   : 'Tạo nhóm (${_picked.length})'),
@@ -209,24 +243,7 @@ class _NewChatScreenState extends State<NewChatScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Thêm thành viên')),
       body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-          child: TextField(
-            controller: _search,
-            onChanged: _onQuery,
-            decoration: InputDecoration(
-              hintText: 'Tìm người theo tên',
-              prefixIcon: const Icon(Icons.search, size: 20),
-              isDense: true,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-        ),
+        _searchField(),
         Expanded(child: _people(true)),
         SafeArea(
           top: false,
@@ -256,32 +273,16 @@ class _NewChatScreenState extends State<NewChatScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Cuộc trò chuyện mới'),
+          // AppBar nền sáng: tab dùng màu thương hiệu (trước đây là chữ trắng)
           bottom: const TabBar(
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
+            labelColor: AppColors.brand,
+            unselectedLabelColor: AppColors.textSecondary,
+            indicatorColor: AppColors.brand,
             tabs: [Tab(text: 'Nhắn tin'), Tab(text: 'Tạo nhóm')],
           ),
         ),
         body: Column(children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-            child: TextField(
-              controller: _search,
-              onChanged: _onQuery,
-              decoration: InputDecoration(
-                hintText: 'Tìm người theo tên',
-                prefixIcon: const Icon(Icons.search, size: 20),
-                isDense: true,
-                filled: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
+          _searchField(),
           Expanded(
             child: TabBarView(children: [
               _people(false),

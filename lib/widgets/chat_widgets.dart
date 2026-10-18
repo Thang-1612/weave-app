@@ -46,6 +46,8 @@ Widget avatarFrom(String? av, String name, double r) {
   }
   return CircleAvatar(
     radius: r,
+    backgroundColor: AppColors.soft,
+    foregroundColor: AppColors.brand,
     backgroundImage: img,
     child: img == null
         ? Text(name.isEmpty ? '?' : name.characters.first.toUpperCase())
@@ -71,7 +73,12 @@ class ChatAvatar extends StatelessWidget {
   const ChatAvatar(this.chat, {super.key, this.radius = 24});
   @override
   Widget build(BuildContext context) => chat.isGroup
-      ? CircleAvatar(radius: radius, child: const Icon(Icons.groups))
+      ? CircleAvatar(
+    radius: radius,
+    backgroundColor: AppColors.soft,
+    foregroundColor: AppColors.brand,
+    child: const Icon(Icons.groups),
+  )
       : UserAvatar(chat.otherId(ChatService.I.me), radius: radius);
 }
 
@@ -113,16 +120,18 @@ class MessageBubble extends StatelessWidget {
 
   static final Map<String, Uint8List> _img = {};
 
+  /// Chiều rộng tối đa của bong bóng: 75% chiều rộng, trong khoảng 200–460.
+  static double _maxBubbleWidth(BuildContext context) =>
+      (MediaQuery.of(context).size.width * 0.75).clamp(200.0, 460.0).toDouble();
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final cs = Theme.of(context).colorScheme;
-    // Tin của mình: màu chủ đạo, chữ trắng. Tin của người khác: nền trắng + bóng nhẹ.
-    final bg = mine ? cs.primary : (dark ? Colors.grey.shade800 : Colors.white);
-    final fg = mine ? cs.onPrimary : (dark ? Colors.white : Colors.black87);
-    final sub = mine ? cs.onPrimary.withValues(alpha: .75) : AppColors.textSecondary;
-    final maxW =
-    (MediaQuery.of(context).size.width * 0.75).clamp(200.0, 460.0).toDouble();
+    // Tin của mình: Brand Indigo, chữ trắng. Tin của người khác: nền Surface + viền mảnh.
+    final bg = mine ? AppColors.brand : (dark ? Colors.grey.shade800 : AppColors.surface);
+    final fg = mine ? Colors.white : (dark ? Colors.white : AppColors.textPrimary);
+    final sub = mine ? Colors.white.withValues(alpha: .75) : AppColors.textSecondary;
+    final maxW = _maxBubbleWidth(context);
     final grouped = <String, int>{};
     msg.reactions.forEach((_, e) => grouped[e] = (grouped[e] ?? 0) + 1);
 
@@ -151,15 +160,8 @@ class MessageBubble extends StatelessWidget {
                       bottomLeft: Radius.circular(mine ? 18 : 4),
                       bottomRight: Radius.circular(mine ? 4 : 18),
                     ),
-                    boxShadow: mine
-                        ? null
-                        : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: .07),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
+                    // Viền mảnh thay cho bóng đổ (card/bong bóng phẳng theo design system)
+                    border: mine ? null : Border.all(color: AppColors.border),
                   ),
                   child: _content(context, fg, sub),
                 ),
@@ -174,12 +176,12 @@ class MessageBubble extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: msg.reactions[me] == e.key
-                                  ? cs.primary.withValues(alpha: .2)
-                                  : (dark ? AppColors.textSecondary : Colors.white),
+                                  ? AppColors.soft
+                                  : (dark ? AppColors.textSecondary : AppColors.surface),
                               border: Border.all(
                                 color: msg.reactions[me] == e.key
-                                    ? cs.primary
-                                    : Colors.black12,
+                                    ? AppColors.brand
+                                    : AppColors.border,
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -198,7 +200,6 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _content(BuildContext context, Color fg, Color sub) {
-    final cs = Theme.of(context).colorScheme;
     if (msg.deleted) {
       return Text('Tin nhắn đã thu hồi',
           style: TextStyle(fontStyle: FontStyle.italic, color: sub));
@@ -209,7 +210,8 @@ class MessageBubble extends StatelessWidget {
         future: ChatService.I.user(msg.senderId),
         initialData: ChatService.I.cached(msg.senderId),
         builder: (c, s) => Text(s.data?.name ?? '',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: cs.primary)),
+            style: const TextStyle(
+                fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.brand)),
       ));
     }
     if (msg.replyTo != null) {
@@ -218,7 +220,7 @@ class MessageBubble extends StatelessWidget {
         padding: const EdgeInsets.only(left: 8),
         decoration: BoxDecoration(
             border: Border(
-                left: BorderSide(color: mine ? cs.onPrimary : cs.primary, width: 3))),
+                left: BorderSide(color: mine ? Colors.white : AppColors.brand, width: 3))),
         child: Text((msg.replyTo!['text'] ?? '').toString(),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -227,6 +229,8 @@ class MessageBubble extends StatelessWidget {
     }
     if (msg.type == 'image' && msg.imageB64 != null) {
       final bytes = _img.putIfAbsent(msg.id, () => base64Decode(msg.imageB64!));
+      // Ảnh co theo bong bóng: không vượt chiều rộng tối đa trên màn hình hẹp
+      final imgW = (_maxBubbleWidth(context) - 28).clamp(120.0, 240.0).toDouble();
       kids.add(GestureDetector(
         onTap: () => showDialog(
           context: context,
@@ -234,7 +238,7 @@ class MessageBubble extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Image.memory(bytes, width: 220, fit: BoxFit.cover, gaplessPlayback: true),
+          child: Image.memory(bytes, width: imgW, fit: BoxFit.cover, gaplessPlayback: true),
         ),
       ));
     }
@@ -313,6 +317,9 @@ Future<void> showShareToChatSheet(BuildContext context,
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(WeaveRadius.card)),
+    ),
     builder: (ctx) => SafeArea(
       child: SizedBox(
         height: MediaQuery.of(ctx).size.height * 0.6,

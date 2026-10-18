@@ -3,21 +3,79 @@ import '../models/story_models.dart';
 import '../services/l10n.dart';
 import '../services/story_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/story_status_chip.dart';
 import '../widgets/story_widgets.dart';
 import 'story_create_screen.dart';
 import 'story_detail_screen.dart';
 
+/// Từ chiều rộng này trở lên, thẻ câu chuyện xếp thành 2 cột.
+const double _kStoryListTwoColumnBreakpoint = 760;
+
 class StoryListScreen extends StatelessWidget {
   const StoryListScreen({super.key});
+
+  Widget _card(BuildContext context, Story s, String me) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: WeaveSpacing.md),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => StoryDetailScreen(storyId: s.id),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(WeaveSpacing.lg),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                backgroundColor: AppColors.soft,
+                child: Icon(storyKindIcon(s.kind), color: AppColors.brand),
+              ),
+              const SizedBox(width: WeaveSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${storyKindLabel(s.kind)} · ${fmtDate(s.updatedAt)}'
+                          '${s.ownerId == me ? '' : ' · ${tr('Bạn bè mời', 'Shared with you')}'}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: WeaveSpacing.sm),
+                    StoryStatusChip(s),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final me = StoryService.uid;
     return Scaffold(
       appBar: AppBar(title: const Text('Weave Storymaker')),
+      // Màu nút lấy từ theme: một hành động chính nổi bật mỗi màn hình
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.brand,
-        foregroundColor: Colors.white,
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const StoryCreateScreen()),
         ),
@@ -45,26 +103,36 @@ class StoryListScreen extends StatelessWidget {
               ),
             );
           }
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 88),
-            itemCount: list.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (_, i) {
-              final s = list[i];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppColors.soft,
-                  child: Icon(storyKindIcon(s.kind), color: AppColors.brand),
-                ),
-                title: Text(s.title,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text(
-                  '${storyKindLabel(s.kind)} · ${fmtDate(s.updatedAt)}'
-                      '${s.ownerId == me ? '' : ' · ${tr('Bạn bè mời', 'Shared with you')}'}',
-                ),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => StoryDetailScreen(storyId: s.id),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final wide =
+                  constraints.maxWidth >= _kStoryListTwoColumnBreakpoint + 32;
+              final maxW = wide ? 1040.0 : 600.0;
+              const padH = 16.0;
+              final contentWidth =
+                  (constraints.maxWidth < maxW ? constraints.maxWidth : maxW) -
+                      padH * 2;
+              const gap = WeaveSpacing.md;
+              final cardWidth = wide ? (contentWidth - gap) / 2 : contentWidth;
+
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxW),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(padH, 12, padH, 88),
+                    children: [
+                      Wrap(
+                        spacing: gap,
+                        children: [
+                          for (final s in list)
+                            SizedBox(
+                              width: cardWidth,
+                              child: _card(context, s, me),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               );

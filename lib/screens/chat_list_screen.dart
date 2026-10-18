@@ -14,8 +14,10 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
-  /// Từ chiều rộng này trở lên dùng bố cục 2 cột giống Zalo PC.
+  /// Từ chiều rộng này trở lên dùng bố cục 2 cột: danh sách | phòng chat.
   static const double _wideBreakpoint = 900;
+
+  /// Chiều rộng cột danh sách hội thoại trên desktop (quy chuẩn 300–340).
   static const double _listWidth = 340;
 
   final svc = ChatService.I;
@@ -97,6 +99,25 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return child();
   }
 
+  // Chip kiểu Weave: nền trắng, viền mảnh; đang chọn = Soft Indigo.
+  Widget _withChipTheme(Widget child) {
+    return ChipTheme(
+      data: ChipTheme.of(context).copyWith(
+        backgroundColor: AppColors.surface,
+        selectedColor: AppColors.soft,
+        side: const BorderSide(color: AppColors.border),
+        shape: const StadiumBorder(),
+        showCheckmark: false,
+        labelStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      child: child,
+    );
+  }
+
   // ───────────── Điện thoại ─────────────
   Widget _mobile(AsyncSnapshot<List<Chat>> snap, List<Chat> main, List<Chat> requests) {
     return DefaultTabController(
@@ -107,7 +128,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
               ? TextField(
             autofocus: true,
             decoration: const InputDecoration(
-                hintText: 'Tìm cuộc trò chuyện…', border: InputBorder.none),
+              hintText: 'Tìm cuộc trò chuyện…',
+              // Ô tìm trong AppBar: không nền, không viền (theme mặc định có viền)
+              filled: false,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+            ),
             onChanged: (v) => setState(() => _q = v),
           )
               : const Text('Tin nhắn'),
@@ -125,10 +152,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
               }),
             ),
           ],
+          // AppBar nền sáng nên tab dùng màu thương hiệu (trước đây là chữ trắng)
           bottom: TabBar(
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
+            labelColor: AppColors.brand,
+            unselectedLabelColor: AppColors.textSecondary,
+            indicatorColor: AppColors.brand,
             tabs: [
               const Tab(text: 'Tin nhắn'),
               Tab(text: requests.isEmpty ? 'Tin chờ' : 'Tin chờ (${requests.length})'),
@@ -154,83 +182,109 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  // ───────────── Máy tính: 2 cột kiểu Zalo ─────────────
+  // ───────────── Máy tính: 2 cột (danh sách | phòng chat) ─────────────
   Widget _desktop(AsyncSnapshot<List<Chat>> snap, List<Chat> main, List<Chat> requests) {
     final list = _tab == 0 ? main : requests;
     return Scaffold(
       body: Row(children: [
         SizedBox(
           width: _listWidth,
-          child: Column(children: [
-            SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 8, 8, 4),
-                child: Row(children: [
-                  IconButton(
-                    tooltip: 'Quay lại',
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Tìm kiếm',
-                        prefixIcon: const Icon(Icons.search, size: 20),
-                        isDense: true,
-                        filled: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
+          // Material (không phải ColoredBox) để ListTile vẽ được màu mục chọn
+          child: Material(
+            color: AppColors.surface,
+            child: Column(children: [
+              // Cao bằng AppBar của phòng chat bên phải, có viền dưới để hai
+              // bên thẳng hàng.
+              DecoratedBox(
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AppColors.border)),
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: SizedBox(
+                    height: kToolbarHeight,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+                      child: Row(children: [
+                        IconButton(
+                          tooltip: 'Quay lại',
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => Navigator.of(context).maybePop(),
                         ),
-                      ),
-                      onChanged: (v) => setState(() => _q = v),
+                        Expanded(
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Tìm kiếm',
+                              prefixIcon: const Icon(Icons.search, size: 20),
+                              isDense: true,
+                              filled: true,
+                              fillColor: AppColors.background,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(WeaveRadius.control),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(WeaveRadius.control),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(WeaveRadius.control),
+                                borderSide: const BorderSide(color: AppColors.brand),
+                              ),
+                            ),
+                            onChanged: (v) => setState(() => _q = v),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Tạo cuộc trò chuyện',
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: () => _newChat(),
+                        ),
+                        IconButton(
+                          tooltip: 'Tạo nhóm',
+                          icon: const Icon(Icons.group_add_outlined),
+                          onPressed: () => _newChat(group: true),
+                        ),
+                      ]),
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'Tạo cuộc trò chuyện',
-                    icon: const Icon(Icons.edit_outlined),
-                    onPressed: () => _newChat(),
-                  ),
-                  IconButton(
-                    tooltip: 'Tạo nhóm',
-                    icon: const Icon(Icons.group_add_outlined),
-                    onPressed: () => _newChat(group: true),
-                  ),
-                ]),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-              child: Row(children: [
-                ChoiceChip(
-                  label: const Text('Tất cả'),
-                  selected: _tab == 0,
-                  onSelected: (_) => setState(() => _tab = 0),
-                ),
-                const SizedBox(width: 8),
-                ChoiceChip(
-                  label: Text(requests.isEmpty ? 'Tin chờ' : 'Tin chờ (${requests.length})'),
-                  selected: _tab == 1,
-                  onSelected: (_) => setState(() => _tab = 1),
-                ),
-              ]),
-            ),
-            if (_tab == 0 && _q.isEmpty) FriendsStrip(onOpen: _open),
-            const Divider(height: 1),
-            Expanded(
-              child: _state(
-                snap,
-                    () => _list(
-                  list,
-                  _tab == 0
-                      ? 'Chưa có cuộc trò chuyện.\nChọn một người bạn ở trên để bắt đầu.'
-                      : 'Không có tin nhắn chờ.',
                 ),
               ),
-            ),
-          ]),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                child: _withChipTheme(
+                  Row(children: [
+                    ChoiceChip(
+                      label: const Text('Tất cả'),
+                      selected: _tab == 0,
+                      onSelected: (_) => setState(() => _tab = 0),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text(
+                          requests.isEmpty ? 'Tin chờ' : 'Tin chờ (${requests.length})'),
+                      selected: _tab == 1,
+                      onSelected: (_) => setState(() => _tab = 1),
+                    ),
+                  ]),
+                ),
+              ),
+              if (_tab == 0 && _q.isEmpty) FriendsStrip(onOpen: _open),
+              const Divider(height: 1),
+              Expanded(
+                child: _state(
+                  snap,
+                      () => _list(
+                    list,
+                    _tab == 0
+                        ? 'Chưa có cuộc trò chuyện.\nChọn một người bạn ở trên để bắt đầu.'
+                        : 'Không có tin nhắn chờ.',
+                  ),
+                ),
+              ),
+            ]),
+          ),
         ),
         const VerticalDivider(width: 1),
         Expanded(child: _rightPane()),
@@ -246,7 +300,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
           Icon(Icons.chat_bubble_outline, size: 72, color: AppColors.textSecondary),
           SizedBox(height: 16),
           Text('Chào mừng đến với Tin nhắn',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary)),
           SizedBox(height: 6),
           Text('Chọn một cuộc trò chuyện bên trái để bắt đầu',
               style: TextStyle(color: AppColors.textSecondary)),
@@ -317,8 +374,8 @@ class _ChatTile extends StatelessWidget {
         final preview =
             (chat.lastSenderId == me && chat.lastType != 'system' ? 'Bạn: ' : '') + chat.lastText;
         return ListTile(
+          // Màu mục đang chọn lấy từ listTileTheme (Soft Indigo + chữ Brand Indigo)
           selected: selected,
-          selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: .1),
           leading: ChatAvatar(chat),
           title: Text(name,
               maxLines: 1,
@@ -343,7 +400,7 @@ class _ChatTile extends StatelessWidget {
                     margin: const EdgeInsets.only(left: 4),
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                     decoration: BoxDecoration(
-                        color: muted ? AppColors.textSecondary : Colors.red,
+                        color: muted ? AppColors.textSecondary : AppColors.danger,
                         borderRadius: BorderRadius.circular(10)),
                     child: Text(unread > 99 ? '99+' : '$unread',
                         style: const TextStyle(color: Colors.white, fontSize: 11)),

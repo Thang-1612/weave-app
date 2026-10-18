@@ -8,6 +8,11 @@ String _two(int n) => n.toString().padLeft(2, '0');
 
 String _fmtDate(DateTime d) => '${_two(d.day)}/${_two(d.month)}/${d.year}';
 
+/// Từ chiều rộng này trở lên: bộ lọc theo năm bên trái, danh sách bên phải.
+/// Dưới mức này: hàng chip năm ở đầu trang.
+const double _kOtdWideBreakpoint = 900;
+const double _kOtdFilterWidth = 260;
+
 /// Màn hình "Ngày này năm xưa": các bài của mình đăng vào hôm nay của những
 /// năm trước, nhóm theo năm.
 class OnThisDayScreen extends StatefulWidget {
@@ -19,6 +24,9 @@ class OnThisDayScreen extends StatefulWidget {
 
 class _OnThisDayScreenState extends State<OnThisDayScreen> {
   late Future<List<OnThisDayGroup>> _future = _load();
+
+  /// Năm đang lọc theo "số năm trước"; null = hiện tất cả.
+  int? _yearsAgo;
 
   Future<List<OnThisDayGroup>> _load() async {
     try {
@@ -38,6 +46,11 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
     } catch (_) {}
   }
 
+  String _yearsLabel(int yearsAgo) => tr(
+    '$yearsAgo năm trước',
+    yearsAgo == 1 ? '1 year ago' : '$yearsAgo years ago',
+  );
+
   Widget _empty() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -52,7 +65,11 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
             'No memories on this day yet',
           ),
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -96,77 +113,241 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
     );
   }
 
-  Widget _list(List<OnThisDayGroup> groups) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 24),
-      children: [
-        for (final g in groups) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
-            child: Row(
-              children: [
-                const Icon(Icons.history, size: 18, color: AppColors.textSecondary),
-                const SizedBox(width: 6),
-                Text(
-                  tr(
-                    '${g.yearsAgo} năm trước',
-                    g.yearsAgo == 1 ? '1 year ago' : '${g.yearsAgo} years ago',
-                  ),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+  /// Danh sách các nhóm theo năm (đã lọc). Nhóm nào cũng có tiêu đề nhỏ
+  /// "N năm trước + ngày" làm metadata, các bài vẽ bằng PostCard.
+  List<Widget> _groupWidgets(List<OnThisDayGroup> groups) {
+    final shown = _yearsAgo == null
+        ? groups
+        : groups.where((g) => g.yearsAgo == _yearsAgo).toList();
+    return [
+      for (final g in shown) ...[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+          child: Row(
+            children: [
+              const Icon(Icons.history, size: 18, color: AppColors.textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                _yearsLabel(g.yearsAgo),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  _fmtDate(g.date),
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _fmtDate(g.date),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        for (final p in g.posts)
+          PostCard(
+            key: ValueKey('otd_${p.id}'),
+            post: p,
+            openProfileOnTap: false,
+          ),
+      ],
+      const SizedBox(height: WeaveSpacing.xl),
+    ];
+  }
+
+  // ---------------------------------------------------------------------
+  // Bộ lọc theo năm
+  // ---------------------------------------------------------------------
+
+  /// Rộng: danh sách năm dạng menu (có số bài), chọn một mục để lọc.
+  Widget _yearMenu(List<OnThisDayGroup> groups) {
+    final total = groups.fold<int>(0, (s, g) => s + g.posts.length);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              tr('LỌC THEO NĂM', 'FILTER BY YEAR'),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          ListTile(
+            dense: true,
+            selected: _yearsAgo == null,
+            title: Text(tr('Tất cả', 'All')),
+            trailing: Text('$total'),
+            onTap: () => setState(() => _yearsAgo = null),
+          ),
+          for (final g in groups)
+            ListTile(
+              dense: true,
+              selected: _yearsAgo == g.yearsAgo,
+              title: Text(_yearsLabel(g.yearsAgo)),
+              subtitle: Text(_fmtDate(g.date)),
+              trailing: Text('${g.posts.length}'),
+              onTap: () => setState(() => _yearsAgo = g.yearsAgo),
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  /// Hẹp: hàng chip cuộn ngang ở đầu trang.
+  Widget _yearChips(List<OnThisDayGroup> groups) {
+    return SizedBox(
+      height: 52,
+      child: ChipTheme(
+        data: ChipTheme.of(context).copyWith(
+          backgroundColor: AppColors.surface,
+          selectedColor: AppColors.soft,
+          side: const BorderSide(color: AppColors.border),
+          shape: const StadiumBorder(),
+          showCheckmark: false,
+        ),
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(tr('Tất cả', 'All')),
+                selected: _yearsAgo == null,
+                onSelected: (_) => setState(() => _yearsAgo = null),
+              ),
+            ),
+            for (final g in groups)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(_yearsLabel(g.yearsAgo)),
+                  selected: _yearsAgo == g.yearsAgo,
+                  onSelected: (_) => setState(() => _yearsAgo = g.yearsAgo),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _body(List<OnThisDayGroup> groups) {
+    // Năm đang lọc không còn trong dữ liệu mới (sau khi làm mới): bỏ lọc
+    final yearStillExists =
+        _yearsAgo == null || groups.any((g) => g.yearsAgo == _yearsAgo);
+    if (!yearStillExists) _yearsAgo = null;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= _kOtdWideBreakpoint;
+
+        if (wide) {
+          // Rộng: bộ lọc năm | danh sách cuộn riêng.
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1040),
+              child: Padding(
+                padding: const EdgeInsets.all(WeaveSpacing.xl),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: _kOtdFilterWidth,
+                      child: SingleChildScrollView(child: _yearMenu(groups)),
+                    ),
+                    const SizedBox(width: WeaveSpacing.sm),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _refresh,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: _groupWidgets(groups),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        // Hẹp: chip năm ở đầu trang, danh sách cuộn bên dưới.
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              children: [
+                _yearChips(groups),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: _groupWidgets(groups),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          for (final p in g.posts)
-            PostCard(
-              key: ValueKey('otd_${p.id}'),
-              post: p,
-              openProfileOnTap: false,
-            ),
-        ],
-      ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Ngày này năm xưa', 'On this day')),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: RefreshIndicator(
-            onRefresh: _refresh,
-            child: FutureBuilder<List<OnThisDayGroup>>(
-              future: _future,
-              builder: (context, snap) {
-                if (snap.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snap.hasError) return _error(snap.error!);
-                final groups = snap.data ?? const <OnThisDayGroup>[];
-                if (groups.isEmpty) return _empty();
-                return _list(groups);
-              },
-            ),
-          ),
-        ),
+      body: FutureBuilder<List<OnThisDayGroup>>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          // Trạng thái lỗi / trống: vẫn kéo để làm mới được, giới hạn bề ngang 600
+          if (snap.hasError) {
+            return _centered(RefreshIndicator(
+              onRefresh: _refresh,
+              child: _error(snap.error!),
+            ));
+          }
+          final groups = snap.data ?? const <OnThisDayGroup>[];
+          if (groups.isEmpty) {
+            return _centered(RefreshIndicator(
+              onRefresh: _refresh,
+              child: _empty(),
+            ));
+          }
+          return _body(groups);
+        },
       ),
     );
   }
+
+  Widget _centered(Widget child) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 600),
+      child: child,
+    ),
+  );
 }
 
 /// Mục bấm để mở "Ngày này năm xưa". Đặt vào menu, ngăn kéo hoặc trang cá

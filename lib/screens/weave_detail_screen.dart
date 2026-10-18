@@ -11,12 +11,16 @@ import '../widgets/weave_moments_tab.dart';
 import '../widgets/place_picker_screen.dart';
 import '../services/maps_launcher.dart';
 
+/// Từ chiều rộng này trở lên: Tổng quan cố định bên trái, các tab bên phải.
+const double _kWeaveDetailWideBreakpoint = 1000;
+const double _kWeaveOverviewWidth = 400;
+
 class WeaveDetailScreen extends StatelessWidget {
   final String activityId;
   const WeaveDetailScreen({super.key, required this.activityId});
 
   Widget _plain(Widget body) => Scaffold(
-    appBar: AppBar(flexibleSpace: const GradientAppBarBackground()),
+    appBar: AppBar(),
     body: body,
   );
 
@@ -37,39 +41,113 @@ class WeaveDetailScreen extends StatelessWidget {
               child: Text(tr('Hoạt động không còn tồn tại.',
                   'This activity no longer exists.'))));
         }
-        return DefaultTabController(
-          length: 4,
-          child: Scaffold(
-            appBar: AppBar(
-              flexibleSpace: const GradientAppBarBackground(),
-              title: Text(a.title, overflow: TextOverflow.ellipsis),
-              bottom: TabBar(
-                isScrollable: true,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white70,
-                indicatorColor: Colors.white,
-                tabs: [
-                  Tab(text: tr('Tổng quan', 'Overview')),
-                  Tab(text: tr('Bình chọn', 'Polls')),
-                  Tab(text: tr('Khoảnh khắc', 'Moments')),
-                  Tab(text: tr('Nhiệm vụ', 'Challenges')),
+
+        final wide =
+            MediaQuery.sizeOf(context).width >= _kWeaveDetailWideBreakpoint;
+        return wide ? _wide(a) : _narrow(a);
+      },
+    );
+  }
+
+  // Tab "Nhiệm vụ" chưa có nội dung, dùng chung cho hai bố cục.
+  Widget _challengesTab() => _ComingSoon(
+    icon: Icons.flag_outlined,
+    text: tr('Nhiệm vụ nhỏ sẽ có ở bước sau.',
+        'Small challenges come in a later step.'),
+  );
+
+  // ───────────── Hẹp (điện thoại): 4 tab ─────────────
+  Widget _narrow(WeaveActivity a) {
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(a.title, overflow: TextOverflow.ellipsis),
+          // AppBar nền sáng: tab dùng màu thương hiệu (trước đây là chữ trắng)
+          bottom: TabBar(
+            isScrollable: true,
+            labelColor: AppColors.brand,
+            unselectedLabelColor: AppColors.textSecondary,
+            indicatorColor: AppColors.brand,
+            tabs: [
+              Tab(text: tr('Tổng quan', 'Overview')),
+              Tab(text: tr('Bình chọn', 'Polls')),
+              Tab(text: tr('Khoảnh khắc', 'Moments')),
+              Tab(text: tr('Nhiệm vụ', 'Challenges')),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _OverviewTab(activity: a),
+            _PollsTab(activity: a),
+            WeaveMomentsTab(activity: a),
+            _challengesTab(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ───────────── Rộng (desktop): Tổng quan | Bình chọn, Khoảnh khắc, Nhiệm vụ ─────────────
+  Widget _wide(WeaveActivity a) {
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(title: Text(a.title, overflow: TextOverflow.ellipsis)),
+        body: Row(
+          children: [
+            // Material (không phải ColoredBox) để ListTile thành viên vẽ được hiệu ứng chạm
+            SizedBox(
+              width: _kWeaveOverviewWidth,
+              child: Material(
+                color: AppColors.surface,
+                child: _OverviewTab(activity: a),
+              ),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: Column(
+                children: [
+                  Material(
+                    color: AppColors.surface,
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        border:
+                        Border(bottom: BorderSide(color: AppColors.border)),
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TabBar(
+                          isScrollable: true,
+                          tabAlignment: TabAlignment.start,
+                          labelColor: AppColors.brand,
+                          unselectedLabelColor: AppColors.textSecondary,
+                          indicatorColor: AppColors.brand,
+                          tabs: [
+                            Tab(text: tr('Bình chọn', 'Polls')),
+                            Tab(text: tr('Khoảnh khắc', 'Moments')),
+                            Tab(text: tr('Nhiệm vụ', 'Challenges')),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _PollsTab(activity: a),
+                        WeaveMomentsTab(activity: a),
+                        _challengesTab(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-            body: TabBarView(
-              children: [
-                _OverviewTab(activity: a),
-                _PollsTab(activity: a),
-                WeaveMomentsTab(activity: a),
-                _ComingSoon(
-                    icon: Icons.flag_outlined,
-                    text: tr('Nhiệm vụ nhỏ sẽ có ở bước sau.',
-                        'Small challenges come in a later step.')),
-              ],
-            ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 }
@@ -136,7 +214,8 @@ class _OverviewTabState extends State<_OverviewTab> {
     if (mounted) setState(() => _busy = false);
   }
 
-  Future<bool> _confirm(String title, String body) async {
+  /// [danger] = true: nút xác nhận màu đỏ (hành động nguy hiểm, như rời hoạt động).
+  Future<bool> _confirm(String title, String body, {bool danger = false}) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
@@ -147,6 +226,9 @@ class _OverviewTabState extends State<_OverviewTab> {
               onPressed: () => Navigator.pop(c, false),
               child: Text(tr('Hủy', 'Cancel'))),
           FilledButton(
+              style: danger
+                  ? FilledButton.styleFrom(backgroundColor: AppColors.danger)
+                  : null,
               onPressed: () => Navigator.pop(c, true),
               child: Text(tr('Đồng ý', 'OK'))),
         ],
@@ -157,9 +239,14 @@ class _OverviewTabState extends State<_OverviewTab> {
 
   Widget _heading(String t) => Padding(
     padding: const EdgeInsets.only(top: 20, bottom: 8),
-    child: Text(t,
-        style: const TextStyle(
-            fontWeight: FontWeight.w700, color: AppColors.brand)),
+    child: Text(
+      t,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textSecondary,
+      ),
+    ),
   );
 
   Widget _info(IconData icon, String label, String value) => Padding(
@@ -222,8 +309,8 @@ class _OverviewTabState extends State<_OverviewTab> {
                   Padding(
                     padding: const EdgeInsets.only(left: 30, bottom: 8),
                     child: Text(a.lockedPlace!.address!,
-                        style:
-                        const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12)),
                   ),
                 if (a.lockedPlace?.lat != null && a.lockedPlace?.lng != null)
                   Padding(
@@ -232,6 +319,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                   ),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: [
                     if (a.lockedPlace != null)
                       OutlinedButton.icon(
@@ -249,8 +337,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                               initial: a.lockedPlace);
                           if (p == null || !mounted) return;
                           await _run(() => WeaveService.lockPlace(a.id, p),
-                              doneMsg: tr('Đã chọn địa điểm',
-                                  'Place saved'));
+                              doneMsg: tr('Đã chọn địa điểm', 'Place saved'));
                         },
                         icon: const Icon(Icons.edit_location_alt_outlined),
                         label: Text(a.lockedPlace == null
@@ -281,10 +368,9 @@ class _OverviewTabState extends State<_OverviewTab> {
                         : weaveRsvpLabel(m.rsvp)),
                   ),
                 const SizedBox(height: 20),
+                // Mỗi trạng thái chỉ có một nút chính nổi bật (màu theo theme)
                 if (_isHost && a.status == WeaveStatus.planning)
                   FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.brand),
                     onPressed: _busy
                         ? null
                         : () => _run(() => WeaveService.start(a.id),
@@ -294,8 +380,6 @@ class _OverviewTabState extends State<_OverviewTab> {
                   ),
                 if (_isHost && a.status == WeaveStatus.active)
                   FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.brand),
                     onPressed: _busy
                         ? null
                         : () async {
@@ -306,14 +390,20 @@ class _OverviewTabState extends State<_OverviewTab> {
                       );
                       if (ok) {
                         _run(() => WeaveService.end(a.id),
-                            doneMsg: tr('Đã kết thúc hoạt động', 'Activity ended'));
+                            doneMsg: tr('Đã kết thúc hoạt động',
+                                'Activity ended'));
                       }
                     },
                     icon: const Icon(Icons.flag),
                     label: Text(tr('Kết thúc hoạt động', 'End activity')),
                   ),
+                // Rời hoạt động: nút viền màu đỏ Danger + hộp xác nhận
                 if (!_isHost && !a.isEnded)
                   OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.danger,
+                      side: const BorderSide(color: AppColors.danger),
+                    ),
                     onPressed: _busy
                         ? null
                         : () async {
@@ -321,6 +411,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                         tr('Rời hoạt động?', 'Leave activity?'),
                         tr('Bạn sẽ không còn thấy hoạt động này.',
                             'You will no longer see this activity.'),
+                        danger: true,
                       );
                       if (ok) {
                         _run(() => WeaveService.leave(a.id),
@@ -365,8 +456,6 @@ class _PollsTab extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.brand),
                       onPressed: () =>
                           showWeaveCreatePollSheet(context, activity.id),
                       icon: const Icon(Icons.add),

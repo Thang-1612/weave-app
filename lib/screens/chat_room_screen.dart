@@ -231,8 +231,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             ),
           if (mine)
             ListTile(
-              leading: const Icon(Icons.undo, color: Colors.red),
-              title: const Text('Thu hồi', style: TextStyle(color: Colors.red)),
+              leading: const Icon(Icons.undo, color: AppColors.danger),
+              title: const Text('Thu hồi', style: TextStyle(color: AppColors.danger)),
               onTap: () {
                 Navigator.pop(ctx);
                 svc.recall(widget.chatId, m.id).catchError((x) => _err('$x'));
@@ -262,6 +262,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         final isRequest = !chat.isGroup && !chat.acceptedBy.contains(me) && chat.lastSenderId != me && chat.hasMessages;
 
         return Scaffold(
+          // Bàn phím mở thì thân Scaffold co lại, composer luôn nằm sát phía trên bàn phím
+          resizeToAvoidBottomInset: true,
           appBar: AppBar(
             titleSpacing: 0,
             title: InkWell(
@@ -275,7 +277,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     ChatTitle(chat, style: const TextStyle(fontSize: 16)),
                     if (typing || chat.isGroup)
                       Text(typing ? 'Đang soạn tin…' : '${chat.members.length} thành viên',
-                          style: const TextStyle(fontSize: 11)),
+                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ]),
                 ),
               ]),
@@ -304,6 +306,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 if (isRequest)
                   Container(
                     width: double.infinity,
+                    // Màu vàng nhạt giữ nguyên: màu ngữ nghĩa "cần chú ý"
                     color: Colors.amber.withValues(alpha: .2),
                     padding: const EdgeInsets.all(10),
                     child: Column(children: [
@@ -312,14 +315,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         TextButton(onPressed: () => svc.accept(chat), child: const Text('Chấp nhận')),
                         TextButton(
                             onPressed: () => svc.setBlocked(chat, true),
-                            child: const Text('Chặn', style: TextStyle(color: Colors.red))),
+                            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                            child: const Text('Chặn')),
                       ]),
                     ]),
                   ),
                 if (chat.disappearAfterSec > 0)
                   Container(
                     width: double.infinity,
-                    color: Colors.grey.withValues(alpha: .15),
+                    color: AppColors.soft,
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text('⏱ Tin nhắn tự hủy sau ${disappearLabel(chat.disappearAfterSec)}',
                         textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
@@ -333,6 +337,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         Padding(
                           padding: const EdgeInsets.only(right: 6),
                           child: ActionChip(
+                              backgroundColor: AppColors.surface,
+                              side: const BorderSide(color: AppColors.border),
                               label: Text(s),
                               onPressed: () => setState(() {
                                 _ctrl.text = s;
@@ -377,6 +383,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           const Text('Hãy gửi lời chào đầu tiên', style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           ActionChip(
+            backgroundColor: AppColors.surface,
+            side: const BorderSide(color: AppColors.border),
             avatar: const Text('👋'),
             label: Text(greeting),
             onPressed: () => svc.sendText(chat, greeting).catchError((x) => _err('$x')),
@@ -426,7 +434,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: .06),
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(dayLabel(m.createdAt),
@@ -485,7 +493,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Widget _composer(Chat chat) {
     final bar = _editing != null || _reply != null;
-    final cs = Theme.of(context).colorScheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
     final canSend = _ctrl.text.trim().isNotEmpty;
     final wide = MediaQuery.of(context).size.width >= 900;
@@ -504,23 +511,25 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         hintText: 'Nhắn tin…',
         isDense: true,
         filled: true,
-        fillColor: dark ? Colors.grey.shade800 : Colors.white,
+        fillColor: dark ? Colors.grey.shade800 : AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: const BorderSide(color: Colors.black12),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: const BorderSide(color: Colors.black12),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide(color: cs.primary, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.brand, width: 1.5),
         ),
       ),
     );
 
+    // Composer nằm cố định cuối cột. SafeArea tránh thanh home của điện thoại;
+    // bàn phím được Scaffold xử lý (resizeToAvoidBottomInset).
     return SafeArea(
       top: false,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -528,13 +537,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           Container(
             margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
             decoration: BoxDecoration(
-              color: cs.primary.withValues(alpha: .08),
+              color: AppColors.soft,
               borderRadius: BorderRadius.circular(10),
-              border: Border(left: BorderSide(color: cs.primary, width: 3)),
+              border: const Border(left: BorderSide(color: AppColors.brand, width: 3)),
             ),
             padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
             child: Row(children: [
-              Icon(_editing != null ? Icons.edit : Icons.reply, size: 16, color: cs.primary),
+              Icon(_editing != null ? Icons.edit : Icons.reply, size: 16, color: AppColors.brand),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -587,7 +596,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 1),
               child: Material(
-                color: canSend ? cs.primary : Colors.grey.shade400,
+                color: canSend ? AppColors.brand : AppColors.textSecondary.withValues(alpha: .4),
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),

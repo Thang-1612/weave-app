@@ -5,7 +5,7 @@ import '../services/l10n.dart';
 import '../services/user_service.dart';
 import '../theme/app_theme.dart';
 
-/// Khung chung cho các màn hình cài đặt: tiêu đề gradient + nội dung.
+/// Khung chung cho các màn hình cài đặt: AppBar phẳng theo theme + nội dung.
 class SettingsScaffold extends StatelessWidget {
   final String title;
   final Widget body;
@@ -21,8 +21,8 @@ class SettingsScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Không còn flexibleSpace gradient: AppBar lấy nền Surface và viền dưới từ theme.
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(title),
         actions: actions,
       ),
@@ -66,6 +66,9 @@ class SectionLabel extends StatelessWidget {
 }
 
 /// Thẻ trắng bo tròn gom nhiều dòng cài đặt.
+///
+/// Dùng Material (không phải Container tô màu) để ListTile bên trong vẽ được
+/// hiệu ứng chạm và rê chuột; Container có màu sẽ che mất lớp ink này.
 class SettingsCard extends StatelessWidget {
   final List<Widget> children;
 
@@ -73,11 +76,12 @@ class SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+    return Material(
+      color: AppColors.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
+        side: const BorderSide(color: AppColors.border),
       ),
       child: Column(
         children: [

@@ -17,6 +17,10 @@ import '../widgets/poll_editor.dart';
 import '../widgets/reaction_picker.dart';
 import '../widgets/space_picker.dart';
 
+/// Từ chiều rộng này trở lên, form chia hai cột: soạn bài bên trái,
+/// tùy chọn bên phải. Dưới mức này: một cột.
+const double _kTwoColumnBreakpoint = 900;
+
 /// Một khối đang soạn: text, image hoặc link.
 class _Draft {
   final Key key = UniqueKey();
@@ -487,6 +491,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     super.dispose();
   }
 
+  // ---------------------------------------------------------------------
+  // Giao diện
+  // ---------------------------------------------------------------------
+
   Widget _buildBlock(_Draft d, int i) {
     switch (d.type) {
       case 'text':
@@ -500,29 +508,43 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ? tr('Bạn muốn hỏi điều gì?', 'What would you like to ask?')
                 : tr('Bạn đang nghĩ gì?', "What's on your mind?"))
                 : tr('Viết tiếp...', 'Keep writing...'),
+            // Ô soạn không viền, nền trong suốt (theme mặc định có viền)
+            filled: false,
             border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
           ),
         );
       case 'image':
+      // Tỷ lệ theo ảnh thật, co theo chiều rộng khung; giới hạn chiều cao
+        final ratio = (d.width > 0 && d.height > 0)
+            ? (d.width / d.height).clamp(0.8, 1.8).toDouble()
+            : 4 / 3;
         return Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.memory(
-              d.bytes!,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+          child: LayoutBuilder(
+            builder: (context, c) {
+              final w = c.maxWidth.isFinite ? c.maxWidth : 400.0;
+              final h = (w / ratio).clamp(0.0, 420.0).toDouble();
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(WeaveRadius.control),
+                child: Image.memory(
+                  d.bytes!,
+                  width: w,
+                  height: h,
+                  fit: BoxFit.cover,
+                ),
+              );
+            },
           ),
         );
       case 'link':
         return Container(
           margin: const EdgeInsets.only(top: 4),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(WeaveSpacing.md),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(14),
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(WeaveRadius.control),
             border: Border.all(color: AppColors.border),
           ),
           child: Row(
@@ -544,7 +566,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       d.url,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -562,8 +587,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       child: TextButton.icon(
         onPressed: _busy || _posting ? null : onTap,
         icon: Icon(icon, size: 20),
-        label: Text(label),
-        style: TextButton.styleFrom(foregroundColor: AppColors.brand),
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.brand,
+          // Padding nhỏ để 4 nút vẫn vừa trên màn hình hẹp (320 px)
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+        ),
       ),
     );
   }
@@ -578,296 +607,360 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         'Poll (needs at least 2 options)');
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
-        title: Text(tr('Tạo bài viết', 'Create post')),
-        actions: [
-          TextButton(
-            onPressed: _canPost ? _post : null,
-            child: _posting
-                ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-                : Text(
-              tr('Đăng', 'Post'),
-              style: TextStyle(
-                color: _canPost
-                    ? Colors.white
-                    : const Color.fromRGBO(255, 255, 255, 0.6),
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ],
+  /// Chip kiểu Weave cho cả khối tùy chọn: nền trắng, viền mảnh, chọn = Soft Indigo.
+  Widget _withChipTheme({required Widget child}) {
+    final base = ChipTheme.of(context);
+    return ChipTheme(
+      data: base.copyWith(
+        backgroundColor: AppColors.surface,
+        selectedColor: AppColors.soft,
+        side: const BorderSide(color: AppColors.border),
+        shape: const StadiumBorder(),
+        labelStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textPrimary,
+        ),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Column(
+      child: child,
+    );
+  }
+
+  Widget _hint(String text, {Color color = AppColors.textSecondary}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: WeaveSpacing.sm),
+      child: Text(text, style: TextStyle(fontSize: 12, color: color)),
+    );
+  }
+
+  /// Khối tùy chọn: chủ đề, đối tượng xem, hộp thời gian, tự ẩn, câu hỏi, bình chọn.
+  /// Mọi chip nằm chung một Wrap để tiết kiệm chiều cao trên màn hình hẹp.
+  Widget _buildOptions() {
+    final showQuestionChip =
+        _openAt == null && widget.forkOf == null && _visibility == 'public';
+
+    return _withChipTheme(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: WeaveSpacing.sm,
+            runSpacing: WeaveSpacing.sm,
             children: [
               // Chủ đề (câu hỏi không có chủ đề)
-              if (!_isQuestion)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        ChoiceChip(
-                          avatar: const Icon(Icons.auto_awesome, size: 16),
-                          label: Text(tr('Tự động', 'Auto')),
-                          selected: _spaceId == null,
-                          onSelected: (_) => setState(() => _spaceId = null),
-                        ),
-                        ActionChip(
-                          backgroundColor:
-                          _spaceId != null ? AppColors.soft : null,
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(_spaceChipLabel()),
-                              const Icon(Icons.arrow_drop_down, size: 18),
-                            ],
-                          ),
-                          onPressed: _posting ? null : _pickSpace,
-                        ),
-                      ],
-                    ),
-                  ),
+              if (!_isQuestion) ...[
+                ChoiceChip(
+                  avatar: const Icon(Icons.auto_awesome, size: 16),
+                  label: Text(tr('Tự động', 'Auto')),
+                  selected: _spaceId == null,
+                  onSelected: (_) => setState(() => _spaceId = null),
                 ),
+                ActionChip(
+                  backgroundColor: _spaceId != null ? AppColors.soft : null,
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_spaceChipLabel()),
+                      const Icon(Icons.arrow_drop_down, size: 18),
+                    ],
+                  ),
+                  onPressed: _posting ? null : _pickSpace,
+                ),
+              ],
               // Đối tượng xem: Công khai / Bạn bè / Chỉ mình tôi
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: ActionChip(
-                    avatar: Icon(audienceIcon(_visibility), size: 16),
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(audienceLabel(_visibility)),
-                        const Icon(Icons.arrow_drop_down, size: 18),
-                      ],
-                    ),
-                    onPressed: _posting ? null : _pickAudience,
-                  ),
+              ActionChip(
+                avatar: Icon(audienceIcon(_visibility), size: 16),
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(audienceLabel(_visibility)),
+                    const Icon(Icons.arrow_drop_down, size: 18),
+                  ],
                 ),
+                onPressed: _posting ? null : _pickAudience,
               ),
-              if (_visibility != 'public')
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      audienceHint(_visibility),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                  ),
-                ),
               // Hộp thời gian (câu hỏi không dùng)
               if (!_isQuestion)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: InputChip(
-                      avatar: const Icon(Icons.hourglass_bottom, size: 16),
-                      label: Text(_openAt == null
-                          ? tr('Hẹn giờ mở', 'Time capsule')
-                          : '${tr('Mở vào', 'Opens on')} ${CapsuleService.fmtDate(_openAt!)}'),
-                      onPressed: _posting ? null : _pickOpenAt,
-                      onDeleted: _openAt == null
-                          ? null
-                          : () => setState(() => _openAt = null),
-                    ),
-                  ),
+                InputChip(
+                  avatar: const Icon(Icons.hourglass_bottom, size: 16),
+                  label: Text(_openAt == null
+                      ? tr('Hẹn giờ mở', 'Time capsule')
+                      : '${tr('Mở vào', 'Opens on')} ${CapsuleService.fmtDate(_openAt!)}'),
+                  onPressed: _posting ? null : _pickOpenAt,
+                  onDeleted: _openAt == null
+                      ? null
+                      : () => setState(() => _openAt = null),
                 ),
               if (_openAt == null && !_isQuestion)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: InputChip(
-                      avatar: const Icon(Icons.timer_off_outlined, size: 16),
-                      label: Text(_expiresAt == null
-                          ? tr('Tự ẩn sau...', 'Auto-hide after...')
-                          : '${tr('Tự ẩn vào', 'Hides on')} ${CapsuleService.fmtDate(_expiresAt!)}'),
-                      onPressed: _posting ? null : _pickExpiry,
-                      onDeleted: _expiresAt == null
-                          ? null
-                          : () => setState(() => _expiresAt = null),
-                    ),
-                  ),
+                InputChip(
+                  avatar: const Icon(Icons.timer_off_outlined, size: 16),
+                  label: Text(_expiresAt == null
+                      ? tr('Tự ẩn sau...', 'Auto-hide after...')
+                      : '${tr('Tự ẩn vào', 'Hides on')} ${CapsuleService.fmtDate(_expiresAt!)}'),
+                  onPressed: _posting ? null : _pickExpiry,
+                  onDeleted: _expiresAt == null
+                      ? null
+                      : () => setState(() => _expiresAt = null),
                 ),
               // Câu hỏi: người xem trả lời bằng bình luận, tác giả chọn đáp án.
               // Chỉ hiện ở bài công khai vì bài khác không tính điểm đáp án.
-              if (_openAt == null &&
-                  widget.forkOf == null &&
-                  _visibility == 'public')
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilterChip(
-                      avatar: const Icon(Icons.help_outline, size: 16),
-                      label: Text(tr('Đây là câu hỏi', 'This is a question')),
-                      selected: _isQuestion,
-                      onSelected: _posting
-                          ? null
-                          : (v) => setState(() {
-                        _isQuestion = v;
-                        if (v) _expiresAt = null;
-                      }),
-                    ),
-                  ),
-                ),
-              if (_isQuestion)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      tr(
-                        'Mọi người trả lời bằng bình luận, bạn chọn đáp án đúng nhất.',
-                        'People answer in comments, and you pick the best answer.',
-                      ),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                  ),
+              if (showQuestionChip)
+                FilterChip(
+                  avatar: const Icon(Icons.help_outline, size: 16),
+                  label: Text(tr('Đây là câu hỏi', 'This is a question')),
+                  selected: _isQuestion,
+                  onSelected: _posting
+                      ? null
+                      : (v) => setState(() {
+                    _isQuestion = v;
+                    if (v) _expiresAt = null;
+                  }),
                 ),
               // Bình chọn: người xem chọn đáp án, kết quả hiện sau khi bỏ phiếu
               if (_openAt == null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: InputChip(
-                      avatar: const Icon(Icons.poll_outlined, size: 16),
-                      label: Text(_pollChipLabel()),
-                      selected: _poll != null,
-                      onPressed: _posting ? null : _editPoll,
-                      onDeleted: _poll == null ? null : _removePoll,
-                    ),
-                  ),
+                InputChip(
+                  avatar: const Icon(Icons.poll_outlined, size: 16),
+                  label: Text(_pollChipLabel()),
+                  selected: _poll != null,
+                  onPressed: _posting ? null : _editPoll,
+                  onDeleted: _poll == null ? null : _removePoll,
                 ),
-              // Thông báo đang rẽ nhánh
-              if (widget.forkOf != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.call_split,
-                            size: 16, color: AppColors.brand),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${tr('Rẽ nhánh từ bài của', 'Forking')} ${widget.forkOf!.authorName}',
-                          style: const TextStyle(
-                              fontSize: 12.5, color: AppColors.brand),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              if (_busy || _classifying)
-                const LinearProgressIndicator(minHeight: 2),
-              if (_classifying)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
+            ],
+          ),
+          if (_visibility != 'public') _hint(audienceHint(_visibility)),
+          if (_isQuestion)
+            _hint(
+              tr(
+                'Mọi người trả lời bằng bình luận, bạn chọn đáp án đúng nhất.',
+                'People answer in comments, and you pick the best answer.',
+              ),
+            ),
+          // Thông báo đang rẽ nhánh
+          if (widget.forkOf != null)
+            Padding(
+              padding: const EdgeInsets.only(top: WeaveSpacing.sm),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.call_split,
+                      size: 16, color: AppColors.brand),
+                  const SizedBox(width: 6),
+                  Flexible(
                     child: Text(
-                      tr(
-                        'Đang nhận biết chủ đề của bài viết...',
-                        'Detecting the topic of your post...',
+                      '${tr('Rẽ nhánh từ bài của', 'Forking')} ${widget.forkOf!.authorName}',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: AppColors.brand,
                       ),
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
                     ),
                   ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Vùng soạn: thanh tiến trình, danh sách khối (kéo thả được) và thanh công cụ.
+  Widget _buildEditor() {
+    return Column(
+      children: [
+        if (_busy || _classifying) const LinearProgressIndicator(minHeight: 2),
+        if (_classifying)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                tr(
+                  'Đang nhận biết chủ đề của bài viết...',
+                  'Detecting the topic of your post...',
                 ),
-              Expanded(
-                child: ReorderableListView.builder(
-                  buildDefaultDragHandles: false,
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-                  itemCount: _drafts.length,
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (newIndex > oldIndex) newIndex -= 1;
-                      final d = _drafts.removeAt(oldIndex);
-                      _drafts.insert(newIndex, d);
-                    });
-                  },
-                  itemBuilder: (context, i) {
-                    final d = _drafts[i];
-                    return Padding(
-                      key: d.key,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ReorderableDragStartListener(
-                            index: i,
-                            child: const Padding(
-                              padding: EdgeInsets.only(top: 12, right: 6),
-                              child: Icon(
-                                Icons.drag_indicator,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                          Expanded(child: _buildBlock(d, i)),
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            icon: const Icon(Icons.close, size: 20),
-                            onPressed: () => _remove(i),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
                 ),
               ),
-              Container(
-                decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: AppColors.border)),
-                ),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            ),
+          ),
+        Expanded(
+          child: ReorderableListView.builder(
+            buildDefaultDragHandles: false,
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
+            itemCount: _drafts.length,
+            onReorder: (oldIndex, newIndex) {
+              setState(() {
+                if (newIndex > oldIndex) newIndex -= 1;
+                final d = _drafts.removeAt(oldIndex);
+                _drafts.insert(newIndex, d);
+              });
+            },
+            itemBuilder: (context, i) {
+              final d = _drafts[i];
+              return Padding(
+                key: d.key,
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _toolButton(Icons.text_fields, tr('Chữ', 'Text'), _addText),
-                    _toolButton(
-                      Icons.image_outlined,
-                      tr('Ảnh', 'Photo'),
-                      _addImage,
+                    ReorderableDragStartListener(
+                      index: i,
+                      child: const Padding(
+                        padding: EdgeInsets.only(top: 12, right: 6),
+                        child: Icon(
+                          Icons.drag_indicator,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ),
-                    _toolButton(Icons.link, 'Link', _addLink),
-                    _toolButton(
-                      Icons.emoji_emotions_outlined,
-                      'Icon',
-                      _addEmoji,
+                    Expanded(child: _buildBlock(d, i)),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => _remove(i),
                     ),
                   ],
                 ),
+              );
+            },
+          ),
+        ),
+        Container(
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.border)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            children: [
+              _toolButton(Icons.text_fields, tr('Chữ', 'Text'), _addText),
+              _toolButton(
+                Icons.image_outlined,
+                tr('Ảnh', 'Photo'),
+                _addImage,
+              ),
+              _toolButton(Icons.link, 'Link', _addLink),
+              _toolButton(
+                Icons.emoji_emotions_outlined,
+                'Icon',
+                _addEmoji,
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  /// Nút Đăng: hành động chính duy nhất của màn hình này (nút tím đặc).
+  Widget _buildPostButton() {
+    return Padding(
+      padding: const EdgeInsets.only(right: WeaveSpacing.md),
+      child: Center(
+        child: FilledButton(
+          onPressed: _canPost ? _post : null,
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(72, WeaveSizes.buttonHeightCompact - 4),
+            padding: const EdgeInsets.symmetric(horizontal: WeaveSpacing.lg),
+          ),
+          child: _posting
+              ? const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white,
+            ),
+          )
+              : Text(tr('Đăng', 'Post')),
+        ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final twoColumns =
+        MediaQuery.sizeOf(context).width >= _kTwoColumnBreakpoint;
+
+    final Widget body;
+    if (twoColumns) {
+      // Rộng: soạn bài bên trái (card), tùy chọn bên phải (card).
+      body = Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1040),
+          child: Padding(
+            padding: const EdgeInsets.all(WeaveSpacing.xl),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Card(
+                    clipBehavior: Clip.antiAlias,
+                    child: _buildEditor(),
+                  ),
+                ),
+                const SizedBox(width: WeaveSpacing.xl),
+                SizedBox(
+                  width: 320,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(WeaveSpacing.lg),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            tr('Tùy chọn bài viết', 'Post options'),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: WeaveSpacing.md),
+                          _buildOptions(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Hẹp: một cột. Tùy chọn ở đầu, vùng soạn chiếm phần còn lại.
+      body = Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _buildOptions(),
+                ),
+              ),
+              Expanded(child: _buildEditor()),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      // Hẹp: nền trắng như một trang soạn thảo. Rộng: nền app, soạn bài nằm trong card.
+      backgroundColor: twoColumns ? null : AppColors.surface,
+      appBar: AppBar(
+        title: Text(tr('Tạo bài viết', 'Create post')),
+        actions: [_buildPostButton()],
+      ),
+      body: body,
     );
   }
 }
@@ -924,7 +1017,9 @@ class _LinkDialogState extends State<_LinkDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
+      ),
       title: Text(tr('Thêm liên kết', 'Add a link')),
       content: SizedBox(
         width: 360,
@@ -962,7 +1057,6 @@ class _LinkDialogState extends State<_LinkDialog> {
           child: Text(tr('Hủy', 'Cancel')),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
           onPressed: _submit,
           child: Text(tr('Thêm', 'Add')),
         ),

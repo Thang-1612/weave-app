@@ -8,6 +8,10 @@ import '../widgets/group_create_sheet.dart';
 import '../widgets/weave_activity_widgets.dart';
 import 'weave_detail_screen.dart';
 
+/// Từ chiều rộng này trở lên, form chia hai cột: thông tin hoạt động bên trái,
+/// mời thành viên bên phải. Dưới mức này: một cột.
+const double _kWeaveCreateTwoColumnBreakpoint = 900;
+
 class WeaveCreateScreen extends StatefulWidget {
   /// Nếu có, nhóm được chọn sẵn và không cho đổi.
   final String? groupId;
@@ -123,16 +127,120 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
 
   Widget _label(String t) => Padding(
     padding: const EdgeInsets.only(top: 18, bottom: 6),
-    child: Text(t,
-        style: const TextStyle(
-            fontWeight: FontWeight.w700, color: AppColors.brand)),
+    child: Text(
+      t,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textSecondary,
+      ),
+    ),
   );
+
+  /// Phần thông tin: tên, mô tả, nhóm, thời gian. Viền, bo góc và màu focus của
+  /// các ô nhập lấy từ theme.
+  List<Widget> _basicFields(List<GroupInfo> groups) {
+    return [
+      Align(
+        alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          onPressed: _createGroup,
+          icon: const Icon(Icons.group_add_outlined),
+          label: Text(tr('Tạo nhóm mới', 'New group')),
+        ),
+      ),
+      TextField(
+        controller: _title,
+        maxLength: 60,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: InputDecoration(
+          labelText: tr('Tên hoạt động', 'Activity name'),
+          hintText: tr('Ví dụ: Đà Lạt cuối tuần', 'e.g. Weekend in Da Lat'),
+        ),
+      ),
+      const SizedBox(height: 12),
+      TextField(
+        controller: _desc,
+        maxLines: 3,
+        maxLength: 300,
+        decoration: InputDecoration(
+          labelText: tr('Mô tả (không bắt buộc)', 'Description (optional)'),
+        ),
+      ),
+      if (widget.groupId == null) ...[
+        _label(tr('Nhóm', 'Group')),
+        DropdownButtonFormField<GroupInfo>(
+          value: _group,
+          isExpanded: true,
+          hint: Text(tr('Chọn nhóm', 'Pick a group')),
+          items: [
+            for (final g in groups)
+              DropdownMenuItem(value: g, child: Text(g.name)),
+          ],
+          onChanged: (g) {
+            if (g != null) _selectGroup(g);
+          },
+        ),
+      ],
+      _label(tr('Thời gian dự kiến', 'Planned dates')),
+      OutlinedButton.icon(
+        onPressed: _pickRange,
+        icon: const Icon(Icons.event),
+        label: Text(_range == null
+            ? tr('Chọn khoảng ngày (có thể bỏ qua)',
+            'Pick date range (optional)')
+            : weaveRange(_range!.start, _range!.end)),
+      ),
+    ];
+  }
+
+  /// Phần mời thành viên (chỉ có khi đã chọn nhóm).
+  List<Widget> _inviteeFields() {
+    final g = _group;
+    if (g == null) return const [];
+    final others = g.memberIds.where((u) => u != WeaveService.me).toList();
+    return [
+      _label(tr('Mời thành viên', 'Invite members')),
+      if (others.isEmpty)
+        Text(
+          tr('Nhóm này chưa có thành viên nào khác.',
+              'No other members in this group.'),
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+      for (final uid in others)
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _invitees.contains(uid),
+          onChanged: (v) => setState(() {
+            if (v == true) {
+              _invitees.add(uid);
+            } else {
+              _invitees.remove(uid);
+            }
+          }),
+          secondary: WeaveUserAvatar(uid: uid),
+          title: WeaveUserName(uid: uid),
+        ),
+    ];
+  }
+
+  /// Nút tạo hoạt động: hành động chính duy nhất của màn hình (màu theo theme).
+  Widget _submitButton() {
+    return FilledButton(
+      onPressed: _busy ? null : _submit,
+      child: _busy
+          ? const SizedBox(
+          height: 18,
+          width: 18,
+          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+          : Text(tr('Tạo hoạt động', 'Create activity')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Tạo hoạt động', 'New activity')),
       ),
       body: FutureBuilder<List<GroupInfo>>(
@@ -160,8 +268,6 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
                     ),
                     const SizedBox(height: 16),
                     FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.brand),
                       onPressed: _createGroup,
                       icon: const Icon(Icons.group_add_outlined),
                       label: Text(tr('Tạo nhóm', 'Create group')),
@@ -171,107 +277,93 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
               ),
             );
           }
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: _createGroup,
-                      icon: const Icon(Icons.group_add_outlined),
-                      label: Text(tr('Tạo nhóm mới', 'New group')),
-                    ),
-                  ),
-                  TextField(
-                    controller: _title,
-                    maxLength: 60,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
-                      labelText: tr('Tên hoạt động', 'Activity name'),
-                      hintText: tr('Ví dụ: Đà Lạt cuối tuần', 'e.g. Weekend in Da Lat'),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _desc,
-                    maxLines: 3,
-                    maxLength: 300,
-                    decoration: InputDecoration(
-                      labelText: tr('Mô tả (không bắt buộc)', 'Description (optional)'),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  if (widget.groupId == null) ...[
-                    _label(tr('Nhóm', 'Group')),
-                    DropdownButtonFormField<GroupInfo>(
-                      value: _group,
-                      isExpanded: true,
-                      decoration:
-                      const InputDecoration(border: OutlineInputBorder()),
-                      hint: Text(tr('Chọn nhóm', 'Pick a group')),
-                      items: [
-                        for (final g in groups)
-                          DropdownMenuItem(value: g, child: Text(g.name)),
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final twoColumns =
+                  constraints.maxWidth >= _kWeaveCreateTwoColumnBreakpoint;
+
+              if (twoColumns) {
+                // Rộng: thông tin bên trái, mời thành viên (card) bên phải.
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1040),
+                    child: ListView(
+                      padding: const EdgeInsets.all(WeaveSpacing.xl),
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ..._basicFields(groups),
+                                  const SizedBox(height: 24),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: _submitButton(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: WeaveSpacing.xl),
+                            SizedBox(
+                              width: 340,
+                              child: Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    WeaveSpacing.lg,
+                                    0,
+                                    WeaveSpacing.lg,
+                                    WeaveSpacing.lg,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: _group == null
+                                        ? [
+                                      _label(tr('Mời thành viên',
+                                          'Invite members')),
+                                      Text(
+                                        tr('Chọn nhóm để mời thành viên.',
+                                            'Pick a group to invite members.'),
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ]
+                                        : _inviteeFields(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
-                      onChanged: (g) {
-                        if (g != null) _selectGroup(g);
-                      },
                     ),
-                  ],
-                  _label(tr('Thời gian dự kiến', 'Planned dates')),
-                  OutlinedButton.icon(
-                    onPressed: _pickRange,
-                    icon: const Icon(Icons.event),
-                    label: Text(_range == null
-                        ? tr('Chọn khoảng ngày (có thể bỏ qua)',
-                        'Pick date range (optional)')
-                        : weaveRange(_range!.start, _range!.end)),
                   ),
-                  if (_group != null) ...[
-                    _label(tr('Mời thành viên', 'Invite members')),
-                    if (_group!.memberIds.length <= 1)
-                      Text(
-                        tr('Nhóm này chưa có thành viên nào khác.',
-                            'No other members in this group.'),
-                        style: const TextStyle(color: AppColors.textSecondary),
-                      ),
-                    for (final uid in _group!.memberIds
-                        .where((u) => u != WeaveService.me))
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        value: _invitees.contains(uid),
-                        onChanged: (v) => setState(() {
-                          if (v == true) {
-                            _invitees.add(uid);
-                          } else {
-                            _invitees.remove(uid);
-                          }
-                        }),
-                        secondary: WeaveUserAvatar(uid: uid),
-                        title: WeaveUserName(uid: uid),
-                      ),
-                  ],
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.brand,
-                        padding: const EdgeInsets.symmetric(vertical: 14)),
-                    onPressed: _busy ? null : _submit,
-                    child: _busy
-                        ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                        : Text(tr('Tạo hoạt động', 'Create activity')),
+                );
+              }
+
+              // Hẹp: một cột như cũ.
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      ..._basicFields(groups),
+                      ..._inviteeFields(),
+                      const SizedBox(height: 24),
+                      _submitButton(),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           );
         },
       ),

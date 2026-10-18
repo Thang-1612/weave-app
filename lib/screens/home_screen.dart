@@ -8,7 +8,6 @@ import '../services/user_prefs.dart';
 import '../theme/app_theme.dart';
 import '../widgets/account_switcher.dart';
 import '../widgets/weave_responsive_shell.dart';
-import '../widgets/home_side_widgets.dart';
 import 'create_post_screen.dart';
 import 'feed_screen.dart';
 import 'friends_screen.dart';
@@ -59,10 +58,10 @@ class _HomeScreenState extends State<HomeScreen> {
     UserPrefs.instance.addListener(_onPrefs);
     // Đo thời gian dùng ứng dụng (thống kê, giới hạn, nhắc nghỉ)
     UsageService.instance.start(() => mounted ? context : null);
+    // Mở bài viết khi vào từ liên kết dạng /post/<mã> (bản web)
     // Giữ danh sách người xem của bài chỉ-bạn-bè khớp với danh sách bạn bè
     FriendPostSync.start();
     TrashService.purgeExpired(); // dọn bài trong thùng rác quá 30 ngày
-    // Mở bài viết khi vào từ liên kết dạng /post/<mã> (bản web)
     WidgetsBinding.instance.addPostFrameCallback((_) => _openDeepLink());
   }
 
@@ -82,8 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (s != null && UserPrefs.instance.isRestricted(s.id)) _space = null;
     });
   }
-
-  /// Mở bài viết khi vào từ liên kết dạng `/post/<mã>` (bản web).
+  /// Mở bài viết khi vào từ liên kết dạng /post/<mã> (bản web).
   Future<void> _openDeepLink() async {
     final id = DeepLink.takePostId();
     if (id == null || !mounted) return;
@@ -212,11 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (_page == 0) {
       return AppBar(
-        title: Text(
-          _homeTitle(),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: Text(_homeTitle()),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
           IconButton(
@@ -238,11 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
     return AppBar(
-      title: Text(
-        _pageTitle(),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      title: Text(_pageTitle()),
       automaticallyImplyLeading: false,
       actions: [
         if (_page == 3) ...[
@@ -349,13 +339,13 @@ class _HomeScreenState extends State<HomeScreen> {
       ListTile(
         leading: const Icon(Icons.dashboard_outlined),
         title: Text(tr('Tất cả', 'All')),
-        selected: _page == 0 && _space == null && !_favorites,
+        selected: _space == null && !_favorites,
         onTap: () => _selectAll(inDrawer),
       ),
       ListTile(
         leading: const Icon(Icons.star_border),
         title: Text(tr('Yêu thích', 'Favorites')),
-        selected: _page == 0 && _favorites,
+        selected: _favorites,
         onTap: () => _selectFavorites(inDrawer),
       ),
       ListTile(
@@ -370,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       const Divider(),
       SpaceMenu(
-        selectedSpaceId: _page == 0 ? _space?.id : null,
+        selectedSpaceId: _space?.id,
         favoriteIds: prefs.favoriteSpaces.toSet(),
         isHidden: prefs.isRestricted,
         onSpaceSelected: (s) => _selectSpace(s, inDrawer),
@@ -454,80 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Cùng menu đó nhưng đặt trong sidebar desktop.
   Widget _buildSidebarMenu() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Divider(height: WeaveSpacing.xl),
-        ..._menuItems(inDrawer: false),
-      ],
-    );
-  }
-
-  // Trang chủ: trên tablet/desktop có thêm lời chào + ô tạo bài phía trên
-  // bảng tin; mobile chỉ có bảng tin (nút "+" đã nằm trên AppBar).
-  Widget _homeTab(String? uid) {
-    // Builder để có context nằm dưới shell (đọc được WeaveLayout).
-    return Builder(
-      builder: (context) {
-        final showHeader = !WeaveLayout.of(context).isMobile;
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Column(
-              children: [
-                if (showHeader)
-                  HomeFeedHeader(
-                    name: nameOf(FirebaseAuth.instance.currentUser),
-                    onCreate: _openCreate,
-                    // Cửa sổ thấp thì bỏ lời chào để nhường chỗ cho bảng tin.
-                    showGreeting: constraints.maxHeight >= 720,
-                  ),
-                // Key cố định: đổi cỡ cửa sổ không làm mất vị trí cuộn của feed.
-                Expanded(
-                  key: const ValueKey('home-feed'),
-                  child: FeedScreen(
-                    key: ValueKey(uid),
-                    space: _space,
-                    favorites: _favorites,
-                    // Shell đã giới hạn độ rộng cột; không cắt thêm 600 px
-                    maxWidth: double.infinity,
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // Cột phải (desktop rộng, chỉ ở trang chủ): lối tắt tới các màn hình có thật.
-  Widget? _buildSecondaryPanel() {
-    if (_page != 0) return null;
-    return HomeShortcutsPanel(
-      title: tr('Lối tắt', 'Shortcuts'),
-      shortcuts: [
-        HomeShortcut(
-          icon: Icons.hourglass_bottom,
-          title: tr('Hộp thời gian', 'Time capsules'),
-          onTap: () => _openFromMenu(const CapsulesScreen(), false),
-        ),
-        HomeShortcut(
-          icon: Icons.mail_outline,
-          title: tr('Lời cảm ơn', 'Thank-yous'),
-          onTap: () => _openFromMenu(const ThanksInboxScreen(), false),
-        ),
-        HomeShortcut(
-          icon: Icons.groups,
-          title: 'Weave Together',
-          onTap: () => _openFromMenu(const WeaveListScreen(), false),
-        ),
-        HomeShortcut(
-          icon: Icons.auto_awesome,
-          title: 'Weave Storymaker',
-          onTap: () => _openFromMenu(const StoryListScreen(), false),
-        ),
-      ],
-    );
+    return Column(children: _menuItems(inDrawer: false));
   }
 
   List<WeaveDestination> _destinations(String? uid) {
@@ -576,24 +493,21 @@ class _HomeScreenState extends State<HomeScreen> {
       onCreate: _openCreate,
       createLabel: tr('Tạo bài', 'Create post'),
       sidebarCreateLabel: tr('Tạo bài', 'Create post'),
-      // Các màn hình bên trong tự lo phần đệm lề; cột bảng tin hẹp cho dễ đọc.
+      // Các màn hình bên trong đã tự lo phần đệm lề và độ rộng tối đa.
       contentPadding: EdgeInsets.zero,
-      maxContentWidth: _page == 0 ? 880 : 960,
-      secondaryPanel: _buildSecondaryPanel(),
-      // SizedBox.expand + StackFit.expand: ép trang lấp đầy khung, vì shell
-      // bọc body trong Align nên mặc định body chỉ nhận ràng buộc lỏng.
-      body: SizedBox.expand(
-        child: IndexedStack(
-          index: _page,
-          sizing: StackFit.expand,
-          children: [
-            _homeTab(uid),
-            // key theo uid để các trang tự làm mới khi đổi tài khoản
-            FriendsScreen(key: ValueKey(uid)),
-            NotificationsScreen(key: ValueKey(uid)),
-            ProfileScreen(key: ValueKey(uid)),
-          ],
-        ),
+      body: IndexedStack(
+        index: _page,
+        children: [
+          FeedScreen(
+            key: ValueKey(uid),
+            space: _space,
+            favorites: _favorites,
+          ),
+          // key theo uid để các trang tự làm mới khi đổi tài khoản
+          FriendsScreen(key: ValueKey(uid)),
+          NotificationsScreen(key: ValueKey(uid)),
+          ProfileScreen(key: ValueKey(uid)),
+        ],
       ),
     );
   }

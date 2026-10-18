@@ -22,7 +22,9 @@ Future<String?> showEmojiEntrySheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(WeaveRadius.card),
+      ),
     ),
     builder: (_) => const _EmojiEntrySheet(),
   );
@@ -43,7 +45,7 @@ class _PickerBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       elevation: 8,
       borderRadius: BorderRadius.circular(32),
       child: SingleChildScrollView(
@@ -87,7 +89,7 @@ class _PickerBubble extends StatelessWidget {
                   margin: const EdgeInsets.all(2),
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFFF3F4F6),
+                    color: AppColors.background,
                   ),
                   child: const Icon(Icons.add, color: AppColors.brand),
                 ),
@@ -257,7 +259,11 @@ class _EmojiEntrySheetState extends State<_EmojiEntrySheet> {
         children: [
           Text(
             tr('Chọn biểu tượng cảm xúc', 'Pick an emoji'),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -279,9 +285,13 @@ class _EmojiEntrySheetState extends State<_EmojiEntrySheet> {
               hintText: '😊',
               errorText: _error,
               filled: true,
-              fillColor: const Color(0xFFF3F4F6),
+              fillColor: AppColors.background,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(WeaveRadius.card),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(WeaveRadius.card),
                 borderSide: BorderSide.none,
               ),
             ),
@@ -533,6 +543,10 @@ class _ReactionTriggerState extends State<ReactionTrigger> {
 }
 
 /// Nút cảm xúc trên bài viết.
+///
+/// Cùng chiều cao (44), bo góc (12) và cỡ chữ (15, đậm vừa) với nút Bình luận
+/// (TextButton theo theme), để hàng nút thích / bình luận / lưu / chia sẻ
+/// đồng đều và có cùng hiệu ứng rê chuột, nhấn.
 class ReactionButton extends StatefulWidget {
   final Post post;
 
@@ -543,8 +557,7 @@ class ReactionButton extends StatefulWidget {
 }
 
 class _ReactionButtonState extends State<ReactionButton> {
-  late final Stream<String?> _mine =
-  ReactionService.watchMyReaction(
+  late final Stream<String?> _mine = ReactionService.watchMyReaction(
     widget.post.id,
     collection: widget.post.collection,
   );
@@ -553,24 +566,34 @@ class _ReactionButtonState extends State<ReactionButton> {
   Widget build(BuildContext context) {
     return ReactionTrigger(
       mine: _mine,
+      borderRadius: BorderRadius.circular(WeaveRadius.control),
       onApply: (emoji) => ReactionService.setReaction(widget.post, emoji),
       builder: (context, mine) {
         final color = mine != null ? AppColors.brand : AppColors.textSecondary;
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (mine != null)
-                Text(mine, style: const TextStyle(fontSize: 20))
-              else
-                Icon(Icons.thumb_up_alt_outlined, size: 20, color: color),
-              const SizedBox(width: 6),
-              Text(
-                mine != null ? reactionLabel(mine) : tr('Thích', 'Like'),
-                style: TextStyle(color: color, fontWeight: FontWeight.w600),
-              ),
-            ],
+        return ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: WeaveSizes.buttonHeightCompact,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: WeaveSpacing.md),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (mine != null)
+                  Text(mine, style: const TextStyle(fontSize: 20))
+                else
+                  Icon(Icons.thumb_up_alt_outlined, size: 20, color: color),
+                const SizedBox(width: 6),
+                Text(
+                  mine != null ? reactionLabel(mine) : tr('Thích', 'Like'),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

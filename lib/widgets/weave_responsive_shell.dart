@@ -76,8 +76,7 @@ class WeaveDestination {
   final Widget Function(Widget icon, bool selected)? iconWrapper;
 
   Widget buildIcon(bool selected, {double? size, Color? color}) {
-    final Widget w =
-    Icon(selected ? selectedIcon : icon, size: size, color: color);
+    final Widget w = Icon(selected ? selectedIcon : icon, size: size, color: color);
     final wrap = iconWrapper;
     return wrap == null ? w : wrap(w, selected);
   }
@@ -124,10 +123,8 @@ class WeaveResponsiveShell extends StatelessWidget {
 
   /// Như [appBar] nhưng biết bố cục hiện tại (ví dụ chỉ thêm nút "+" ở mobile).
   /// Được ưu tiên hơn [appBar].
-  final PreferredSizeWidget Function(
-      BuildContext context,
-      WeaveLayoutInfo info,
-      )? appBarBuilder;
+  final PreferredSizeWidget Function(BuildContext context, WeaveLayoutInfo info)?
+  appBarBuilder;
 
   /// Menu trượt, chỉ dùng ở mobile và tablet. Desktop dùng [sidebarExtra].
   final Widget? drawer;
@@ -304,42 +301,6 @@ class WeaveResponsiveShell extends StatelessWidget {
     );
   }
 
-  Widget _buildSidebarHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        WeaveSpacing.xl,
-        WeaveSpacing.lg,
-        WeaveSpacing.lg,
-        WeaveSpacing.xl,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.soft,
-              borderRadius: BorderRadius.circular(WeaveRadius.control),
-            ),
-            child: const Icon(
-              Icons.all_inclusive_rounded,
-              color: AppColors.brand,
-            ),
-          ),
-          const SizedBox(width: WeaveSpacing.md),
-          const Text(
-            'Weave',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDesktopSidebar() {
     // Material (không phải Container tô màu) để ListTile trong sidebar vẽ được
     // hiệu ứng chạm và nền mục đang chọn.
@@ -356,7 +317,39 @@ class WeaveResponsiveShell extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildSidebarHeader(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    WeaveSpacing.xl,
+                    WeaveSpacing.lg,
+                    WeaveSpacing.lg,
+                    WeaveSpacing.xl,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.soft,
+                          borderRadius: BorderRadius.circular(WeaveRadius.control),
+                        ),
+                        child: const Icon(
+                          Icons.all_inclusive_rounded,
+                          color: AppColors.brand,
+                        ),
+                      ),
+                      const SizedBox(width: WeaveSpacing.md),
+                      const Text(
+                        'Weave',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 // Vùng giữa cuộn được: cửa sổ thấp hay menu dài đều không tràn.
                 Expanded(
                   child: ListView(
@@ -386,8 +379,7 @@ class WeaveResponsiveShell extends StatelessWidget {
                       icon: const Icon(Icons.add),
                       label: Text(sidebarCreateLabel),
                       style: FilledButton.styleFrom(
-                        minimumSize:
-                        const Size.fromHeight(WeaveSizes.buttonHeight),
+                        minimumSize: const Size.fromHeight(WeaveSizes.buttonHeight),
                       ),
                     ),
                   ),
