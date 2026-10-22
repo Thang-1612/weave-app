@@ -8,7 +8,6 @@ import '../../widgets/friend_button.dart';
 import '../../widgets/settings_widgets.dart';
 import '../../widgets/suggested_people.dart';
 import 'favorites_screen.dart';
-import '../../widgets/weave_ui.dart';
 
 class InviteScreen extends StatefulWidget {
   const InviteScreen({super.key});

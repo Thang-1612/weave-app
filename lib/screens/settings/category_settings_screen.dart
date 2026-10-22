@@ -4,7 +4,6 @@ import '../../services/l10n.dart';
 import '../../services/user_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/settings_widgets.dart';
-import '../../widgets/weave_ui.dart';
 
 class CategorySettingsScreen extends StatelessWidget {
   const CategorySettingsScreen({super.key});

@@ -5,7 +5,6 @@ import '../../services/l10n.dart';
 import '../../services/usage_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/settings_widgets.dart';
-import '../../widgets/weave_ui.dart';
 
 class TimeManagementScreen extends StatefulWidget {
   const TimeManagementScreen({super.key});
