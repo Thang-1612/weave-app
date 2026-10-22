@@ -23,6 +23,9 @@ class AppColors {
   static const warningSoft = Color(0xFFFEF3C7);
   static const successSoft = Color(0xFFCCFBF1);
   static const dangerSoft = Color(0xFFFEE2E2);
+  static const warningBorder = Color(0xFFFDE68A);
+  static const brandTint = Color(0xFFC7D2FE); // thanh chon, nhan nhe
+  static const borderStrong = Color(0xFFD1D5DB); // dam hon border
 
   /// Chỉ giữ để tương thích code cũ và để dùng trong gradient điểm nhấn.
   /// Không dùng làm màu giao diện thông thường.

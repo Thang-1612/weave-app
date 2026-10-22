@@ -253,7 +253,7 @@ class _PollCardState extends State<PollCard> {
             const SizedBox(
               height: 40,
               width: double.infinity,
-              child: ColoredBox(color: Color(0xFFE5E7EB)),
+              child: ColoredBox(color: AppColors.border),
             ),
             Align(
               alignment: Alignment.centerLeft,
@@ -263,8 +263,8 @@ class _PollCardState extends State<PollCard> {
                   height: 40,
                   child: ColoredBox(
                     color: isMine
-                        ? const Color(0xFFC7D2FE)
-                        : const Color(0xFFD1D5DB),
+                        ? AppColors.brandTint
+                        : AppColors.borderStrong,
                   ),
                 ),
               ),
@@ -388,7 +388,7 @@ class _PollCardState extends State<PollCard> {
       margin: const EdgeInsets.only(top: 4, bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),

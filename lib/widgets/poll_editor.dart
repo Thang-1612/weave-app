@@ -145,7 +145,7 @@ class PollEditor extends StatelessWidget {
                         hintText: tr('Lựa chọn ${i + 1}', 'Option ${i + 1}'),
                         counterText: '',
                         filled: true,
-                        fillColor: const Color(0xFFF3F4F6),
+                        fillColor: AppColors.background,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,

@@ -3,7 +3,7 @@ import '../../services/l10n.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/settings_widgets.dart';
 
-const _appName = 'Social App';
+const _appName = 'Weave';
 const _appVersion = '1.0.0';
 
 class AboutScreen extends StatelessWidget {

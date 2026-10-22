@@ -20,8 +20,8 @@ class _InviteScreenState extends State<InviteScreen> {
   late final Stream<List<Friendship>> _stream = FriendService.watchMine();
 
   String get _inviteText => tr(
-    'Mình đang dùng Social App để chia sẻ và trò chuyện theo chủ đề. Tham gia cùng mình nhé: https://social-app-353f0.web.app',
-    'I am using Social App to share and chat by topic. Join me: https://social-app-353f0.web.app',
+    'Mình đang dùng Weave để chia sẻ và trò chuyện theo chủ đề. Tham gia cùng mình nhé: https://social-app-353f0.web.app',
+    'I am using Weave to share and chat by topic. Join me: https://social-app-353f0.web.app',
   );
 
   Future<void> _copy() async {

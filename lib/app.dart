@@ -11,7 +11,7 @@ class SocialApp extends StatelessWidget {
         MaterialPageRoute(builder: (_) => const AuthGate());
 
     return MaterialApp(
-      title: 'Social App',
+      title: 'Weave',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       // Mọi địa chỉ (ví dụ /post/abc) đều vào AuthGate; phần còn lại do

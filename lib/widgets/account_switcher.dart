@@ -248,7 +248,7 @@ class _AccountSwitcherSheetState extends State<_AccountSwitcherSheet> {
           ),
           ListTile(
             leading: const CircleAvatar(
-              backgroundColor: Color(0xFFFEE2E2),
+              backgroundColor: AppColors.dangerSoft,
               child: Icon(Icons.logout, color: AppColors.danger),
             ),
             title: Text(
@@ -550,7 +550,7 @@ class _SignInDialogState extends State<_SignInDialog> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
+                          color: AppColors.background,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(

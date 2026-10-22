@@ -35,7 +35,7 @@ class ProposalStatus extends StatelessWidget {
           margin: const EdgeInsets.only(top: 6),
           padding: const EdgeInsets.fromLTRB(10, 4, 2, 4),
           decoration: BoxDecoration(
-            color: accepted ? const Color(0xFFE7F7EC) : const Color(0xFFF1F2F4),
+            color: accepted ? AppColors.successSoft : AppColors.border,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(

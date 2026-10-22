@@ -472,9 +472,9 @@ class PostCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
       decoration: BoxDecoration(
         // Màu vàng nhạt giữ nguyên: là màu ngữ nghĩa "gợi ý", không thuộc bảng màu thương hiệu
-        color: const Color(0xFFFFFBEB),
+        color: AppColors.warningSoft,
         borderRadius: BorderRadius.circular(WeaveRadius.control),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(color: AppColors.warningBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
