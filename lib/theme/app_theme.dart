@@ -18,6 +18,12 @@ class AppColors {
   static const teal = Color(0xFF0F766E); // Thành công, điểm nhấn phụ
   static const danger = Color(0xFFDC2626); // Xóa, lỗi, hành động nguy hiểm
 
+  // [MỚI] Token màu trạng thái: bản đậm dùng cho chữ/icon, bản Soft dùng làm nền chip, banner.
+  static const warning = Color(0xFFB45309); // Cảnh báo, chờ xử lý
+  static const warningSoft = Color(0xFFFEF3C7);
+  static const successSoft = Color(0xFFCCFBF1);
+  static const dangerSoft = Color(0xFFFEE2E2);
+
   /// Chỉ giữ để tương thích code cũ và để dùng trong gradient điểm nhấn.
   /// Không dùng làm màu giao diện thông thường.
   static const pink = Color(0xFFDB2777);
