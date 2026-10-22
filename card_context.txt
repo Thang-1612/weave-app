@@ -1,0 +1,198 @@
+﻿
+  lib\screens\comments_screen.dart:324:    final ok = await showDialog<bool>(
+  lib\screens\comments_screen.dart:325:      context: context,
+  lib\screens\comments_screen.dart:326:      builder: (ctx) => AlertDialog(
+  lib\screens\comments_screen.dart:327:        shape: RoundedRectangleBorder(
+> lib\screens\comments_screen.dart:328:          borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\comments_screen.dart:329:        ),
+  lib\screens\comments_screen.dart:330:        title: Text(tr('Xóa bình luận?', 'Delete comment?')),
+  lib\screens\comments_screen.dart:331:        actions: [
+  lib\screens\comments_screen.dart:332:          TextButton(
+  lib\screens\comments_screen.dart:333:            onPressed: () => Navigator.of(ctx).pop(false),
+  lib\screens\comments_screen.dart:334:            child: Text(tr('Hủy', 'Cancel')),
+  lib\screens\comments_screen.dart:904:                    vertical: 8,
+  lib\screens\comments_screen.dart:905:                  ),
+  lib\screens\comments_screen.dart:906:                  decoration: BoxDecoration(
+  lib\screens\comments_screen.dart:907:                    color: AppColors.surface,
+> lib\screens\comments_screen.dart:908:                    borderRadius: BorderRadius.circular(16),
+  lib\screens\comments_screen.dart:909:                    border: Border.all(
+  lib\screens\comments_screen.dart:910:                      color: isAccepted ? _answerGreen : AppColors.border,
+  lib\screens\comments_screen.dart:911:                      width: isAccepted ? 1.6 : 1,
+  lib\screens\comments_screen.dart:912:                    ),
+  lib\screens\comments_screen.dart:913:                  ),
+  lib\screens\comments_screen.dart:914:                  child: Column(
+  lib\screens\comments_screen.dart:1197:  @override
+  lib\screens\comments_screen.dart:1198:  Widget build(BuildContext context) {
+  lib\screens\comments_screen.dart:1199:    return AlertDialog(
+  lib\screens\comments_screen.dart:1200:      shape: RoundedRectangleBorder(
+> lib\screens\comments_screen.dart:1201:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\comments_screen.dart:1202:      ),
+  lib\screens\comments_screen.dart:1203:      title: Text(tr('Báo cáo bình luận', 'Report comment')),
+  lib\screens\comments_screen.dart:1204:      content: SizedBox(
+  lib\screens\comments_screen.dart:1205:        width: 360,
+  lib\screens\comments_screen.dart:1206:        child: SingleChildScrollView(
+  lib\screens\comments_screen.dart:1207:          child: Column(
+  lib\screens\feed_screen.dart:412:      ),
+  lib\screens\feed_screen.dart:413:      padding: const EdgeInsets.fromLTRB(14, 6, 4, 6),
+  lib\screens\feed_screen.dart:414:      decoration: BoxDecoration(
+  lib\screens\feed_screen.dart:415:        color: AppColors.soft,
+> lib\screens\feed_screen.dart:416:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\feed_screen.dart:417:      ),
+  lib\screens\feed_screen.dart:418:      child: Row(
+  lib\screens\feed_screen.dart:419:        children: [
+  lib\screens\feed_screen.dart:420:          const Icon(Icons.auto_awesome, size: 20, color: AppColors.brand),
+  lib\screens\feed_screen.dart:421:          const SizedBox(width: 10),
+  lib\screens\feed_screen.dart:422:          Expanded(
+  lib\screens\settings\category_settings_screen.dart:56:      margin: const EdgeInsets.only(bottom: 10),
+  lib\screens\settings\category_settings_screen.dart:57:      clipBehavior: Clip.antiAlias,
+  lib\screens\settings\category_settings_screen.dart:58:      decoration: BoxDecoration(
+  lib\screens\settings\category_settings_screen.dart:59:        color: AppColors.surface,
+> lib\screens\settings\category_settings_screen.dart:60:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\settings\category_settings_screen.dart:61:        border: Border.all(color: AppColors.border),
+  lib\screens\settings\category_settings_screen.dart:62:      ),
+  lib\screens\settings\category_settings_screen.dart:63:      child: Theme(
+  lib\screens\settings\category_settings_screen.dart:64:        // Bỏ đường kẻ mặc định của ExpansionTile
+  lib\screens\settings\category_settings_screen.dart:65:        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+  lib\screens\settings\category_settings_screen.dart:66:        child: ExpansionTile(
+  lib\screens\settings\help_screen.dart:119:                tr('Câu hỏi thường gặp', 'Frequently asked questions')),
+  lib\screens\settings\help_screen.dart:120:            Container(
+  lib\screens\settings\help_screen.dart:121:              decoration: BoxDecoration(
+  lib\screens\settings\help_screen.dart:122:                color: AppColors.surface,
+> lib\screens\settings\help_screen.dart:123:                borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\settings\help_screen.dart:124:                border: Border.all(color: AppColors.border),
+  lib\screens\settings\help_screen.dart:125:              ),
+  lib\screens\settings\help_screen.dart:126:              clipBehavior: Clip.antiAlias,
+  lib\screens\settings\help_screen.dart:127:              child: Column(
+  lib\screens\settings\help_screen.dart:128:                children: [
+  lib\screens\settings\help_screen.dart:129:                  for (var i = 0; i < _faqs.length; i++) ...[
+  lib\screens\settings\invite_screen.dart:87:            Container(
+  lib\screens\settings\invite_screen.dart:88:              padding: const EdgeInsets.all(16),
+  lib\screens\settings\invite_screen.dart:89:              decoration: BoxDecoration(
+  lib\screens\settings\invite_screen.dart:90:                color: AppColors.surface,
+> lib\screens\settings\invite_screen.dart:91:                borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\settings\invite_screen.dart:92:                border: Border.all(color: AppColors.border),
+  lib\screens\settings\invite_screen.dart:93:              ),
+  lib\screens\settings\invite_screen.dart:94:              child: Column(
+  lib\screens\settings\invite_screen.dart:95:                crossAxisAlignment: CrossAxisAlignment.start,
+  lib\screens\settings\invite_screen.dart:96:                children: [
+  lib\screens\settings\invite_screen.dart:97:                  Text(_inviteText, style: const TextStyle(height: 1.4)),
+  lib\screens\settings\time_management_screen.dart:134:    return Container(
+  lib\screens\settings\time_management_screen.dart:135:      padding: const EdgeInsets.all(WeaveSpacing.xl),
+  lib\screens\settings\time_management_screen.dart:136:      decoration: BoxDecoration(
+  lib\screens\settings\time_management_screen.dart:137:        color: AppColors.surface,
+> lib\screens\settings\time_management_screen.dart:138:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\settings\time_management_screen.dart:139:        border: Border.all(color: AppColors.border),
+  lib\screens\settings\time_management_screen.dart:140:      ),
+  lib\screens\settings\time_management_screen.dart:141:      child: Column(
+  lib\screens\settings\time_management_screen.dart:142:        crossAxisAlignment: CrossAxisAlignment.start,
+  lib\screens\settings\time_management_screen.dart:143:        children: [
+  lib\screens\settings\time_management_screen.dart:144:          Text(
+  lib\widgets\place_picker_screen.dart:309:                        padding: const EdgeInsets.symmetric(
+  lib\widgets\place_picker_screen.dart:310:                            horizontal: 12, vertical: 6),
+  lib\widgets\place_picker_screen.dart:311:                        decoration: BoxDecoration(
+  lib\widgets\place_picker_screen.dart:312:                          color: Colors.black54,
+> lib\widgets\place_picker_screen.dart:313:                          borderRadius: BorderRadius.circular(16),
+  lib\widgets\place_picker_screen.dart:314:                        ),
+  lib\widgets\place_picker_screen.dart:315:                        child: Text(
+  lib\widgets\place_picker_screen.dart:316:                            tr('Tìm địa điểm hoặc chạm vào bản đồ để ghim',
+  lib\widgets\place_picker_screen.dart:317:                                'Search a place or tap the map to drop a pin'),
+  lib\widgets\place_picker_screen.dart:318:                            style: const TextStyle(color: Colors.white)),
+  lib\widgets\place_picker_screen.dart:319:                      ),
+  lib\widgets\poll_card.dart:388:      margin: const EdgeInsets.only(top: 4, bottom: 8),
+  lib\widgets\poll_card.dart:389:      padding: const EdgeInsets.all(12),
+  lib\widgets\poll_card.dart:390:      decoration: BoxDecoration(
+  lib\widgets\poll_card.dart:391:        color: const Color(0xFFF8FAFC),
+> lib\widgets\poll_card.dart:392:        borderRadius: BorderRadius.circular(16),
+  lib\widgets\poll_card.dart:393:        border: Border.all(color: AppColors.border),
+  lib\widgets\poll_card.dart:394:      ),
+  lib\widgets\poll_card.dart:395:      child: StreamBuilder<List<String>?>(
+  lib\widgets\poll_card.dart:396:        stream: _mine,
+  lib\widgets\poll_card.dart:397:        builder: (context, snap) {
+  lib\widgets\poll_card.dart:398:          if (snap.hasError) {
+  lib\widgets\post_card.dart:73:    final ok = await showDialog<bool>(
+  lib\widgets\post_card.dart:74:      context: context,
+  lib\widgets\post_card.dart:75:      builder: (ctx) => AlertDialog(
+  lib\widgets\post_card.dart:76:        shape: RoundedRectangleBorder(
+> lib\widgets\post_card.dart:77:          borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\post_card.dart:78:        ),
+  lib\widgets\post_card.dart:79:        title: Text(title),
+  lib\widgets\post_card.dart:80:        content: content == null ? null : Text(content),
+  lib\widgets\post_card.dart:81:        actions: [
+  lib\widgets\post_card.dart:82:          TextButton(
+  lib\widgets\post_card.dart:83:            onPressed: () => Navigator.of(ctx).pop(false),
+  lib\widgets\post_card.dart:824:  @override
+  lib\widgets\post_card.dart:825:  Widget build(BuildContext context) {
+  lib\widgets\post_card.dart:826:    return AlertDialog(
+  lib\widgets\post_card.dart:827:      shape: RoundedRectangleBorder(
+> lib\widgets\post_card.dart:828:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\post_card.dart:829:      ),
+  lib\widgets\post_card.dart:830:      title: Text(tr('Bổ sung gợi ý', 'Add a hint')),
+  lib\widgets\post_card.dart:831:      content: SizedBox(
+  lib\widgets\post_card.dart:832:        width: 360,
+  lib\widgets\post_card.dart:833:        child: TextField(
+  lib\widgets\post_card.dart:834:          controller: _controller,
+  lib\widgets\reaction_picker.dart:286:              errorText: _error,
+  lib\widgets\reaction_picker.dart:287:              filled: true,
+  lib\widgets\reaction_picker.dart:288:              fillColor: AppColors.background,
+  lib\widgets\reaction_picker.dart:289:              border: OutlineInputBorder(
+> lib\widgets\reaction_picker.dart:290:                borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\reaction_picker.dart:291:                borderSide: BorderSide.none,
+  lib\widgets\reaction_picker.dart:292:              ),
+  lib\widgets\reaction_picker.dart:293:              enabledBorder: OutlineInputBorder(
+> lib\widgets\reaction_picker.dart:294:                borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\reaction_picker.dart:295:                borderSide: BorderSide.none,
+  lib\widgets\reaction_picker.dart:296:              ),
+  lib\widgets\reaction_picker.dart:297:            ),
+  lib\widgets\reaction_picker.dart:298:          ),
+  lib\widgets\reaction_picker.dart:299:        ],
+  lib\widgets\reaction_picker.dart:300:      ),
+  lib\widgets\settings_widgets.dart:86:    return Material(
+  lib\widgets\settings_widgets.dart:87:      color: AppColors.surface,
+  lib\widgets\settings_widgets.dart:88:      clipBehavior: Clip.antiAlias,
+  lib\widgets\settings_widgets.dart:89:      shape: RoundedRectangleBorder(
+> lib\widgets\settings_widgets.dart:90:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\settings_widgets.dart:91:        side: const BorderSide(color: AppColors.border),
+  lib\widgets\settings_widgets.dart:92:      ),
+  lib\widgets\settings_widgets.dart:93:      child: Column(
+  lib\widgets\settings_widgets.dart:94:        children: [
+  lib\widgets\settings_widgets.dart:95:          for (var i = 0; i < children.length; i++) ...[
+  lib\widgets\settings_widgets.dart:96:            if (i > 0) const Divider(height: 1, indent: 60),
+  lib\widgets\story_widgets.dart:205:      margin: const EdgeInsets.only(bottom: 12),
+  lib\widgets\story_widgets.dart:206:      padding: const EdgeInsets.all(14),
+  lib\widgets\story_widgets.dart:207:      decoration: BoxDecoration(
+  lib\widgets\story_widgets.dart:208:        color: Colors.white,
+> lib\widgets\story_widgets.dart:209:        borderRadius: BorderRadius.circular(16),
+  lib\widgets\story_widgets.dart:210:        border: Border.all(color: AppColors.border),
+  lib\widgets\story_widgets.dart:211:      ),
+  lib\widgets\story_widgets.dart:212:      child: Column(
+  lib\widgets\story_widgets.dart:213:        crossAxisAlignment: CrossAxisAlignment.start,
+  lib\widgets\story_widgets.dart:214:        children: [
+  lib\widgets\story_widgets.dart:215:          if (photo != null)
+  lib\widgets\story_widgets.dart:315:      margin: const EdgeInsets.only(bottom: 12),
+  lib\widgets\story_widgets.dart:316:      padding: const EdgeInsets.all(14),
+  lib\widgets\story_widgets.dart:317:      decoration: BoxDecoration(
+  lib\widgets\story_widgets.dart:318:        color: AppColors.soft,
+> lib\widgets\story_widgets.dart:319:        borderRadius: BorderRadius.circular(16),
+  lib\widgets\story_widgets.dart:320:      ),
+  lib\widgets\story_widgets.dart:321:      child: Column(
+  lib\widgets\story_widgets.dart:322:        crossAxisAlignment: CrossAxisAlignment.start,
+  lib\widgets\story_widgets.dart:323:        children: [
+  lib\widgets\story_widgets.dart:324:          Text(
+  lib\widgets\story_widgets.dart:325:            tr('AI cần thêm thông tin, nên chưa tự điền:',
+  lib\widgets\weave_activity_widgets.dart:231:      elevation: 0,
+  lib\widgets\weave_activity_widgets.dart:232:      color: AppColors.surface,
+  lib\widgets\weave_activity_widgets.dart:233:      margin: const EdgeInsets.only(bottom: 10),
+  lib\widgets\weave_activity_widgets.dart:234:      shape: RoundedRectangleBorder(
+> lib\widgets\weave_activity_widgets.dart:235:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\weave_activity_widgets.dart:236:        side: const BorderSide(color: AppColors.border),
+  lib\widgets\weave_activity_widgets.dart:237:      ),
+  lib\widgets\weave_activity_widgets.dart:238:      child: InkWell(
+> lib\widgets\weave_activity_widgets.dart:239:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\weave_activity_widgets.dart:240:        onTap: onTap,
+  lib\widgets\weave_activity_widgets.dart:241:        child: Padding(
+  lib\widgets\weave_activity_widgets.dart:242:          padding: const EdgeInsets.all(14),
+  lib\widgets\weave_activity_widgets.dart:243:          child: Column(
+  lib\widgets\weave_activity_widgets.dart:244:            crossAxisAlignment: CrossAxisAlignment.start,
+  lib\widgets\weave_activity_widgets.dart:245:            children: [
+
+

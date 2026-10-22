@@ -15,8 +15,8 @@ import '../theme/app_theme.dart';
 import '../widgets/post_card.dart';
 import '../widgets/reaction_picker.dart';
 
-/// Màu của đáp án được chọn.
-const _answerGreen = Color(0xFF16A34A);
+/// Màu của đáp án được chọn (cùng màu Teal với nhãn đáp án ở thẻ bài viết).
+const _answerGreen = AppColors.teal;
 
 /// Gợi ý khi gõ @: một người bạn hoặc trợ lý AI.
 class _Suggestion {
@@ -324,7 +324,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(tr('Xóa bình luận?', 'Delete comment?')),
         actions: [
           TextButton(
@@ -477,56 +476,60 @@ class _CommentsScreenState extends State<CommentsScreen> {
     return Container(
       constraints: const BoxConstraints(maxHeight: 220),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.border)),
       ),
-      child: ListView(
-        shrinkWrap: true,
-        padding: EdgeInsets.zero,
-        children: [
-          for (final s in _suggestions)
-            ListTile(
-              dense: true,
-              leading: s.isAi
-                  ? Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: AppColors.gradient,
-                ),
-                child: const Icon(
-                  Icons.smart_toy_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              )
-                  : CircleAvatar(
-                radius: 18,
-                backgroundColor: AppColors.soft,
-                child: Text(
-                  initialOf(s.name),
-                  style: const TextStyle(
-                    color: AppColors.brand,
-                    fontWeight: FontWeight.bold,
+      // Material trong suốt để ListTile vẽ được hiệu ứng chạm trên nền Container
+      child: Material(
+        color: Colors.transparent,
+        child: ListView(
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          children: [
+            for (final s in _suggestions)
+              ListTile(
+                dense: true,
+                leading: s.isAi
+                    ? Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: AppColors.gradient,
+                  ),
+                  child: const Icon(
+                    Icons.smart_toy_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                )
+                    : CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppColors.soft,
+                  child: Text(
+                    initialOf(s.name),
+                    style: const TextStyle(
+                      color: AppColors.brand,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              title: Text(
-                s.isAi ? 'AI' : s.name,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: s.isAi
-                  ? Text(
-                tr(
-                  'Gọi trợ lý AI trả lời bình luận này',
-                  'Ask the AI assistant to reply to this comment',
+                title: Text(
+                  s.isAi ? 'AI' : s.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-              )
-                  : null,
-              onTap: () => _pick(s),
-            ),
-        ],
+                subtitle: s.isAi
+                    ? Text(
+                  tr(
+                    'Gọi trợ lý AI trả lời bình luận này',
+                    'Ask the AI assistant to reply to this comment',
+                  ),
+                )
+                    : null,
+                onTap: () => _pick(s),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -535,7 +538,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     final reply = _replyTo;
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: SafeArea(
@@ -550,7 +553,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 if (reply != null)
                   Container(
                     width: double.infinity,
-                    color: const Color(0xFFF3F4F6),
+                    color: AppColors.background,
                     padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
                     child: Row(
                       children: [
@@ -601,14 +604,25 @@ class _CommentsScreenState extends State<CommentsScreen> {
                             ),
                             counterText: '',
                             filled: true,
-                            fillColor: const Color(0xFFF3F4F6),
+                            fillColor: AppColors.background,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,
                             ),
+                            // Theme có viền cho mọi ô nhập nên phải đặt rõ cả
+                            // enabledBorder và focusedBorder cho ô dạng viên thuốc này.
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
                               borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide:
+                              const BorderSide(color: AppColors.brand),
                             ),
                           ),
                         ),
@@ -620,7 +634,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         child: SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child:
+                          CircularProgressIndicator(strokeWidth: 2),
                         ),
                       )
                           : IconButton(
@@ -645,7 +660,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Bình luận', 'Comments')),
       ),
       body: Column(
@@ -679,7 +693,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 'Bài viết này đã bị xóa',
                                 'This post has been deleted',
                               ),
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              style: const TextStyle(
+                                  color: AppColors.textSecondary),
                             ),
                           );
                         }
@@ -717,7 +732,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                       'No comments yet.\nBe the first!',
                                     ),
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(color: AppColors.textSecondary),
+                                    style: const TextStyle(
+                                        color: AppColors.textSecondary),
                                   ),
                                 )
                               else
@@ -830,7 +846,7 @@ class _CommentTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
@@ -845,7 +861,7 @@ class _CommentTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F7EE),
+        color: _answerGreen.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -885,7 +901,7 @@ class _CommentTile extends StatelessWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isAccepted ? _answerGreen : AppColors.border,
@@ -904,6 +920,7 @@ class _CommentTile extends StatelessWidget {
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ),
@@ -965,19 +982,12 @@ class _CommentTile extends StatelessWidget {
                             InkWell(
                               borderRadius: BorderRadius.circular(8),
                               onTap: onReply,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(
                                   horizontal: 6,
                                   vertical: 4,
                                 ),
-                                child: Text(
-                                  tr('Trả lời', 'Reply'),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
+                                child: _ReplyLabel(),
                               ),
                             ),
                             if (canAccept)
@@ -1032,6 +1042,8 @@ class _CommentTile extends StatelessWidget {
                                   value: 'delete',
                                   child: Text(
                                     tr('Xóa bình luận', 'Delete comment'),
+                                    style: const TextStyle(
+                                        color: AppColors.danger),
                                   ),
                                 ),
                             ],
@@ -1044,6 +1056,23 @@ class _CommentTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Nhãn "Trả lời" (tách riêng để dùng const cho InkWell bên trên).
+class _ReplyLabel extends StatelessWidget {
+  const _ReplyLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      tr('Trả lời', 'Reply'),
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textSecondary,
       ),
     );
   }
@@ -1105,7 +1134,7 @@ class _MentionText extends StatelessWidget {
 
   const _MentionText({required this.text, required this.mentions});
 
-  static const _style = TextStyle(height: 1.3);
+  static const _style = TextStyle(height: 1.3, color: AppColors.textPrimary);
 
   @override
   Widget build(BuildContext context) {
@@ -1165,7 +1194,9 @@ class _ReportDialogState extends State<_ReportDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
+      ),
       title: Text(tr('Báo cáo bình luận', 'Report comment')),
       content: SizedBox(
         width: 360,
@@ -1181,7 +1212,8 @@ class _ReportDialogState extends State<_ReportDialog> {
                     _reason == r
                         ? Icons.radio_button_checked
                         : Icons.radio_button_unchecked,
-                    color: _reason == r ? AppColors.brand : AppColors.textSecondary,
+                    color:
+                    _reason == r ? AppColors.brand : AppColors.textSecondary,
                   ),
                   title: Text(reportReasonLabel(r)),
                   onTap: () => setState(() => _reason = r),
@@ -1197,10 +1229,18 @@ class _ReportDialogState extends State<_ReportDialog> {
                     'Add details (optional)',
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
+                  fillColor: AppColors.background,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(WeaveRadius.control),
                     borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(WeaveRadius.control),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(WeaveRadius.control),
+                    borderSide: const BorderSide(color: AppColors.brand),
                   ),
                 ),
               ),

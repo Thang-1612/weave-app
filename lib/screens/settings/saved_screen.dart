@@ -23,8 +23,7 @@ class _SavedScreenState extends State<SavedScreen> {
     final results = await Future.wait(ids.map(PostService.getPost));
     // Giữ đúng thứ tự: lưu gần nhất lên đầu; bỏ qua bài đã bị xóa
     return [
-      for (final p in results)
-        if (p != null) p,
+      for (final p in results) ?p,
     ];
   }
 

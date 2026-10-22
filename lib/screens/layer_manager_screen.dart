@@ -7,7 +7,6 @@ import '../services/l10n.dart';
 import '../services/layer_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/audience_picker.dart';
-import '../widgets/auth_widgets.dart';
 import '../widgets/layer_audience_picker.dart';
 import '../widgets/layer_tab_bar.dart';
 import 'close_friend_screen.dart';
@@ -46,12 +45,11 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
   }
 
   Future<void> _add() async {
+    // Hình dạng và màu nền của bottom sheet lấy từ bottomSheetTheme.
     final r = await showModalBottomSheet<_NewLayer>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      constraints: const BoxConstraints(maxWidth: 560),
       builder: (_) => const _AddLayerSheet(),
     );
     if (r == null || !mounted) return;
@@ -90,7 +88,6 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(tr('Xóa lớp "${l.name}"?', 'Delete layer "${l.name}"?')),
         content: Text(tr(
           'Nội dung của lớp sẽ bị xóa vĩnh viễn, không khôi phục được.',
@@ -129,14 +126,9 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
         '${l.blocks.length} content blocks');
   }
 
+  // Card lấy màu, viền, bo góc từ cardTheme.
   Widget _card({required Widget child}) => Card(
-    color: Colors.white,
-    elevation: 0,
     margin: const EdgeInsets.symmetric(vertical: 5),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-      side: const BorderSide(color: AppColors.border),
-    ),
     child: Padding(padding: const EdgeInsets.all(12), child: child),
   );
 
@@ -166,7 +158,8 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                         'Là nội dung bài đăng. Đổi đối tượng ở menu ⋯ của bài.',
                         'This is the post itself. Change its audience from the post ⋯ menu.',
                       ),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -184,7 +177,8 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
             )
                 : tr('Kéo ⠿ để sắp xếp thứ tự các lớp',
                 'Drag ⠿ to reorder layers'),
-            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+            style: const TextStyle(
+                fontSize: 12.5, color: AppColors.textSecondary),
           ),
         ),
       ],
@@ -193,7 +187,7 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
 
   Widget _buildLayer(List<WeaveLayer> layers, int i) {
     final l = layers[i];
-    return Container(
+    return KeyedSubtree(
       key: ValueKey(l.id),
       child: _card(
         child: Column(
@@ -205,7 +199,8 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                   index: i,
                   child: const Padding(
                     padding: EdgeInsets.only(top: 2, right: 8),
-                    child: Icon(Icons.drag_indicator, color: AppColors.textSecondary),
+                    child: Icon(Icons.drag_indicator,
+                        color: AppColors.textSecondary),
                   ),
                 ),
                 Expanded(
@@ -280,11 +275,11 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                 const SizedBox(width: 8),
                 Text(
                   tr('Bình luận', 'Comments'),
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                      fontSize: 13, color: AppColors.textSecondary),
                 ),
                 Switch(
                   value: l.commentsEnabled,
-                  activeColor: AppColors.brand,
                   onChanged: (v) => _run(
                         () => LayerService.setCommentsEnabled(
                       widget.post.ref,
@@ -304,23 +299,20 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(
-          flexibleSpace: const GradientAppBarBackground(),
-          title: Text(tr('Quản lý lớp', 'Manage layers')),
-          actions: [
-            IconButton(
-              tooltip: tr('Danh sách bạn thân', 'Close friends'),
-              icon: const Icon(Icons.favorite_border),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CloseFriendsScreen()),
-              ),
+      appBar: AppBar(
+        title: Text(tr('Quản lý lớp', 'Manage layers')),
+        actions: [
+          IconButton(
+            tooltip: tr('Danh sách bạn thân', 'Close friends'),
+            icon: const Icon(Icons.favorite_border),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CloseFriendsScreen()),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+      // Màu và bo góc của FAB lấy từ floatingActionButtonTheme.
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.brand,
-        foregroundColor: Colors.white,
         onPressed: _add,
         icon: const Icon(Icons.add),
         label: Text(tr('Thêm lớp', 'Add layer')),
@@ -343,8 +335,7 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
                 header: _buildHeader(layers.isEmpty),
                 itemCount: layers.length,
-                onReorder: (oldIndex, newIndex) {
-                  if (newIndex > oldIndex) newIndex -= 1;
+                onReorderItem: (oldIndex, newIndex) {
                   final ids = [for (final l in layers) l.id];
                   ids.insert(newIndex, ids.removeAt(oldIndex));
                   _run(() => LayerService.reorder(widget.post.ref, ids));
@@ -394,7 +385,8 @@ class _AddLayerSheetState extends State<_AddLayerSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+      EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
@@ -404,8 +396,7 @@ class _AddLayerSheetState extends State<_AddLayerSheet> {
             children: [
               Text(
                 tr('Thêm lớp mới', 'Add a new layer'),
-                style:
-                const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
               TextField(
@@ -444,8 +435,6 @@ class _AddLayerSheetState extends State<_AddLayerSheet> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  style:
-                  FilledButton.styleFrom(backgroundColor: AppColors.brand),
                   onPressed: () => Navigator.of(context).pop(
                     _NewLayer(_name.text.trim(), _audience, _text.text.trim()),
                   ),

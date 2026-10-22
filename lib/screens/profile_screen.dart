@@ -17,6 +17,8 @@ import 'edit_profile_screen.dart';
 /// Từ chiều rộng này trở lên, hồ sơ chia hai cột: giới thiệu bên trái,
 /// bài viết bên phải. Dưới mức này: một cột như cũ.
 const double _kProfileTwoColumnBreakpoint = 800;
+const double _kProfileContentMaxWidth = 1040;
+const double _kProfileIntroWidth = 320;
 
 class _Stat extends StatelessWidget {
   final String value;
@@ -340,51 +342,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             return LayoutBuilder(
               builder: (context, constraints) {
-                final twoColumns =
-                    constraints.maxWidth >= _kProfileTwoColumnBreakpoint;
+                final w = constraints.maxWidth;
+                final twoColumns = w >= _kProfileTwoColumnBreakpoint;
 
                 if (twoColumns) {
                   // Rộng: giới thiệu (card cố định 320) | bài viết cuộn riêng.
-                  return Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1040),
-                      child: Padding(
-                        padding: const EdgeInsets.all(WeaveSpacing.xl),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  // Danh sách bài kéo dài tới mép phải cửa sổ để lăn chuột ở
+                  // lề phải vẫn cuộn được; nội dung vẫn căn trong 1040 px.
+                  final margin = w > _kProfileContentMaxWidth
+                      ? (w - _kProfileContentMaxWidth) / 2
+                      : 0.0;
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: margin + WeaveSpacing.xl),
+                      SizedBox(
+                        width: _kProfileIntroWidth,
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(top: WeaveSpacing.xl),
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: WeaveSpacing.xl,
+                                horizontal: WeaveSpacing.sm,
+                              ),
+                              child: intro(),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: WeaveSpacing.md),
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.fromLTRB(
+                            0,
+                            WeaveSpacing.xl,
+                            margin + WeaveSpacing.xl,
+                            0,
+                          ),
                           children: [
-                            SizedBox(
-                              width: 320,
-                              child: SingleChildScrollView(
-                                child: Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: WeaveSpacing.xl,
-                                      horizontal: WeaveSpacing.sm,
-                                    ),
-                                    child: intro(),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: WeaveSpacing.md),
-                            Expanded(
-                              child: ListView(
-                                children: [
-                                  ..._buildPostWidgets(postsSnap, posts),
-                                  const SizedBox(height: WeaveSpacing.xl),
-                                ],
-                              ),
-                            ),
+                            ..._buildPostWidgets(postsSnap, posts),
+                            const SizedBox(height: WeaveSpacing.xl),
                           ],
                         ),
                       ),
-                    ),
+                    ],
                   );
                 }
 
                 // Hẹp: một cột, thông tin xếp dọc rồi tới bài viết.
+                // ScrollView full chiều rộng nên lăn chuột ở hai lề vẫn cuộn.
                 return SingleChildScrollView(
                   child: Center(
                     child: ConstrainedBox(

@@ -4,6 +4,7 @@ import '../../services/l10n.dart';
 import '../../services/user_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/settings_widgets.dart';
+import '../../widgets/weave_ui.dart';
 
 class CategorySettingsScreen extends StatelessWidget {
   const CategorySettingsScreen({super.key});
@@ -13,7 +14,6 @@ class CategorySettingsScreen extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(tr('Xóa dữ liệu sở thích?', 'Clear interest data?')),
         content: Text(
           tr(
@@ -38,7 +38,10 @@ class CategorySettingsScreen extends StatelessWidget {
     try {
       await UserPrefs.instance.resetInterests();
       messenger.showSnackBar(
-        SnackBar(content: Text(tr('Đã xóa dữ liệu sở thích', 'Interest data cleared'))),
+        SnackBar(
+          content:
+          Text(tr('Đã xóa dữ liệu sở thích', 'Interest data cleared')),
+        ),
       );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('$e')));
@@ -48,15 +51,14 @@ class CategorySettingsScreen extends StatelessWidget {
   /// Một nhóm chủ đề lớn: bấm để mở ra các chủ đề nhỏ, có công tắc cả nhóm.
   Widget _group(BuildContext context, SpaceGroup g, UserPrefs prefs) {
     final total = g.children.length;
-    final visible =
-        g.children.where((s) => !prefs.isRestricted(s.id)).length;
+    final visible = g.children.where((s) => !prefs.isRestricted(s.id)).length;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Theme(
@@ -74,7 +76,8 @@ class CategorySettingsScreen extends StatelessWidget {
             tr('$visible/$total đang hiện', '$visible/$total visible'),
             style: TextStyle(
               fontSize: 12.5,
-              color: visible == total ? AppColors.textSecondary : AppColors.brand,
+              color:
+              visible == total ? AppColors.textSecondary : AppColors.brand,
             ),
           ),
           children: [
@@ -120,7 +123,8 @@ class CategorySettingsScreen extends StatelessWidget {
                   'Chủ đề bị tắt sẽ không hiện trong mục Tất cả, trong menu chủ đề và trong đề xuất. Bài bạn đăng vào chủ đề đó vẫn được lưu bình thường.',
                   'Turned-off topics do not appear in All posts, the topic menu or recommendations. Your posts in those topics are still saved normally.',
                 ),
-                style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                style: const TextStyle(
+                    color: AppColors.textSecondary, height: 1.4),
               ),
             ),
             SectionLabel(tr('Chủ đề được hiện', 'Visible topics')),

@@ -199,8 +199,8 @@ class PostService {
       'comments': 0,
       'reactionSummary': <String, dynamic>{},
       'createdAt': FieldValue.serverTimestamp(),
-      if (forkedFrom != null) 'forkedFrom': forkedFrom,
-      if (forkedFromAuthor != null) 'forkedFromAuthor': forkedFromAuthor,
+      'forkedFrom': ?forkedFrom,
+      'forkedFromAuthor': ?forkedFromAuthor,
       if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt),
       // Chưa có đáp án khi mới đăng (luật Firestore không cho tạo sẵn đáp án)
       if (isQuestion) 'isQuestion': true,

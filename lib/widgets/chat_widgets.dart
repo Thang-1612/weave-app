@@ -86,15 +86,23 @@ class ChatTitle extends StatelessWidget {
   final Chat chat;
   final TextStyle? style;
   const ChatTitle(this.chat, {super.key, this.style});
+
+  Widget _text(String t) =>
+      Text(t, maxLines: 1, overflow: TextOverflow.ellipsis, style: style);
+
   @override
-  Widget build(BuildContext context) => FutureBuilder<String>(
-    future: ChatService.I.chatName(chat),
-    initialData: chat.isGroup
-        ? (chat.name.isEmpty ? 'Nhóm chat' : chat.name)
-        : ChatService.I.cached(chat.otherId(ChatService.I.me))?.name,
-    builder: (c, s) => Text(s.data ?? '…',
-        maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
-  );
+  Widget build(BuildContext context) {
+    final svc = ChatService.I;
+    // Đã có trong cache (hoặc là nhóm): hiện ngay, không tạo Future mới
+    // nên không nhấp nháy khi màn hình vẽ lại.
+    final name = svc.chatNameSync(chat);
+    if (name != null) return _text(name);
+    // Chưa có: chờ Future của người dùng (được cache theo uid, ổn định giữa các lần vẽ).
+    return FutureBuilder<ChatUser>(
+      future: svc.user(chat.otherId(svc.me)),
+      builder: (c, s) => _text(s.data?.name ?? '…'),
+    );
+  }
 }
 
 // ───────────── Bong bóng tin nhắn ─────────────
@@ -120,86 +128,100 @@ class MessageBubble extends StatelessWidget {
 
   static final Map<String, Uint8List> _img = {};
 
-  /// Chiều rộng tối đa của bong bóng: 75% chiều rộng, trong khoảng 200–460.
-  static double _maxBubbleWidth(BuildContext context) =>
-      (MediaQuery.of(context).size.width * 0.75).clamp(200.0, 460.0).toDouble();
+  /// Chiều rộng tối đa của bong bóng: 75% bề rộng khả dụng của khung chứa
+  /// (không phải cả cửa sổ), trong khoảng 200–460.
+  static double _maxBubbleWidth(double available) =>
+      (available * 0.75).clamp(200.0, 460.0).toDouble();
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+    // Vuốt ngang để trả lời chỉ dành cho cảm ứng. Trên desktop/web, kéo chuột
+    // ngang là thao tác chọn chữ (tin nhắn dùng SelectableText) nên không bắt.
+    final platform = Theme.of(context).platform;
+    final touch = platform == TargetPlatform.android ||
+        platform == TargetPlatform.iOS ||
+        platform == TargetPlatform.fuchsia;
     // Tin của mình: Brand Indigo, chữ trắng. Tin của người khác: nền Surface + viền mảnh.
     final bg = mine ? AppColors.brand : (dark ? Colors.grey.shade800 : AppColors.surface);
     final fg = mine ? Colors.white : (dark ? Colors.white : AppColors.textPrimary);
     final sub = mine ? Colors.white.withValues(alpha: .75) : AppColors.textSecondary;
-    final maxW = _maxBubbleWidth(context);
     final grouped = <String, int>{};
     msg.reactions.forEach((_, e) => grouped[e] = (grouped[e] ?? 0) + 1);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Align(
-        alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-        child: GestureDetector(
-          onLongPress: onLongPress,
-          onHorizontalDragEnd: (d) {
-            if ((d.primaryVelocity ?? 0).abs() > 500) onReply();
-          },
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxW),
-            child: Column(
-              crossAxisAlignment:
-              mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(18),
-                      topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(mine ? 18 : 4),
-                      bottomRight: Radius.circular(mine ? 4 : 18),
-                    ),
-                    // Viền mảnh thay cho bóng đổ (card/bong bóng phẳng theo design system)
-                    border: mine ? null : Border.all(color: AppColors.border),
-                  ),
-                  child: _content(context, fg, sub),
-                ),
-                if (grouped.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 3),
-                    child: Wrap(spacing: 4, children: [
-                      for (final e in grouped.entries)
-                        InkWell(
-                          onTap: () => onReact(e.key),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: msg.reactions[me] == e.key
-                                  ? AppColors.soft
-                                  : (dark ? AppColors.textSecondary : AppColors.surface),
-                              border: Border.all(
-                                color: msg.reactions[me] == e.key
-                                    ? AppColors.brand
-                                    : AppColors.border,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(e.value > 1 ? '${e.key} ${e.value}' : e.key,
-                                style: const TextStyle(fontSize: 12)),
-                          ),
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Trừ lề ngang 2 x 12 của Padding bên dưới
+        final maxW = _maxBubbleWidth(c.maxWidth - 24);
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          child: Align(
+            alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+            child: GestureDetector(
+              onLongPress: onLongPress,
+              onHorizontalDragEnd: touch
+                  ? (d) {
+                if ((d.primaryVelocity ?? 0).abs() > 500) onReply();
+              }
+                  : null,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxW),
+                child: Column(
+                  crossAxisAlignment:
+                  mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.only(
+                          topLeft: const Radius.circular(18),
+                          topRight: const Radius.circular(18),
+                          bottomLeft: Radius.circular(mine ? 18 : 4),
+                          bottomRight: Radius.circular(mine ? 4 : 18),
                         ),
-                    ]),
-                  ),
-              ],
+                        // Viền mảnh thay cho bóng đổ (card/bong bóng phẳng theo design system)
+                        border: mine ? null : Border.all(color: AppColors.border),
+                      ),
+                      child: _content(context, fg, sub, maxW),
+                    ),
+                    if (grouped.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Wrap(spacing: 4, children: [
+                          for (final e in grouped.entries)
+                            InkWell(
+                              onTap: () => onReact(e.key),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: msg.reactions[me] == e.key
+                                      ? AppColors.soft
+                                      : (dark ? AppColors.textSecondary : AppColors.surface),
+                                  border: Border.all(
+                                    color: msg.reactions[me] == e.key
+                                        ? AppColors.brand
+                                        : AppColors.border,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(e.value > 1 ? '${e.key} ${e.value}' : e.key,
+                                    style: const TextStyle(fontSize: 12)),
+                              ),
+                            ),
+                        ]),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _content(BuildContext context, Color fg, Color sub) {
+  Widget _content(BuildContext context, Color fg, Color sub, double maxW) {
     if (msg.deleted) {
       return Text('Tin nhắn đã thu hồi',
           style: TextStyle(fontStyle: FontStyle.italic, color: sub));
@@ -229,8 +251,9 @@ class MessageBubble extends StatelessWidget {
     }
     if (msg.type == 'image' && msg.imageB64 != null) {
       final bytes = _img.putIfAbsent(msg.id, () => base64Decode(msg.imageB64!));
-      // Ảnh co theo bong bóng: không vượt chiều rộng tối đa trên màn hình hẹp
-      final imgW = (_maxBubbleWidth(context) - 28).clamp(120.0, 240.0).toDouble();
+      // Ảnh co theo bong bóng: không vượt chiều rộng tối đa trên màn hình hẹp,
+      // và cao tối đa 320 để ảnh dọc không kéo dài cả màn hình.
+      final imgW = (maxW - 28).clamp(120.0, 240.0).toDouble();
       kids.add(GestureDetector(
         onTap: () => showDialog(
           context: context,
@@ -238,7 +261,10 @@ class MessageBubble extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Image.memory(bytes, width: imgW, fit: BoxFit.cover, gaplessPlayback: true),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 320),
+            child: Image.memory(bytes, width: imgW, fit: BoxFit.cover, gaplessPlayback: true),
+          ),
         ),
       ));
     }
@@ -312,14 +338,12 @@ class ChatUnreadBadge extends StatelessWidget {
 }
 
 // ───────────── Chia sẻ bài viết vào chat ─────────────
+// Bo góc của bottom sheet lấy từ bottomSheetTheme trong app_theme.dart.
 Future<void> showShareToChatSheet(BuildContext context,
     {required String postId, required String title, String snippet = ''}) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(WeaveRadius.card)),
-    ),
     builder: (ctx) => SafeArea(
       child: SizedBox(
         height: MediaQuery.of(ctx).size.height * 0.6,

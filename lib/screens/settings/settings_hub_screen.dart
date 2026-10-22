@@ -36,7 +36,6 @@ class _Item {
   final String? subtitle;
   final Widget Function()? page;
   final VoidCallback? action;
-  final Color? color;
 
   const _Item(
       this.id,
@@ -45,7 +44,6 @@ class _Item {
         this.subtitle,
         this.page,
         this.action,
-        this.color,
       }) : assert(page != null || action != null);
 }
 
@@ -91,9 +89,6 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(WeaveRadius.card),
-        ),
         title: Text(tr('Đăng xuất?', 'Log out?')),
         content: Text(
           tr(

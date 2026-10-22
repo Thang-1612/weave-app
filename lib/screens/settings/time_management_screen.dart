@@ -5,6 +5,7 @@ import '../../services/l10n.dart';
 import '../../services/usage_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/settings_widgets.dart';
+import '../../widgets/weave_ui.dart';
 
 class TimeManagementScreen extends StatefulWidget {
   const TimeManagementScreen({super.key});
@@ -69,7 +70,8 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
         children: [
           for (final m in options)
             ChoiceChip(
-              label: Text(m == 0 ? tr('Tắt', 'Off') : '$m ${tr('phút', 'min')}'),
+              label:
+              Text(m == 0 ? tr('Tắt', 'Off') : '$m ${tr('phút', 'min')}'),
               selected: value == m,
               onSelected: (_) => onSelected(m),
             ),
@@ -95,13 +97,15 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
                 children: [
                   Text(
                     _week[i] >= 60 ? '${_week[i] ~/ 60}' : '',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 4),
                   Container(
                     height: maxSec == 0
                         ? 4
-                        : (maxHeight * _week[i] / maxSec).clamp(4.0, maxHeight),
+                        : (maxHeight * _week[i] / maxSec)
+                        .clamp(4.0, maxHeight),
                     margin: const EdgeInsets.symmetric(horizontal: 6),
                     decoration: BoxDecoration(
                       color: i == 6 ? AppColors.brand : AppColors.soft,
@@ -124,65 +128,71 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
     );
   }
 
+  /// Thẻ tóm tắt hôm nay: phẳng, số lớn màu Brand; chạm giới hạn thì thanh
+  /// tiến độ chuyển sang Danger.
+  Widget _todayCard(double? progress) {
+    final overLimit = progress != null && progress >= 1;
+    return Container(
+      padding: const EdgeInsets.all(WeaveSpacing.xl),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            tr('Hôm nay bạn đã dùng', 'Today you used'),
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            formatDuration(_today),
+            style: const TextStyle(
+              color: AppColors.brand,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          if (progress != null) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 8,
+                backgroundColor: AppColors.soft,
+                color: overLimit ? AppColors.danger : AppColors.brand,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${tr('Giới hạn', 'Limit')}: $_limit ${tr('phút', 'min')}',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final avg = _week.isEmpty ? 0 : _week.reduce((a, b) => a + b) ~/ 7;
-    final progress =
-    _limit > 0 ? (_today / (_limit * 60)).clamp(0.0, 1.0).toDouble() : null;
+    final progress = _limit > 0
+        ? (_today / (_limit * 60)).clamp(0.0, 1.0).toDouble()
+        : null;
 
     return SettingsScaffold(
       title: tr('Quản lý thời gian', 'Time management'),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
           : settingsList([
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: AppColors.gradient,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                tr('Hôm nay bạn đã dùng', 'Today you used'),
-                style: const TextStyle(
-                  color: Color.fromRGBO(255, 255, 255, 0.85),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                formatDuration(_today),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              if (progress != null) ...[
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    backgroundColor:
-                    const Color.fromRGBO(255, 255, 255, 0.3),
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${tr('Giới hạn', 'Limit')}: $_limit ${tr('phút', 'min')}',
-                  style: const TextStyle(
-                    color: Color.fromRGBO(255, 255, 255, 0.85),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
+        _todayCard(progress),
         SectionLabel(tr('7 ngày gần nhất', 'Last 7 days')),
         SettingsCard(children: [_chart()]),
         Padding(
@@ -225,7 +235,8 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
               'Thời gian chỉ tính khi ứng dụng đang mở trên thiết bị này. Khi đạt giới hạn hoặc đến lúc nghỉ, ứng dụng sẽ hiện một lời nhắc.',
               'Time is counted only while the app is open on this device. When you reach your limit or a break is due, the app shows a reminder.',
             ),
-            style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+            style: const TextStyle(
+                color: AppColors.textSecondary, height: 1.4),
           ),
         ),
       ]),

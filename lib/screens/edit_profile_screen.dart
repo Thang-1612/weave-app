@@ -76,7 +76,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Chỉnh sửa hồ sơ', 'Edit profile')),
       ),
       body: Center(

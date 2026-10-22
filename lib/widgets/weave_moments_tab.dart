@@ -38,9 +38,8 @@ class WeaveMomentsTab extends StatelessWidget {
                 if (!activity.isEnded)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
+                    // Màu nút lấy từ theme (Brand Indigo)
                     child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.brand),
                       onPressed: () => _openAddSheet(context),
                       icon: const Icon(Icons.add_a_photo_outlined),
                       label: Text(tr('Thêm khoảnh khắc', 'Add a moment')),
@@ -75,6 +74,9 @@ class WeaveMomentsTab extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(WeaveRadius.card)),
+      ),
       builder: (_) => _AddMomentSheet(activityId: activity.id),
     );
   }
@@ -115,6 +117,7 @@ class _MomentCardState extends State<_MomentCard> {
               onPressed: () => Navigator.pop(c, false),
               child: Text(tr('Hủy', 'Cancel'))),
           FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
               onPressed: () => Navigator.pop(c, true),
               child: Text(tr('Xóa', 'Delete'))),
         ],
@@ -140,9 +143,9 @@ class _MomentCardState extends State<_MomentCard> {
             leading: _former
                 ? const CircleAvatar(
                 radius: 16,
-                backgroundColor: AppColors.textSecondary,
+                backgroundColor: AppColors.soft,
                 child: Icon(Icons.person_outline,
-                    size: 18, color: Colors.white))
+                    size: 18, color: AppColors.textSecondary))
                 : WeaveUserAvatar(uid: m.authorId),
             title: _former
                 ? Text(tr('Thành viên cũ', 'Former member'),
@@ -160,15 +163,22 @@ class _MomentCardState extends State<_MomentCard> {
             )
                 : null,
           ),
+          // Mọi ảnh cùng tỷ lệ 4:3 và co theo chiều rộng thẻ
           if (_bytes != null)
-            Image.memory(_bytes!,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                gaplessPlayback: true),
+            AspectRatio(
+              aspectRatio: 4 / 3,
+              child: Image.memory(_bytes,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  gaplessPlayback: true),
+            ),
           if (m.caption.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(14),
-              child: Text(m.caption, style: const TextStyle(height: 1.4)),
+              child: Text(
+                m.caption,
+                style: const TextStyle(height: 1.4, color: AppColors.textPrimary),
+              ),
             ),
         ],
       ),
@@ -241,9 +251,13 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
                 child: Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.memory(_image!,
-                          height: 200, fit: BoxFit.cover),
+                      borderRadius: BorderRadius.circular(WeaveRadius.control),
+                      // Xem trước theo cùng tỷ lệ 4:3 như khi hiển thị trong tab
+                      child: AspectRatio(
+                        aspectRatio: 4 / 3,
+                        child: Image.memory(_image!,
+                            width: double.infinity, fit: BoxFit.cover),
+                      ),
                     ),
                     Positioned(
                       right: 4,
@@ -257,6 +271,7 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
                   ],
                 ),
               ),
+            // Viền và màu focus của ô nhập lấy từ theme
             TextField(
               controller: _caption,
               enabled: !_busy,
@@ -266,7 +281,6 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
               decoration: InputDecoration(
                 hintText: tr('Bạn muốn nhớ điều gì về khoảnh khắc này?',
                     'What do you want to remember about this moment?'),
-                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 8),
@@ -281,14 +295,13 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
                 ),
                 const Spacer(),
                 FilledButton(
-                  style:
-                  FilledButton.styleFrom(backgroundColor: AppColors.brand),
                   onPressed: _busy ? null : _post,
                   child: _busy
                       ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
                       : Text(tr('Đăng', 'Post')),
                 ),
               ],

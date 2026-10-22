@@ -6,6 +6,7 @@ import '../../services/l10n.dart';
 import '../../services/user_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/settings_widgets.dart';
+import '../../widgets/weave_ui.dart';
 
 class _Faq {
   final String qVi;
@@ -94,7 +95,6 @@ class HelpScreen extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(title),
         content: SingleChildScrollView(child: Text(body)),
         actions: [
@@ -116,30 +116,40 @@ class HelpScreen extends StatelessWidget {
         return SettingsScaffold(
           title: tr('Trợ giúp', 'Help'),
           body: settingsList([
-            SectionLabel(tr('Câu hỏi thường gặp', 'Frequently asked questions')),
+            SectionLabel(
+                tr('Câu hỏi thường gặp', 'Frequently asked questions')),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(WeaveRadius.card),
                 border: Border.all(color: AppColors.border),
               ),
               clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [
-                  for (final f in _faqs)
-                    ExpansionTile(
-                      title: Text(
-                        en ? f.qEn : f.qVi,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                  for (var i = 0; i < _faqs.length; i++) ...[
+                    if (i > 0) const Divider(height: 1),
+                    Theme(
+                      // Bỏ đường kẻ mặc định của ExpansionTile
+                      data: Theme.of(context)
+                          .copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        shape: const Border(),
+                        collapsedShape: const Border(),
+                        title: Text(
+                          en ? _faqs[i].qEn : _faqs[i].qVi,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        childrenPadding:
+                        const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                        expandedAlignment: Alignment.centerLeft,
+                        children: [
+                          Text(en ? _faqs[i].aEn : _faqs[i].aVi,
+                              style: const TextStyle(height: 1.4)),
+                        ],
                       ),
-                      childrenPadding:
-                      const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                      expandedAlignment: Alignment.centerLeft,
-                      children: [
-                        Text(en ? f.aEn : f.aVi,
-                            style: const TextStyle(height: 1.4)),
-                      ],
                     ),
+                  ],
                 ],
               ),
             ),
@@ -148,7 +158,8 @@ class HelpScreen extends StatelessWidget {
               children: [
                 SettingsTile(
                   icon: Icons.feedback_outlined,
-                  title: tr('Gửi phản hồi hoặc báo lỗi', 'Send feedback or report a bug'),
+                  title: tr('Gửi phản hồi hoặc báo lỗi',
+                      'Send feedback or report a bug'),
                   subtitle: tr(
                     'Cho chúng tôi biết điều gì cần cải thiện',
                     'Tell us what needs improving',
@@ -256,7 +267,6 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
       'other': tr('Khác', 'Other'),
     };
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text(tr('Gửi phản hồi', 'Send feedback')),
       content: SizedBox(
         width: 360,
@@ -277,6 +287,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
                 ],
               ),
               const SizedBox(height: 12),
+              // Dùng kiểu ô nhập mặc định của theme (viền + nền trắng).
               TextField(
                 controller: _text,
                 maxLines: 5,
@@ -286,16 +297,14 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
                     'Mô tả vấn đề hoặc ý tưởng của bạn...',
                     'Describe your problem or idea...',
                   ),
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
                 ),
               ),
               if (_error != null)
-                Text(_error!, style: const TextStyle(color: AppColors.danger)),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(_error!,
+                      style: const TextStyle(color: AppColors.danger)),
+                ),
             ],
           ),
         ),

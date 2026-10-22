@@ -14,11 +14,17 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
-  /// Từ chiều rộng này trở lên dùng bố cục 2 cột: danh sách | phòng chat.
-  static const double _wideBreakpoint = 900;
+  /// Từ bề rộng KHUNG CHỨA này trở lên dùng bố cục 2 cột: danh sách | phòng chat.
+  /// (Đo bằng LayoutBuilder chứ không phải cả cửa sổ, vì khung điều hướng
+  /// desktop đã chiếm một phần chiều ngang bằng sidebar.)
+  /// 800 = 340 cho danh sách + tối thiểu 460 cho phòng chat.
+  static const double _wideBreakpoint = 800;
 
   /// Chiều rộng cột danh sách hội thoại trên desktop (quy chuẩn 300–340).
   static const double _listWidth = 340;
+
+  /// Chừa chỗ cuối danh sách trên điện thoại để nút + không che hội thoại cuối.
+  static const double _fabClearance = 88;
 
   final svc = ChatService.I;
   late final Stream<List<Chat>> _stream = svc.myChats();
@@ -27,7 +33,23 @@ class _ChatListScreenState extends State<ChatListScreen> {
   String? _selected; // chat đang mở ở khung phải (máy tính)
   int _tab = 0; // 0 = tất cả, 1 = tin chờ (máy tính)
 
-  bool get _wide => MediaQuery.of(context).size.width >= _wideBreakpoint;
+  // Được cập nhật trong LayoutBuilder của build()
+  bool _wide = false;
+
+  /// uid đã yêu cầu tải tên: mỗi uid chỉ tải một lần.
+  final Set<String> _nameRequested = {};
+
+  /// Tải trước tên người đối thoại còn thiếu trong cache, xong thì vẽ lại.
+  void _prefetchNames(List<Chat> l) {
+    for (final c in l) {
+      if (c.isGroup) continue;
+      final uid = c.otherId(svc.me);
+      if (svc.cached(uid) != null || !_nameRequested.add(uid)) continue;
+      svc.user(uid).then((_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
 
   List<Chat> _sort(List<Chat> l, String me) => [
     ...l.where((c) => c.pinnedBy.contains(me)),
@@ -67,16 +89,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final me = svc.me;
-    return StreamBuilder<List<Chat>>(
-      stream: _stream,
-      builder: (context, snap) {
-        final all = (snap.data ?? []).where((c) => c.hasMessages || c.isGroup).toList();
-        final requests = all
-            .where((c) => !c.isGroup && !c.acceptedBy.contains(me) && c.lastSenderId != me)
-            .toList();
-        final main = _sort(all.where((c) => !requests.contains(c)).toList(), me);
-        return _wide ? _desktop(snap, main, requests) : _mobile(snap, main, requests);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _wide = constraints.maxWidth.isFinite &&
+            constraints.maxWidth >= _wideBreakpoint;
+        final me = svc.me;
+        return StreamBuilder<List<Chat>>(
+          stream: _stream,
+          builder: (context, snap) {
+            final all =
+            (snap.data ?? []).where((c) => c.hasMessages || c.isGroup).toList();
+            final requests = all
+                .where((c) =>
+            !c.isGroup && !c.acceptedBy.contains(me) && c.lastSenderId != me)
+                .toList();
+            final main = _sort(all.where((c) => !requests.contains(c)).toList(), me);
+            return _wide ? _desktop(snap, main, requests) : _mobile(snap, main, requests);
+          },
+        );
       },
     );
   }
@@ -145,6 +175,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               onPressed: () => _newChat(group: true),
             ),
             IconButton(
+              tooltip: _searching ? 'Đóng tìm kiếm' : 'Tìm kiếm',
               icon: Icon(_searching ? Icons.close : Icons.search),
               onPressed: () => setState(() {
                 _searching = !_searching;
@@ -158,7 +189,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.brand,
             tabs: [
-              const Tab(text: 'Tin nhắn'),
+              // "Tất cả" (giống desktop), tránh trùng với tiêu đề "Tin nhắn"
+              const Tab(text: 'Tất cả'),
               Tab(text: requests.isEmpty ? 'Tin chờ' : 'Tin chờ (${requests.length})'),
             ],
           ),
@@ -175,6 +207,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ]),
         ),
         floatingActionButton: FloatingActionButton(
+          tooltip: 'Tạo cuộc trò chuyện',
           onPressed: () => _newChat(),
           child: const Icon(Icons.edit),
         ),
@@ -185,6 +218,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
   // ───────────── Máy tính: 2 cột (danh sách | phòng chat) ─────────────
   Widget _desktop(AsyncSnapshot<List<Chat>> snap, List<Chat> main, List<Chat> requests) {
     final list = _tab == 0 ? main : requests;
+    // Chỉ hiện nút Quay lại khi màn này thật sự được đẩy lên từ một màn khác;
+    // nếu nó là một mục gốc của khung điều hướng thì không có gì để quay về.
+    final canGoBack = Navigator.of(context).canPop();
     return Scaffold(
       body: Row(children: [
         SizedBox(
@@ -204,13 +240,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   child: SizedBox(
                     height: kToolbarHeight,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+                      padding: EdgeInsets.fromLTRB(canGoBack ? 4 : 12, 0, 4, 0),
                       child: Row(children: [
-                        IconButton(
-                          tooltip: 'Quay lại',
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed: () => Navigator.of(context).maybePop(),
-                        ),
+                        if (canGoBack)
+                          IconButton(
+                            tooltip: 'Quay lại',
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: () => Navigator.of(context).maybePop(),
+                          ),
                         Expanded(
                           child: TextField(
                             decoration: InputDecoration(
@@ -318,26 +355,42 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Widget _list(List<Chat> l, String empty) {
-    if (l.isEmpty) {
+    _prefetchNames(l);
+    final q = _q.trim().toLowerCase();
+    // Chat chưa biết tên thì tạm giữ lại, có tên rồi mới lọc.
+    final shown = q.isEmpty
+        ? l
+        : l.where((c) {
+      final n = svc.chatNameSync(c);
+      return n == null || n.toLowerCase().contains(q);
+    }).toList();
+
+    if (shown.isEmpty) {
+      final msg = q.isEmpty ? empty : 'Không tìm thấy "${_q.trim()}".';
       return Align(
         alignment: Alignment.topCenter,
         child: Padding(
           padding: const EdgeInsets.only(top: 48, left: 16, right: 16),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.chat_bubble_outline, size: 48, color: AppColors.textSecondary),
+            Icon(q.isEmpty ? Icons.chat_bubble_outline : Icons.search_off,
+                size: 48, color: AppColors.textSecondary),
             const SizedBox(height: 12),
-            Text(empty,
-                textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSecondary)),
+            Text(msg,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textSecondary)),
           ]),
         ),
       );
     }
     return ListView.builder(
-      itemCount: l.length,
+      // Điện thoại có nút + nổi: chừa chỗ để không che hội thoại cuối
+      padding: EdgeInsets.only(bottom: _wide ? 0 : _fabClearance),
+      itemCount: shown.length,
       itemBuilder: (c, i) => _ChatTile(
-        chat: l[i],
-        query: _q,
-        selected: _wide && l[i].id == _selected,
+        key: ValueKey(shown[i].id),
+        chat: shown[i],
+        name: svc.chatNameSync(shown[i]) ?? '',
+        selected: _wide && shown[i].id == _selected,
         onOpen: _open,
       ),
     );
@@ -346,12 +399,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
 class _ChatTile extends StatelessWidget {
   final Chat chat;
-  final String query;
+  final String name;
   final bool selected;
   final void Function(String chatId) onOpen;
   const _ChatTile({
+    super.key,
     required this.chat,
-    required this.query,
+    required this.name,
     required this.selected,
     required this.onOpen,
   });
@@ -363,77 +417,68 @@ class _ChatTile extends StatelessWidget {
     final unread = chat.unreadFor(me);
     final muted = chat.mutedBy.contains(me);
     final pinned = chat.pinnedBy.contains(me);
+    final preview =
+        (chat.lastSenderId == me && chat.lastType != 'system' ? 'Bạn: ' : '') + chat.lastText;
 
-    return FutureBuilder<String>(
-      future: svc.chatName(chat),
-      builder: (context, s) {
-        final name = s.data ?? '';
-        if (query.isNotEmpty && !name.toLowerCase().contains(query.toLowerCase())) {
-          return const SizedBox.shrink();
-        }
-        final preview =
-            (chat.lastSenderId == me && chat.lastType != 'system' ? 'Bạn: ' : '') + chat.lastText;
-        return ListTile(
-          // Màu mục đang chọn lấy từ listTileTheme (Soft Indigo + chữ Brand Indigo)
-          selected: selected,
-          leading: ChatAvatar(chat),
-          title: Text(name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontWeight: unread > 0 ? FontWeight.bold : FontWeight.normal)),
-          subtitle: Text(preview,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontWeight: unread > 0 ? FontWeight.bold : FontWeight.normal)),
-          trailing: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(listTime(chat.lastMessageAt),
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-              const SizedBox(height: 4),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                if (pinned) const Icon(Icons.push_pin, size: 14, color: AppColors.textSecondary),
-                if (muted) const Icon(Icons.notifications_off, size: 14, color: AppColors.textSecondary),
-                if (unread > 0)
-                  Container(
-                    margin: const EdgeInsets.only(left: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(
-                        color: muted ? AppColors.textSecondary : AppColors.danger,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Text(unread > 99 ? '99+' : '$unread',
-                        style: const TextStyle(color: Colors.white, fontSize: 11)),
-                  ),
-              ]),
-            ],
-          ),
-          onTap: () => onOpen(chat.id),
-          onLongPress: () => showModalBottomSheet(
-            context: context,
-            builder: (ctx) => SafeArea(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                ListTile(
-                  leading: Icon(pinned ? Icons.push_pin_outlined : Icons.push_pin),
-                  title: Text(pinned ? 'Bỏ ghim' : 'Ghim lên đầu'),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    svc.setPinned(chat, !pinned);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(muted ? Icons.notifications : Icons.notifications_off),
-                  title: Text(muted ? 'Bật thông báo' : 'Tắt thông báo'),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    svc.setMuted(chat, !muted);
-                  },
-                ),
-              ]),
+    return ListTile(
+      // Màu mục đang chọn lấy từ listTileTheme (Soft Indigo + chữ Brand Indigo)
+      selected: selected,
+      leading: ChatAvatar(chat),
+      title: Text(name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontWeight: unread > 0 ? FontWeight.bold : FontWeight.normal)),
+      subtitle: Text(preview,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontWeight: unread > 0 ? FontWeight.bold : FontWeight.normal)),
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(listTime(chat.lastMessageAt),
+              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+          const SizedBox(height: 4),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            if (pinned) const Icon(Icons.push_pin, size: 14, color: AppColors.textSecondary),
+            if (muted) const Icon(Icons.notifications_off, size: 14, color: AppColors.textSecondary),
+            if (unread > 0)
+              Container(
+                margin: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                    color: muted ? AppColors.textSecondary : AppColors.danger,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Text(unread > 99 ? '99+' : '$unread',
+                    style: const TextStyle(color: Colors.white, fontSize: 11)),
+              ),
+          ]),
+        ],
+      ),
+      onTap: () => onOpen(chat.id),
+      onLongPress: () => showModalBottomSheet(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            ListTile(
+              leading: Icon(pinned ? Icons.push_pin_outlined : Icons.push_pin),
+              title: Text(pinned ? 'Bỏ ghim' : 'Ghim lên đầu'),
+              onTap: () {
+                Navigator.pop(ctx);
+                svc.setPinned(chat, !pinned);
+              },
             ),
-          ),
-        );
-      },
+            ListTile(
+              leading: Icon(muted ? Icons.notifications : Icons.notifications_off),
+              title: Text(muted ? 'Bật thông báo' : 'Tắt thông báo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                svc.setMuted(chat, !muted);
+              },
+            ),
+          ]),
+        ),
+      ),
     );
   }
 }

@@ -63,12 +63,26 @@ class _ResponseBarState extends State<ResponseBar> {
               for (final r in set)
                 ChoiceChip(
                   visualDensity: VisualDensity.compact,
+                  showCheckmark: false,
                   selected: mine == r.id,
+                  // Cùng kiểu chip với các màn khác: nền trắng + viền mảnh,
+                  // đang chọn thì nền Soft Indigo, viền và chữ Brand Indigo
                   selectedColor: AppColors.soft,
+                  backgroundColor: AppColors.surface,
+                  side: BorderSide(
+                    color: mine == r.id ? AppColors.brand : AppColors.border,
+                  ),
+                  shape: const StadiumBorder(),
                   label: Text(
                     '${r.emoji} ${tr(r.vi, r.en)}'
                         '${(_counts[r.id] ?? 0) > 0 ? ' · ${_counts[r.id]}' : ''}',
-                    style: const TextStyle(fontSize: 12.5),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight:
+                      mine == r.id ? FontWeight.w700 : FontWeight.w500,
+                      color:
+                      mine == r.id ? AppColors.brand : AppColors.textPrimary,
+                    ),
                   ),
                   onSelected: (_) => _tap(r.id),
                 ),

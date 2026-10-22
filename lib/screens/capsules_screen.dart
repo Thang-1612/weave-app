@@ -10,6 +10,7 @@ import '../widgets/post_card.dart';
 /// Dưới mức này: bộ lọc nằm ở đầu trang.
 const double _kCapsulesWideBreakpoint = 900;
 const double _kCapsulesFilterWidth = 260;
+const double _kCapsulesContentMaxWidth = 1040;
 
 class CapsulesScreen extends StatefulWidget {
   const CapsulesScreen({super.key});
@@ -38,17 +39,20 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
   }
 
   Future<void> _reload() async {
-    setState(() => _future = _load());
-    await _future;
+    final next = _load();
+    setState(() => _future = next);
+    try {
+      await next;
+    } catch (_) {
+      // Lỗi được FutureBuilder hiển thị; không để RefreshIndicator ném tiếp.
+    }
   }
 
   Future<void> _deleteCapsule(String id) async {
+    final messenger = ScaffoldMessenger.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(WeaveRadius.card),
-        ),
         title: Text(tr('Xóa hộp thời gian?', 'Delete this time capsule?')),
         content: Text(tr(
           'Hộp thời gian sẽ bị xóa vĩnh viễn, không khôi phục được.',
@@ -67,9 +71,16 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
         ],
       ),
     );
-    if (ok != true) return;
-    await CapsuleService.delete(id);
-    _reload();
+    if (ok != true || !mounted) return;
+    try {
+      await CapsuleService.delete(id);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('$e'.replaceFirst('Exception: ', ''))),
+      );
+      return;
+    }
+    if (mounted) _reload();
   }
 
   Widget _title(String s) => Padding(
@@ -162,11 +173,9 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
   }
 
   Widget _filters(int mineCount, int lockedCount, int openedCount, int recvCount) {
+    // Màu và viền đã có trong chipTheme chung; chỉ giữ dạng viên thuốc, không tick.
     return ChipTheme(
       data: ChipTheme.of(context).copyWith(
-        backgroundColor: AppColors.surface,
-        selectedColor: AppColors.soft,
-        side: const BorderSide(color: AppColors.border),
         shape: const StadiumBorder(),
         showCheckmark: false,
       ),
@@ -269,60 +278,66 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
 
           return LayoutBuilder(
             builder: (context, constraints) {
-              final wide = constraints.maxWidth >= _kCapsulesWideBreakpoint;
+              final w = constraints.maxWidth;
+              final wide = w >= _kCapsulesWideBreakpoint;
 
               if (wide) {
                 // Rộng: bộ lọc (card cố định) | danh sách cuộn riêng.
-                return Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1040),
-                    child: Padding(
-                      padding: const EdgeInsets.all(WeaveSpacing.xl),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: _kCapsulesFilterWidth,
-                            child: Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(WeaveSpacing.lg),
-                                child: filters,
-                              ),
-                            ),
+                // Danh sách kéo dài tới mép phải cửa sổ để lăn chuột ở lề
+                // phải vẫn cuộn được; nội dung vẫn căn trong 1040 px.
+                final margin = w > _kCapsulesContentMaxWidth
+                    ? (w - _kCapsulesContentMaxWidth) / 2
+                    : 0.0;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: margin + WeaveSpacing.xl),
+                    SizedBox(
+                      width: _kCapsulesFilterWidth,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(top: WeaveSpacing.xl),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(WeaveSpacing.lg),
+                            child: filters,
                           ),
-                          const SizedBox(width: WeaveSpacing.sm),
-                          Expanded(
-                            child: RefreshIndicator(
-                              onRefresh: _reload,
-                              child: ListView(children: content),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: WeaveSpacing.sm),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _reload,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.fromLTRB(
+                            0,
+                            WeaveSpacing.xl,
+                            margin + WeaveSpacing.xl,
+                            0,
+                          ),
+                          children: content,
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               }
 
-              // Hẹp: bộ lọc ở đầu trang, rồi tới danh sách.
+              // Hẹp: bộ lọc ở đầu trang, rồi tới danh sách. ListView full
+              // chiều rộng, nội dung căn giữa tối đa 600 bằng padding.
               return RefreshIndicator(
                 onRefresh: _reload,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                          child: filters,
-                        ),
-                        ...content,
-                      ],
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: weaveCenteredPadding(w, h: 0, top: 0, bottom: 0),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: filters,
                     ),
-                  ),
+                    ...content,
+                  ],
                 ),
               );
             },

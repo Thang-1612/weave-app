@@ -8,6 +8,7 @@ import '../../widgets/friend_button.dart';
 import '../../widgets/settings_widgets.dart';
 import '../../widgets/suggested_people.dart';
 import 'favorites_screen.dart';
+import '../../widgets/weave_ui.dart';
 
 class InviteScreen extends StatefulWidget {
   const InviteScreen({super.key});
@@ -43,7 +44,9 @@ class _InviteScreenState extends State<InviteScreen> {
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          Text(label,
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 12)),
         ],
       ),
     );
@@ -73,7 +76,8 @@ class _InviteScreenState extends State<InviteScreen> {
                   child: Row(
                     children: [
                       _stat('$friends', tr('Bạn bè', 'Friends')),
-                      _stat('${incoming.length}', tr('Lời mời nhận', 'Requests')),
+                      _stat('${incoming.length}',
+                          tr('Lời mời nhận', 'Requests')),
                       _stat('${outgoing.length}', tr('Đã gửi', 'Sent')),
                     ],
                   ),
@@ -84,8 +88,8 @@ class _InviteScreenState extends State<InviteScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(WeaveRadius.card),
                 border: Border.all(color: AppColors.border),
               ),
               child: Column(
@@ -95,9 +99,6 @@ class _InviteScreenState extends State<InviteScreen> {
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: _copy,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.brand,
-                    ),
                     icon: const Icon(Icons.copy, size: 18),
                     label: Text(tr('Sao chép lời mời', 'Copy invitation')),
                   ),
@@ -107,7 +108,8 @@ class _InviteScreenState extends State<InviteScreen> {
                       'Liên kết sẽ mở được khi bản web đã được triển khai lên Firebase Hosting.',
                       'The link will work once the web app is deployed to Firebase Hosting.',
                     ),
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: const TextStyle(
+                        color: AppColors.textSecondary, fontSize: 12),
                   ),
                 ],
               ),
@@ -144,7 +146,8 @@ class _InviteScreenState extends State<InviteScreen> {
                     'Prioritize posts from people you care about',
                   ),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const FavoritesScreen()),
                   ),
                 ),
               ],

@@ -31,16 +31,23 @@ class SettingsScaffold extends StatelessWidget {
   }
 }
 
-/// Danh sách căn giữa, rộng tối đa 600.
+/// Danh sách căn giữa, nội dung rộng tối đa 600.
+///
+/// ListView phủ toàn chiều rộng và phần lề được đẩy vào padding, nên lăn
+/// chuột hoặc kéo ở hai bên lề vẫn cuộn được danh sách (trước đây ListView
+/// chỉ rộng 600 nên lề không nhận sự kiện cuộn).
 Widget settingsList(List<Widget> children) {
-  return Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 600),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+  const maxContentWidth = 600.0;
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      final side = constraints.maxWidth > maxContentWidth
+          ? (constraints.maxWidth - maxContentWidth) / 2
+          : 0.0;
+      return ListView(
+        padding: EdgeInsets.fromLTRB(12 + side, 8, 12 + side, 24),
         children: children,
-      ),
-    ),
+      );
+    },
   );
 }
 

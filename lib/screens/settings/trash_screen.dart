@@ -21,6 +21,7 @@ class _TrashScreenState extends State<TrashScreen> {
     TrashService.purgeExpired();
   }
 
+  /// Hộp xác nhận cho hành động nguy hiểm: nút chính dùng màu Danger.
   Future<bool> _confirm({
     required String title,
     required String message,
@@ -28,21 +29,27 @@ class _TrashScreenState extends State<TrashScreen> {
   }) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(tr('Hủy', 'Cancel')),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(action),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final scheme = Theme.of(ctx).colorScheme;
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(tr('Hủy', 'Cancel')),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: scheme.error,
+                foregroundColor: scheme.onError,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(action),
+            ),
+          ],
+        );
+      },
     );
     return ok == true;
   }
@@ -57,7 +64,8 @@ class _TrashScreenState extends State<TrashScreen> {
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('${tr('Không khôi phục được', 'Could not restore')}: $e'),
+          content:
+          Text('${tr('Không khôi phục được', 'Could not restore')}: $e'),
         ),
       );
     }
@@ -120,6 +128,7 @@ class _TrashScreenState extends State<TrashScreen> {
   }
 
   Widget _card(TrashItem item) {
+    final scheme = Theme.of(context).colorScheme;
     final space = findSpace(item.spaceId);
     final spaceLabel = space == null
         ? ''
@@ -137,7 +146,7 @@ class _TrashScreenState extends State<TrashScreen> {
       margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
       padding: const EdgeInsets.fromLTRB(14, 12, 8, 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
@@ -147,7 +156,8 @@ class _TrashScreenState extends State<TrashScreen> {
           if (spaceLabel.isNotEmpty)
             Text(
               spaceLabel,
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: const TextStyle(
+                  fontSize: 12, color: AppColors.textSecondary),
             ),
           const SizedBox(height: 6),
           Text(
@@ -166,7 +176,8 @@ class _TrashScreenState extends State<TrashScreen> {
             const SizedBox(height: 4),
             Text(
               extras.join(' · '),
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: const TextStyle(
+                  fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
           const SizedBox(height: 8),
@@ -175,7 +186,8 @@ class _TrashScreenState extends State<TrashScreen> {
               'Đã xóa ${_ago(item.deletedAt)} · còn ${item.daysLeft} ngày',
               'Deleted ${_ago(item.deletedAt)} · ${item.daysLeft} day(s) left',
             ),
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: const TextStyle(
+                fontSize: 12, color: AppColors.textSecondary),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -190,7 +202,7 @@ class _TrashScreenState extends State<TrashScreen> {
                 onPressed: () => _deleteForever(item),
                 icon: const Icon(Icons.delete_forever_outlined, size: 18),
                 label: Text(tr('Xóa vĩnh viễn', 'Delete')),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                style: TextButton.styleFrom(foregroundColor: scheme.error),
               ),
             ],
           ),
@@ -221,7 +233,8 @@ class _TrashScreenState extends State<TrashScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.delete_outline, size: 56, color: AppColors.textSecondary),
+              const Icon(Icons.delete_outline,
+                  size: 56, color: AppColors.textSecondary),
               const SizedBox(height: 12),
               Text(
                 tr(
@@ -229,7 +242,8 @@ class _TrashScreenState extends State<TrashScreen> {
                   'Trash is empty.\nDeleted posts are kept here for 30 days.',
                 ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                style: const TextStyle(
+                    color: AppColors.textSecondary, height: 1.4),
               ),
             ],
           ),
@@ -275,18 +289,18 @@ class _TrashScreenState extends State<TrashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return StreamBuilder<List<TrashItem>>(
       stream: _stream,
       builder: (context, snap) {
         final items = snap.data ?? const <TrashItem>[];
         return Scaffold(
           appBar: AppBar(
-            flexibleSpace: const GradientAppBarBackground(),
             title: Text(tr('Thùng rác', 'Trash')),
             actions: [
               if (items.isNotEmpty)
                 IconButton(
-                  icon: const Icon(Icons.delete_sweep_outlined),
+                  icon: Icon(Icons.delete_sweep_outlined, color: scheme.error),
                   tooltip: tr('Dọn sạch thùng rác', 'Empty trash'),
                   onPressed: () => _emptyAll(items.length),
                 ),

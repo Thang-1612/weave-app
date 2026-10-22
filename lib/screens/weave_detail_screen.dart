@@ -11,8 +11,11 @@ import '../widgets/weave_moments_tab.dart';
 import '../widgets/place_picker_screen.dart';
 import '../services/maps_launcher.dart';
 
-/// Từ chiều rộng này trở lên: Tổng quan cố định bên trái, các tab bên phải.
-const double _kWeaveDetailWideBreakpoint = 1000;
+/// Từ bề rộng KHUNG CHỨA này trở lên: Tổng quan cố định bên trái, các tab bên
+/// phải. (Đo bằng LayoutBuilder chứ không phải cả cửa sổ, vì khung điều hướng
+/// desktop có thể đã chiếm một phần chiều ngang bằng sidebar.)
+/// 960 = 400 cho Tổng quan + tối thiểu 560 cho các tab.
+const double _kWeaveDetailWideBreakpoint = 960;
 const double _kWeaveOverviewWidth = 400;
 
 class WeaveDetailScreen extends StatelessWidget {
@@ -42,9 +45,12 @@ class WeaveDetailScreen extends StatelessWidget {
                   'This activity no longer exists.'))));
         }
 
-        final wide =
-            MediaQuery.sizeOf(context).width >= _kWeaveDetailWideBreakpoint;
-        return wide ? _wide(a) : _narrow(a);
+        return LayoutBuilder(
+          builder: (context, constraints) =>
+          constraints.maxWidth >= _kWeaveDetailWideBreakpoint
+              ? _wide(a)
+              : _narrow(a),
+        );
       },
     );
   }
@@ -215,7 +221,13 @@ class _OverviewTabState extends State<_OverviewTab> {
   }
 
   /// [danger] = true: nút xác nhận màu đỏ (hành động nguy hiểm, như rời hoạt động).
-  Future<bool> _confirm(String title, String body, {bool danger = false}) async {
+  /// [confirmLabel]: nhãn nút xác nhận, nên nêu rõ hành động thay vì "Đồng ý".
+  Future<bool> _confirm(
+      String title,
+      String body, {
+        bool danger = false,
+        String? confirmLabel,
+      }) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
@@ -230,7 +242,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                   ? FilledButton.styleFrom(backgroundColor: AppColors.danger)
                   : null,
               onPressed: () => Navigator.pop(c, true),
-              child: Text(tr('Đồng ý', 'OK'))),
+              child: Text(confirmLabel ?? tr('Đồng ý', 'OK'))),
         ],
       ),
     );
@@ -282,146 +294,147 @@ class _OverviewTabState extends State<_OverviewTab> {
         final going =
             members.where((m) => m.rsvp == RsvpStatus.going).length;
 
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: WeaveStatusChip(status: a.status),
-                ),
-                if (a.description != null) ...[
-                  const SizedBox(height: 12),
-                  Text(a.description!, style: const TextStyle(height: 1.4)),
-                ],
-                const SizedBox(height: 16),
-                _info(
-                    Icons.event,
-                    tr('Ngày', 'Date'),
-                    a.lockedDate != null
-                        ? weaveDate(a.lockedDate!)
-                        : '${weaveRange(a.startAt, a.endAt)} (${tr('dự kiến', 'planned')})'),
-                _info(Icons.place, tr('Địa điểm', 'Place'),
-                    a.lockedPlace?.name ?? notSet),
-                if ((a.lockedPlace?.address ?? '').isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 30, bottom: 8),
-                    child: Text(a.lockedPlace!.address!,
-                        style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 12)),
-                  ),
-                if (a.lockedPlace?.lat != null && a.lockedPlace?.lng != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: WeaveMapPreview(place: a.lockedPlace!),
-                  ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (a.lockedPlace != null)
-                      OutlinedButton.icon(
-                        onPressed: () =>
-                            openInGoogleMaps(context, a.lockedPlace!),
-                        icon: const Icon(Icons.map_outlined),
-                        label: Text(tr('Mở Google Maps', 'Open in Google Maps')),
-                      ),
-                    if (_isHost && !a.isEnded)
-                      OutlinedButton.icon(
-                        onPressed: _busy
-                            ? null
-                            : () async {
-                          final p = await pickWeavePlace(context,
-                              initial: a.lockedPlace);
-                          if (p == null || !mounted) return;
-                          await _run(() => WeaveService.lockPlace(a.id, p),
-                              doneMsg: tr('Đã chọn địa điểm', 'Place saved'));
-                        },
-                        icon: const Icon(Icons.edit_location_alt_outlined),
-                        label: Text(a.lockedPlace == null
-                            ? tr('Chọn địa điểm', 'Choose place')
-                            : tr('Đổi địa điểm', 'Change place')),
-                      ),
-                  ],
-                ),
-                if (mine != null && !a.isEnded) ...[
-                  _heading(tr('Bạn có tham gia không?', 'Are you in?')),
-                  WeaveRsvpSelector(
-                    current: mine.rsvp,
-                    enabled: !_busy,
-                    onChanged: (s) => _run(() => WeaveService.updateRsvp(a.id, s)),
-                  ),
-                ],
-                _heading(
-                    '${tr('Thành viên', 'Members')} · $going/${members.length} ${tr('tham gia', 'going')}'),
-                for (final m in members)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: WeaveUserAvatar(uid: m.userId),
-                    title: WeaveUserName(
-                        uid: m.userId,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text(m.isHost
-                        ? tr('Chủ hoạt động', 'Host')
-                        : weaveRsvpLabel(m.rsvp)),
-                  ),
-                const SizedBox(height: 20),
-                // Mỗi trạng thái chỉ có một nút chính nổi bật (màu theo theme)
-                if (_isHost && a.status == WeaveStatus.planning)
-                  FilledButton.icon(
-                    onPressed: _busy
-                        ? null
-                        : () => _run(() => WeaveService.start(a.id),
-                        doneMsg: tr('Hoạt động đã bắt đầu', 'Activity started')),
-                    icon: const Icon(Icons.play_arrow),
-                    label: Text(tr('Bắt đầu hoạt động', 'Start activity')),
-                  ),
-                if (_isHost && a.status == WeaveStatus.active)
-                  FilledButton.icon(
-                    onPressed: _busy
-                        ? null
-                        : () async {
-                      final ok = await _confirm(
-                        tr('Kết thúc hoạt động?', 'End activity?'),
-                        tr('Sau khi kết thúc, nhật ký nhóm sẽ được tạo từ ảnh và nhiệm vụ của mọi người.',
-                            'Once ended, a group journal is built from everyone’s photos and challenges.'),
-                      );
-                      if (ok) {
-                        _run(() => WeaveService.end(a.id),
-                            doneMsg: tr('Đã kết thúc hoạt động',
-                                'Activity ended'));
-                      }
-                    },
-                    icon: const Icon(Icons.flag),
-                    label: Text(tr('Kết thúc hoạt động', 'End activity')),
-                  ),
-                // Rời hoạt động: nút viền màu đỏ Danger + hộp xác nhận
-                if (!_isHost && !a.isEnded)
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.danger,
-                      side: const BorderSide(color: AppColors.danger),
-                    ),
-                    onPressed: _busy
-                        ? null
-                        : () async {
-                      final ok = await _confirm(
-                        tr('Rời hoạt động?', 'Leave activity?'),
-                        tr('Bạn sẽ không còn thấy hoạt động này.',
-                            'You will no longer see this activity.'),
-                        danger: true,
-                      );
-                      if (ok) {
-                        _run(() => WeaveService.leave(a.id),
-                            popAfter: true);
-                      }
-                    },
-                    child: Text(tr('Rời hoạt động', 'Leave activity')),
-                  ),
+        // ListView chiếm full chiều rộng khung chứa (lăn chuột ở lề vẫn cuộn),
+        // nội dung được canh giữa bằng padding thay vì ConstrainedBox.
+        return LayoutBuilder(
+          builder: (context, c) => ListView(
+            padding: weaveCenteredPadding(c.maxWidth, top: 16, bottom: 16),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: WeaveStatusChip(status: a.status),
+              ),
+              if (a.description != null) ...[
+                const SizedBox(height: 12),
+                Text(a.description!, style: const TextStyle(height: 1.4)),
               ],
-            ),
+              const SizedBox(height: 16),
+              _info(
+                  Icons.event,
+                  tr('Ngày', 'Date'),
+                  a.lockedDate != null
+                      ? weaveDate(a.lockedDate!)
+                      : '${weaveRange(a.startAt, a.endAt)} (${tr('dự kiến', 'planned')})'),
+              _info(Icons.place, tr('Địa điểm', 'Place'),
+                  a.lockedPlace?.name ?? notSet),
+              if ((a.lockedPlace?.address ?? '').isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(left: 30, bottom: 8),
+                  child: Text(a.lockedPlace!.address!,
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12)),
+                ),
+              if (a.lockedPlace?.lat != null && a.lockedPlace?.lng != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: WeaveMapPreview(place: a.lockedPlace!),
+                ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (a.lockedPlace != null)
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          openInGoogleMaps(context, a.lockedPlace!),
+                      icon: const Icon(Icons.map_outlined),
+                      label: Text(tr('Mở Google Maps', 'Open in Google Maps')),
+                    ),
+                  if (_isHost && !a.isEnded)
+                    OutlinedButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () async {
+                        final p = await pickWeavePlace(context,
+                            initial: a.lockedPlace);
+                        if (p == null || !mounted) return;
+                        await _run(() => WeaveService.lockPlace(a.id, p),
+                            doneMsg: tr('Đã chọn địa điểm', 'Place saved'));
+                      },
+                      icon: const Icon(Icons.edit_location_alt_outlined),
+                      label: Text(a.lockedPlace == null
+                          ? tr('Chọn địa điểm', 'Choose place')
+                          : tr('Đổi địa điểm', 'Change place')),
+                    ),
+                ],
+              ),
+              if (mine != null && !a.isEnded) ...[
+                _heading(tr('Bạn có tham gia không?', 'Are you in?')),
+                WeaveRsvpSelector(
+                  current: mine.rsvp,
+                  enabled: !_busy,
+                  onChanged: (s) => _run(() => WeaveService.updateRsvp(a.id, s)),
+                ),
+              ],
+              _heading(
+                  '${tr('Thành viên', 'Members')} · $going/${members.length} ${tr('tham gia', 'going')}'),
+              for (final m in members)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: WeaveUserAvatar(uid: m.userId),
+                  title: WeaveUserName(
+                      uid: m.userId,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(m.isHost
+                      ? tr('Chủ hoạt động', 'Host')
+                      : weaveRsvpLabel(m.rsvp)),
+                ),
+              const SizedBox(height: 20),
+              // Mỗi trạng thái chỉ có một nút chính nổi bật (màu theo theme)
+              if (_isHost && a.status == WeaveStatus.planning)
+                FilledButton.icon(
+                  onPressed: _busy
+                      ? null
+                      : () => _run(() => WeaveService.start(a.id),
+                      doneMsg: tr('Hoạt động đã bắt đầu', 'Activity started')),
+                  icon: const Icon(Icons.play_arrow),
+                  label: Text(tr('Bắt đầu hoạt động', 'Start activity')),
+                ),
+              if (_isHost && a.status == WeaveStatus.active)
+                FilledButton.icon(
+                  onPressed: _busy
+                      ? null
+                      : () async {
+                    final ok = await _confirm(
+                      tr('Kết thúc hoạt động?', 'End activity?'),
+                      tr('Sau khi kết thúc, nhật ký nhóm sẽ được tạo từ ảnh và nhiệm vụ của mọi người.',
+                          'Once ended, a group journal is built from everyone’s photos and challenges.'),
+                      confirmLabel: tr('Kết thúc', 'End'),
+                    );
+                    if (ok) {
+                      _run(() => WeaveService.end(a.id),
+                          doneMsg: tr('Đã kết thúc hoạt động',
+                              'Activity ended'));
+                    }
+                  },
+                  icon: const Icon(Icons.flag),
+                  label: Text(tr('Kết thúc hoạt động', 'End activity')),
+                ),
+              // Rời hoạt động: nút viền màu đỏ Danger + hộp xác nhận
+              if (!_isHost && !a.isEnded)
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.danger),
+                  ),
+                  onPressed: _busy
+                      ? null
+                      : () async {
+                    final ok = await _confirm(
+                      tr('Rời hoạt động?', 'Leave activity?'),
+                      tr('Bạn sẽ không còn thấy hoạt động này.',
+                          'You will no longer see this activity.'),
+                      danger: true,
+                      confirmLabel: tr('Rời', 'Leave'),
+                    );
+                    if (ok) {
+                      _run(() => WeaveService.leave(a.id),
+                          popAfter: true);
+                    }
+                  },
+                  child: Text(tr('Rời hoạt động', 'Leave activity')),
+                ),
+            ],
           ),
         );
       },
@@ -446,37 +459,36 @@ class _PollsTab extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         final polls = snap.data!;
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (!activity.isEnded)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: FilledButton.icon(
-                      onPressed: () =>
-                          showWeaveCreatePollSheet(context, activity.id),
-                      icon: const Icon(Icons.add),
-                      label: Text(tr('Tạo bình chọn', 'New poll')),
-                    ),
+        return LayoutBuilder(
+          builder: (context, c) => ListView(
+            padding: weaveCenteredPadding(c.maxWidth, top: 16, bottom: 16),
+            children: [
+              if (!activity.isEnded)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  // Tonal (nhấn nhẹ): ở bố cục rộng, Tổng quan đã có nút chính
+                  // (Bắt đầu / Kết thúc hoạt động) hiển thị cùng lúc.
+                  child: FilledButton.tonalIcon(
+                    onPressed: () =>
+                        showWeaveCreatePollSheet(context, activity.id),
+                    icon: const Icon(Icons.add),
+                    label: Text(tr('Tạo bình chọn', 'New poll')),
                   ),
-                if (polls.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 40),
-                    child: Text(
-                      tr('Chưa có bình chọn nào.\nTạo một bình chọn để cùng chọn địa điểm hoặc ngày.',
-                          'No polls yet.\nCreate one to pick a place or a date together.'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
-                    ),
+                ),
+              if (polls.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Text(
+                    tr('Chưa có bình chọn nào.\nTạo một bình chọn để cùng chọn địa điểm hoặc ngày.',
+                        'No polls yet.\nCreate one to pick a place or a date together.'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                   ),
-                for (final p in polls)
-                  WeavePollCard(
-                      activityId: activity.id, poll: p, isHost: isHost),
-              ],
-            ),
+                ),
+              for (final p in polls)
+                WeavePollCard(
+                    activityId: activity.id, poll: p, isHost: isHost),
+            ],
           ),
         );
       },

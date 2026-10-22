@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
 import '../services/l10n.dart';
 import '../services/user_service.dart';
-import '../theme/app_theme.dart';
 
 const _maxTags = 10;
 
@@ -115,8 +114,8 @@ class _InterestsScreenState extends State<InterestsScreen> {
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(
             hintText: hint,
-            border: const OutlineInputBorder(),
             suffixIcon: IconButton(
+              tooltip: tr('Thêm', 'Add'),
               icon: const Icon(Icons.add),
               onPressed: () => _add(list, ctrl),
             ),
@@ -160,7 +159,6 @@ class _InterestsScreenState extends State<InterestsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Sở thích & mục tiêu', 'Interests & goals')),
         actions: [
           TextButton(
@@ -171,32 +169,38 @@ class _InterestsScreenState extends State<InterestsScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _section(
-            title: tr('Sở thích', 'Interests'),
-            hint: tr('Ví dụ: âm nhạc', 'e.g. music'),
-            list: _interests,
-            ctrl: _interestCtrl,
-            showPresets: true,
+          : Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _section(
+                title: tr('Sở thích', 'Interests'),
+                hint: tr('Ví dụ: âm nhạc', 'e.g. music'),
+                list: _interests,
+                ctrl: _interestCtrl,
+                showPresets: true,
+              ),
+              const SizedBox(height: 24),
+              _section(
+                title: tr('Mục tiêu / dự án đang làm',
+                    'Goals / current projects'),
+                hint: tr('Ví dụ: học tiếng Nhật', 'e.g. learn Japanese'),
+                list: _goals,
+                ctrl: _goalCtrl,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                tr(
+                  'Các thẻ này giúp tìm bạn cùng sở thích và hiện điểm chung trên bản đồ quan hệ.',
+                  'These tags help find people with shared interests and show common ground on the map.',
+                ),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          _section(
-            title: tr('Mục tiêu / dự án đang làm', 'Goals / current projects'),
-            hint: tr('Ví dụ: học tiếng Nhật', 'e.g. learn Japanese'),
-            list: _goals,
-            ctrl: _goalCtrl,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            tr(
-              'Các thẻ này giúp tìm bạn cùng sở thích và hiện điểm chung trên bản đồ quan hệ.',
-              'These tags help find people with shared interests and show common ground on the map.',
-            ),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'user_prefs.dart';
-import 'l10n.dart';
 
 class ActivityService {
   static CollectionReference<Map<String, dynamic>>? _shares() {

@@ -15,9 +15,7 @@ class CloseFriendsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final me = FirebaseAuth.instance.currentUser?.uid ?? '';
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Bạn thân', 'Close friends')),
       ),
       body: Center(
@@ -134,14 +132,11 @@ class _FriendTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Card lấy màu, viền và bo góc từ cardTheme (Card là Material nên
+    // CheckboxListTile hiện đúng hiệu ứng chạm).
     return Card(
-      color: Colors.white,
-      elevation: 0,
       margin: const EdgeInsets.symmetric(vertical: 4),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.border),
-      ),
+      clipBehavior: Clip.antiAlias,
       child: FutureBuilder<String>(
         future: _nameOf(uid),
         builder: (context, snap) {
@@ -149,7 +144,6 @@ class _FriendTile extends StatelessWidget {
           final initial = name.isNotEmpty ? name.characters.first : '?';
           return CheckboxListTile(
             value: selected,
-            activeColor: AppColors.brand,
             onChanged: (v) => _toggle(context, v ?? false),
             controlAffinity: ListTileControlAffinity.trailing,
             secondary: CircleAvatar(
@@ -166,9 +160,7 @@ class _FriendTile extends StatelessWidget {
               name,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            subtitle: selected
-                ? Text(tr('Bạn thân', 'Close friend'))
-                : null,
+            subtitle: selected ? Text(tr('Bạn thân', 'Close friend')) : null,
           );
         },
       ),

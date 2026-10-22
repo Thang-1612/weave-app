@@ -79,10 +79,10 @@ class BlockNotesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final me = FirebaseAuth.instance.currentUser?.uid;
     final isOwner = post.authorId == me;
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Ghi chú theo khối', 'Block notes')),
       ),
       body: StreamBuilder<List<BlockNote>>(
@@ -109,7 +109,7 @@ class BlockNotesScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: scheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.border),
                     ),
@@ -148,6 +148,7 @@ class BlockNotesScreen extends StatelessWidget {
                                 if (n.authorId == me || isOwner)
                                   IconButton(
                                     visualDensity: VisualDensity.compact,
+                                    tooltip: tr('Xóa ghi chú', 'Remove note'),
                                     icon: const Icon(Icons.close, size: 16),
                                     onPressed: () =>
                                         BlockNoteService.delete(post, n.id),

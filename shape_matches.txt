@@ -1,0 +1,72 @@
+﻿E:\social_app\lib\screens\capsules_screen.dart:179: shape: const StadiumBorder(),
+E:\social_app\lib\screens\chat_list_screen.dart:124: shape: const StadiumBorder(),
+E:\social_app\lib\screens\chat_room_screen.dart:600: shape: const CircleBorder(),
+E:\social_app\lib\screens\comments_screen.dart:327: shape: RoundedRectangleBorder(
+E:\social_app\lib\screens\comments_screen.dart:500: shape: BoxShape.circle,
+E:\social_app\lib\screens\comments_screen.dart:821: shape: BoxShape.circle,
+E:\social_app\lib\screens\comments_screen.dart:1200: shape: RoundedRectangleBorder(
+E:\social_app\lib\screens\create_post_screen.dart:618: shape: const StadiumBorder(),
+E:\social_app\lib\screens\create_post_screen.dart:1022: shape: RoundedRectangleBorder(
+E:\social_app\lib\screens\edit_profile_screen.dart:150: shape: RoundedRectangleBorder(
+E:\social_app\lib\screens\feed_screen.dart:122: shape: const RoundedRectangleBorder(
+E:\social_app\lib\screens\feed_screen.dart:254: shape: const StadiumBorder(),
+E:\social_app\lib\screens\feed_screen.dart:265: shape: const StadiumBorder(),
+E:\social_app\lib\screens\on_this_day_screen.dart:217: shape: const StadiumBorder(),
+E:\social_app\lib\screens\profile_screen.dart:129: shape: BoxShape.circle,
+E:\social_app\lib\screens\recipes_screen.dart:147: shape: RoundedRectangleBorder(
+E:\social_app\lib\screens\register_screen.dart:103: shape: const Border(),
+E:\social_app\lib\screens\story_create_screen.dart:212: shape: const StadiumBorder(),
+E:\social_app\lib\screens\story_detail_screen.dart:100: shape: RoundedRectangleBorder(
+E:\social_app\lib\screens\story_detail_screen.dart:311: shape: const RoundedRectangleBorder(
+E:\social_app\lib\screens\user_profile_page.dart:28: shape: RoundedRectangleBorder(
+E:\social_app\lib\screens\settings\category_settings_screen.dart:68: shape: const Border(),
+E:\social_app\lib\screens\settings\category_settings_screen.dart:69: collapsedShape: const Border(),
+E:\social_app\lib\screens\settings\help_screen.dart:136: shape: const Border(),
+E:\social_app\lib\screens\settings\help_screen.dart:137: collapsedShape: const Border(),
+E:\social_app\lib\screens\settings\settings_hub_screen.dart:92: shape: RoundedRectangleBorder(
+E:\social_app\lib\services\usage_service.dart:195: shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+E:\social_app\lib\services\usage_service.dart:231: shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+E:\social_app\lib\theme\app_theme.dart:194: shape: Border(bottom: BorderSide(color: AppColors.border)),
+E:\social_app\lib\theme\app_theme.dart:205: shape: RoundedRectangleBorder(
+E:\social_app\lib\theme\app_theme.dart:215: shape: RoundedRectangleBorder(
+E:\social_app\lib\theme\app_theme.dart:228: shape: RoundedRectangleBorder(
+E:\social_app\lib\theme\app_theme.dart:245: shape: RoundedRectangleBorder(
+E:\social_app\lib\theme\app_theme.dart:257: shape: controlShape,
+E:\social_app\lib\theme\app_theme.dart:268: shape: controlShape,
+E:\social_app\lib\theme\app_theme.dart:277: shape: controlShape,
+E:\social_app\lib\theme\app_theme.dart:286: shape: controlShape,
+E:\social_app\lib\theme\app_theme.dart:294: shape: RoundedRectangleBorder(
+E:\social_app\lib\theme\app_theme.dart:316: shape: controlShape,
+E:\social_app\lib\widgets\account_switcher.dart:18: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\account_switcher.dart:42: shape: BoxShape.circle,
+E:\social_app\lib\widgets\account_switcher.dart:171: shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+E:\social_app\lib\widgets\account_switcher.dart:499: shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+E:\social_app\lib\widgets\account_switcher.dart:621: shape: RoundedRectangleBorder(
+E:\social_app\lib\widgets\account_switcher.dart:654: shape: RoundedRectangleBorder(
+E:\social_app\lib\widgets\audience_picker.dart:58: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\auth_widgets.dart:85: shape: BoxShape.circle,
+E:\social_app\lib\widgets\chat_widgets.dart:338: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\friend_button.dart:48: shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+E:\social_app\lib\widgets\layer_audience_picker.dart:50: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\layer_audience_picker.dart:93: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\layer_audience_picker.dart:265: shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+E:\social_app\lib\widgets\post_card.dart:76: shape: RoundedRectangleBorder(
+E:\social_app\lib\widgets\post_card.dart:391: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\post_card.dart:615: shape: RoundedRectangleBorder(
+E:\social_app\lib\widgets\post_card.dart:827: shape: RoundedRectangleBorder(
+E:\social_app\lib\widgets\post_extras.dart:92: shape:
+E:\social_app\lib\widgets\post_extras.dart:372: shape: BoxShape.circle,
+E:\social_app\lib\widgets\reaction_picker.dart:24: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\reaction_picker.dart:91: shape: BoxShape.circle,
+E:\social_app\lib\widgets\reaction_picker.dart:166: shape: BoxShape.circle,
+E:\social_app\lib\widgets\response_bar.dart:75: shape: const StadiumBorder(),
+E:\social_app\lib\widgets\settings_widgets.dart:89: shape: RoundedRectangleBorder(
+E:\social_app\lib\widgets\space_picker.dart:44: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\story_widgets.dart:81: shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+E:\social_app\lib\widgets\story_widgets.dart:114: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\story_widgets.dart:367: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\text_prompt.dart:66: shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+E:\social_app\lib\widgets\weave_activity_widgets.dart:156: color: AppColors.surface, shape: BoxShape.circle),
+E:\social_app\lib\widgets\weave_activity_widgets.dart:234: shape: RoundedRectangleBorder(
+E:\social_app\lib\widgets\weave_extras_widgets.dart:298: shape: const RoundedRectangleBorder(
+E:\social_app\lib\widgets\weave_moments_tab.dart:77: shape: const RoundedRectangleBorder(

@@ -55,6 +55,10 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
+  // Màu nền thông báo cột mốc: tông Teal (thành công) thay cho màu vàng ngoài bảng màu.
+  static final _milestoneTile = AppColors.teal.withValues(alpha: 0.10);
+  static final _milestoneAvatar = AppColors.teal.withValues(alpha: 0.20);
+
   late final Stream<List<AppNotification>> _stream =
   NotificationService.watchMine();
   late final Stream<List<Friendship>> _friendsStream =
@@ -153,7 +157,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.mail_outline, size: 64, color: AppColors.textSecondary),
+                  const Icon(Icons.mail_outline,
+                      size: 64, color: AppColors.textSecondary),
                   const SizedBox(height: 12),
                   Text(
                     tr(
@@ -193,13 +198,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                       ),
                     for (final n in items) ...[
+                      // ListTile cần Material ngay phía trên để hiện màu nền
+                      // và hiệu ứng chạm: không bọc nó trong ColoredBox/Container.
                       ListTile(
                         tileColor: n.type == 'milestone'
-                            ? const Color(0xFFFEF3C7)
-                            : (n.read ? null : const Color(0xFFEEF2FF)),
+                            ? _milestoneTile
+                            : (n.read ? null : AppColors.soft),
                         leading: CircleAvatar(
                           backgroundColor: n.type == 'milestone'
-                              ? const Color(0xFFFDE68A)
+                              ? _milestoneAvatar
                               : AppColors.soft,
                           child: Text(
                             n.icon,

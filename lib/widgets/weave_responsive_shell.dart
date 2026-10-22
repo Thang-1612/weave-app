@@ -367,7 +367,7 @@ class WeaveResponsiveShell extends StatelessWidget {
                             onTap: () => onDestinationSelected(i),
                           ),
                         ),
-                      if (sidebarExtra != null) sidebarExtra!,
+                      ?sidebarExtra,
                     ],
                   ),
                 ),

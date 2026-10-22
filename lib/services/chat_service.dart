@@ -76,6 +76,13 @@ class ChatService {
     return (await user(c.otherId(me))).name;
   }
 
+  /// Tên hiển thị nếu đã có trong cache; null nếu chưa tải xong.
+  /// Dùng trong build() để tránh tạo Future mới mỗi lần vẽ (gây nhấp nháy).
+  String? chatNameSync(Chat c) {
+    if (c.isGroup) return c.name.isEmpty ? 'Nhóm chat' : c.name;
+    return _resolved[c.otherId(me)]?.name;
+  }
+
   /// Tìm theo tiền tố tên (phân biệt hoa/thường).
   Future<List<ChatUser>> searchUsers(String q) async {
     q = q.trim();

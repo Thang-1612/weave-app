@@ -33,6 +33,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   Map<String, StorySource> _latestSources = const {};
   bool _publishing = false;
   String? _selectedBlockId; // đoạn đang chỉnh sửa (bố cục rộng)
+  bool _editorDirty = false; // đoạn đang chỉnh sửa có thay đổi chưa lưu
 
   Future<bool> _publish(Story story, String visibility) async {
     if (_publishing) return false;
@@ -169,7 +170,23 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     )) {
       return;
     }
+    _editorDirty = false; // đoạn bị xóa thì không còn gì chưa lưu
     await StoryService.deleteBlock(widget.storyId, b.id);
+  }
+
+  /// Chọn đoạn khác ở bố cục rộng: hỏi trước nếu đoạn hiện tại chưa lưu.
+  Future<void> _selectBlock(String id, String? currentId) async {
+    if (id == currentId) return;
+    if (_editorDirty) {
+      final discard = await _confirm(
+        tr('Đoạn này có thay đổi chưa lưu. Bỏ thay đổi?',
+            'This part has unsaved changes. Discard them?'),
+        tr('Bỏ thay đổi', 'Discard'),
+      );
+      if (!discard || !mounted) return;
+    }
+    _editorDirty = false;
+    setState(() => _selectedBlockId = id);
   }
 
   Future<void> _deleteStory() async {
@@ -429,6 +446,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
             child: Center(child: _publishButton(story)),
           ),
         PopupMenuButton<String>(
+          tooltip: tr('Thêm tùy chọn', 'More options'),
           onSelected: (v) {
             if (v == 'delete') {
               _deleteStory();
@@ -510,40 +528,38 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
       String me,
       int lastOrder,
       ) {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _metaChips(story),
-            const SizedBox(height: 12),
-            StoryMissingCard(
-              questions: story.missing,
+    // ListView full chiều rộng để lăn chuột ở hai lề vẫn hoạt động;
+    // nội dung được căn giữa bằng padding.
+    return LayoutBuilder(
+      builder: (context, c) => ListView(
+        padding: weaveCenteredPadding(c.maxWidth),
+        children: [
+          _metaChips(story),
+          const SizedBox(height: 12),
+          StoryMissingCard(
+            questions: story.missing,
+            canEdit: canEdit,
+            onAnswer: (q) => _answerMissing(q, lastOrder),
+            onDismiss: (q) => StoryService.dismissMissing(widget.storyId, q),
+          ),
+          _droppedNote(story),
+          for (final b in blocks)
+            StoryBlockCard(
+              key: ValueKey(b.id),
+              block: b,
+              sources: sources,
               canEdit: canEdit,
-              onAnswer: (q) => _answerMissing(q, lastOrder),
-              onDismiss: (q) => StoryService.dismissMissing(widget.storyId, q),
+              currentUid: me,
+              onEdit: () => _edit(b),
+              onDelete: () => _delete(b),
             ),
-            _droppedNote(story),
-            for (final b in blocks)
-              StoryBlockCard(
-                key: ValueKey(b.id),
-                block: b,
-                sources: sources,
-                canEdit: canEdit,
-                currentUid: me,
-                onEdit: () => _edit(b),
-                onDelete: () => _delete(b),
-              ),
-            if (canEdit)
-              OutlinedButton.icon(
-                onPressed: () => _addBlock(lastOrder),
-                icon: const Icon(Icons.add),
-                label: Text(tr('Thêm đoạn của bạn', 'Add your own part')),
-              ),
-          ],
-        ),
+          if (canEdit)
+            OutlinedButton.icon(
+              onPressed: () => _addBlock(lastOrder),
+              icon: const Icon(Icons.add),
+              label: Text(tr('Thêm đoạn của bạn', 'Add your own part')),
+            ),
+        ],
       ),
     );
   }
@@ -632,7 +648,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    onTap: () => setState(() => _selectedBlockId = blocks[i].id),
+                    onTap: () => _selectBlock(blocks[i].id, selected?.id),
                   ),
                 if (canEdit)
                   Padding(
@@ -667,6 +683,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
             onSave: (text) => StoryService.updateBlockText(
                 widget.storyId, selected!.id, text),
             onDelete: () => _delete(selected!),
+            // Chỉ là cờ, không cần setState
+            onDirtyChanged: (v) => _editorDirty = v,
           ),
         ),
         const VerticalDivider(width: 1),
@@ -780,6 +798,9 @@ class _BlockEditor extends StatefulWidget {
   final Future<void> Function(String text) onSave;
   final VoidCallback onDelete;
 
+  /// Báo cho màn cha biết đoạn đang sửa có thay đổi chưa lưu hay không.
+  final ValueChanged<bool> onDirtyChanged;
+
   const _BlockEditor({
     super.key,
     required this.block,
@@ -787,6 +808,7 @@ class _BlockEditor extends StatefulWidget {
     required this.canEdit,
     required this.onSave,
     required this.onDelete,
+    required this.onDirtyChanged,
   });
 
   @override
@@ -805,7 +827,10 @@ class _BlockEditorState extends State<_BlockEditor> {
   @override
   void initState() {
     super.initState();
-    _ctrl.addListener(() => setState(() {}));
+    _ctrl.addListener(() {
+      setState(() {});
+      widget.onDirtyChanged(_dirty);
+    });
   }
 
   @override
@@ -831,6 +856,7 @@ class _BlockEditorState extends State<_BlockEditor> {
     try {
       await widget.onSave(text);
       _saved = text;
+      widget.onDirtyChanged(false);
       messenger.showSnackBar(SnackBar(content: Text(tr('Đã lưu', 'Saved'))));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('$e')));

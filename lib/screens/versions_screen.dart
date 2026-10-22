@@ -15,7 +15,8 @@ class VersionsScreen extends StatefulWidget {
 }
 
 class _VersionsScreenState extends State<VersionsScreen> {
-  late Future<List<PostVersion>> _future = VersionService.load(widget.post);
+  late final Future<List<PostVersion>> _future =
+  VersionService.load(widget.post);
   bool _busy = false;
 
   String _preview(PostVersion v) {
@@ -37,7 +38,6 @@ class _VersionsScreenState extends State<VersionsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(tr('Khôi phục phiên bản này?', 'Restore this version?')),
         content: Text(tr(
           'Nội dung hiện tại sẽ được lưu lại thành một phiên bản, nên bạn vẫn quay lại được.',
@@ -49,7 +49,6 @@ class _VersionsScreenState extends State<VersionsScreen> {
             child: Text(tr('Hủy', 'Cancel')),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(tr('Khôi phục', 'Restore')),
           ),
@@ -72,9 +71,9 @@ class _VersionsScreenState extends State<VersionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Lịch sử phiên bản', 'Version history')),
       ),
       body: FutureBuilder<List<PostVersion>>(
@@ -102,7 +101,8 @@ class _VersionsScreenState extends State<VersionsScreen> {
                     'No saved versions yet.\nAn old version is saved whenever you accept an edit proposal.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, height: 1.4),
                 ),
               ),
             );
@@ -120,8 +120,8 @@ class _VersionsScreenState extends State<VersionsScreen> {
                       child: Text(
                         tr('Chỉ giữ ${VersionService.keep} phiên bản gần nhất.',
                             'Only the latest ${VersionService.keep} versions are kept.'),
-                        style:
-                        const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12),
                       ),
                     );
                   }
@@ -134,7 +134,7 @@ class _VersionsScreenState extends State<VersionsScreen> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: scheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.border),
                     ),
@@ -152,7 +152,8 @@ class _VersionsScreenState extends State<VersionsScreen> {
                           const SizedBox(height: 2),
                           Text(v.reason,
                               style: const TextStyle(
-                                  fontSize: 12, color: AppColors.textSecondary)),
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary)),
                         ],
                         const SizedBox(height: 8),
                         Text(_preview(v), style: const TextStyle(height: 1.35)),

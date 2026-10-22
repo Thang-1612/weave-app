@@ -58,10 +58,14 @@ class _ForksScreenState extends State<ForksScreen> {
       MaterialPageRoute(
         builder: (_) => Scaffold(
           appBar: AppBar(
-            flexibleSpace: const GradientAppBarBackground(),
             title: Text(p.authorName),
           ),
-          body: ListView(children: [PostCard(post: p)]),
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: ListView(children: [PostCard(post: p)]),
+            ),
+          ),
         ),
       ),
     );
@@ -81,13 +85,13 @@ class _ForksScreenState extends State<ForksScreen> {
             ),
           Expanded(
             child: InkWell(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(WeaveRadius.control),
               onTap: () => _open(p),
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: root ? AppColors.soft : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: root ? AppColors.soft : AppColors.surface,
+                  borderRadius: BorderRadius.circular(WeaveRadius.control),
                   border: Border.all(
                     color: root ? AppColors.brand : AppColors.border,
                   ),
@@ -141,7 +145,6 @@ class _ForksScreenState extends State<ForksScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Cây nhánh', 'Fork tree')),
       ),
       body: FutureBuilder<List<_Node>>(
@@ -171,7 +174,8 @@ class _ForksScreenState extends State<ForksScreen> {
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         tr('Chưa có nhánh nào.', 'No forks yet.'),
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style:
+                        const TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                   for (final n in nodes) _tile(n.post, n.depth),
@@ -181,8 +185,8 @@ class _ForksScreenState extends State<ForksScreen> {
                       child: Text(
                         tr('Chỉ hiện 40 bài đầu tiên.',
                             'Showing the first 40 posts only.'),
-                        style:
-                        const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12),
                       ),
                     ),
                 ],

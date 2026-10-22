@@ -73,7 +73,7 @@ class OnThisDayService {
     ]);
     return [
       for (final g in results)
-        if (g != null) g,
+        ?g,
     ];
   }
 }

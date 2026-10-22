@@ -7,7 +7,6 @@ import '../services/constellation_service.dart';
 import '../services/friend_service.dart';
 import '../services/l10n.dart';
 import '../services/user_service.dart';
-import '../theme/app_theme.dart';
 import 'interests_screen.dart';
 import 'user_profile_page.dart';
 
@@ -21,6 +20,9 @@ class ConstellationScreen extends StatefulWidget {
 }
 
 class _ConstellationScreenState extends State<ConstellationScreen> {
+  /// Bottom sheet không kéo giãn hết màn hình rộng.
+  static const _sheetConstraints = BoxConstraints(maxWidth: 560);
+
   final _tc = TransformationController();
   bool _loading = true;
   bool _centered = false;
@@ -110,6 +112,7 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      constraints: _sheetConstraints,
       builder: (ctx) => SizedBox(
         height: MediaQuery.of(ctx).size.height * 0.6,
         child: FutureBuilder<List<UserProfile>>(
@@ -169,6 +172,7 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      constraints: _sheetConstraints,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) => Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
@@ -209,6 +213,7 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                   ? Text(tr('Chưa có thẻ nào trùng.', 'No shared tags yet.'))
                   : Wrap(
                 spacing: 8,
+                runSpacing: 4,
                 children: [
                   for (final t in n.sharedTags) Chip(label: Text(t)),
                 ],
@@ -234,7 +239,9 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                     try {
                       await FriendService.setVisibility(
                         other,
-                        v ? EdgeVisibility.public : EdgeVisibility.hidden,
+                        v
+                            ? EdgeVisibility.public
+                            : EdgeVisibility.hidden,
                       );
                       changed = true;
                     } catch (_) {
@@ -272,12 +279,12 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Bản đồ kết nối', 'Connection map')),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_search_outlined),
-            tooltip: tr('Gợi ý bạn cùng sở thích', 'People with shared interests'),
+            tooltip:
+            tr('Gợi ý bạn cùng sở thích', 'People with shared interests'),
             onPressed: _me == null ? null : _showSuggestions,
           ),
           IconButton(
@@ -434,7 +441,8 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
         radius: first ? 26 : 20,
         label: n.profile.shortName,
         letter: _initial(n.profile),
-        color: first ? scheme.secondaryContainer : scheme.surfaceContainerHighest,
+        color:
+        first ? scheme.secondaryContainer : scheme.surfaceContainerHighest,
         onColor: first ? scheme.onSecondaryContainer : scheme.onSurface,
         locked: first && n.hiddenByMe,
         badge: n.sharedTags.length,
@@ -455,6 +463,7 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
     VoidCallback? onTap,
   }) {
     const w = 92.0;
+    final scheme = Theme.of(context).colorScheme;
     return Positioned(
       left: pos.dx - w / 2,
       top: pos.dy - radius,
@@ -483,11 +492,10 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                     top: -4,
                     child: CircleAvatar(
                       radius: 9,
-                      backgroundColor: Theme.of(context).colorScheme.tertiary,
+                      backgroundColor: scheme.tertiary,
                       child: Text('$badge',
                           style: TextStyle(
-                              fontSize: 10,
-                              color: Theme.of(context).colorScheme.onTertiary)),
+                              fontSize: 10, color: scheme.onTertiary)),
                     ),
                   ),
               ],
@@ -519,7 +527,8 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
     if (_centered) return;
     _centered = true;
     final s = math
-        .min(1.0, math.min(view.width / l.size.width, view.height / l.size.height) * 1.6)
+        .min(1.0,
+        math.min(view.width / l.size.width, view.height / l.size.height) * 1.6)
         .clamp(0.45, 1.0)
         .toDouble();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -629,5 +638,9 @@ class _EdgePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _EdgePainter old) =>
-      old.filter != filter || old.nodes != nodes || old.pos != pos;
+      old.filter != filter ||
+          old.nodes != nodes ||
+          old.pos != pos ||
+          old.strong != strong ||
+          old.soft != soft;
 }

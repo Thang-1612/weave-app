@@ -60,7 +60,7 @@ class LayerTabBar extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final it = items[i];
           final selected = it.id == selectedId;
@@ -74,14 +74,14 @@ class LayerTabBar extends StatelessWidget {
             label: Text(it.label),
             selected: selected,
             selectedColor: AppColors.soft,
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             side: BorderSide(
               color: selected ? AppColors.brand : AppColors.border,
             ),
             labelStyle: TextStyle(
               fontSize: 13,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected ? AppColors.brand : Colors.grey.shade800,
+              color: selected ? AppColors.brand : AppColors.textSecondary,
             ),
             onSelected: (_) => onSelected(it.id),
           );

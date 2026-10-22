@@ -1,0 +1,185 @@
+﻿
+  lib\screens\comments_screen.dart:324:    final ok = await showDialog<bool>(
+  lib\screens\comments_screen.dart:325:      context: context,
+  lib\screens\comments_screen.dart:326:      builder: (ctx) => AlertDialog(
+> lib\screens\comments_screen.dart:327:        shape: RoundedRectangleBorder(
+  lib\screens\comments_screen.dart:328:          borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\comments_screen.dart:329:        ),
+  lib\screens\comments_screen.dart:330:        title: Text(tr('Xóa bình luận?', 'Delete comment?')),
+  lib\screens\comments_screen.dart:497:                  width: 36,
+  lib\screens\comments_screen.dart:498:                  height: 36,
+  lib\screens\comments_screen.dart:499:                  decoration: const BoxDecoration(
+> lib\screens\comments_screen.dart:500:                    shape: BoxShape.circle,
+  lib\screens\comments_screen.dart:501:                    gradient: AppColors.gradient,
+  lib\screens\comments_screen.dart:502:                  ),
+  lib\screens\comments_screen.dart:503:                  child: const Icon(
+  lib\screens\comments_screen.dart:818:        width: radius * 2,
+  lib\screens\comments_screen.dart:819:        height: radius * 2,
+  lib\screens\comments_screen.dart:820:        decoration: const BoxDecoration(
+> lib\screens\comments_screen.dart:821:          shape: BoxShape.circle,
+  lib\screens\comments_screen.dart:822:          gradient: AppColors.gradient,
+  lib\screens\comments_screen.dart:823:        ),
+  lib\screens\comments_screen.dart:824:        child: Icon(
+  lib\screens\comments_screen.dart:1197:  @override
+  lib\screens\comments_screen.dart:1198:  Widget build(BuildContext context) {
+  lib\screens\comments_screen.dart:1199:    return AlertDialog(
+> lib\screens\comments_screen.dart:1200:      shape: RoundedRectangleBorder(
+  lib\screens\comments_screen.dart:1201:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\comments_screen.dart:1202:      ),
+  lib\screens\comments_screen.dart:1203:      title: Text(tr('Báo cáo bình luận', 'Report comment')),
+  lib\screens\create_post_screen.dart:615:        backgroundColor: AppColors.surface,
+  lib\screens\create_post_screen.dart:616:        selectedColor: AppColors.soft,
+  lib\screens\create_post_screen.dart:617:        side: const BorderSide(color: AppColors.border),
+> lib\screens\create_post_screen.dart:618:        shape: const StadiumBorder(),
+  lib\screens\create_post_screen.dart:619:        labelStyle: const TextStyle(
+  lib\screens\create_post_screen.dart:620:          fontSize: 13,
+  lib\screens\create_post_screen.dart:621:          fontWeight: FontWeight.w500,
+  lib\screens\create_post_screen.dart:1019:  @override
+  lib\screens\create_post_screen.dart:1020:  Widget build(BuildContext context) {
+  lib\screens\create_post_screen.dart:1021:    return AlertDialog(
+> lib\screens\create_post_screen.dart:1022:      shape: RoundedRectangleBorder(
+  lib\screens\create_post_screen.dart:1023:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\create_post_screen.dart:1024:      ),
+  lib\screens\create_post_screen.dart:1025:      title: Text(tr('Thêm liên kết', 'Add a link')),
+  lib\screens\edit_profile_screen.dart:147:                        style: FilledButton.styleFrom(
+  lib\screens\edit_profile_screen.dart:148:                          minimumSize: const Size.fromHeight(50),
+  lib\screens\edit_profile_screen.dart:149:                          backgroundColor: AppColors.brand,
+> lib\screens\edit_profile_screen.dart:150:                          shape: RoundedRectangleBorder(
+  lib\screens\edit_profile_screen.dart:151:                            borderRadius: BorderRadius.circular(14),
+  lib\screens\edit_profile_screen.dart:152:                          ),
+  lib\screens\edit_profile_screen.dart:153:                        ),
+  lib\screens\recipes_screen.dart:144:                  // Công thức đang dùng: nền soft và viền Brand.
+  lib\screens\recipes_screen.dart:145:                  color: s.activeId == r.id ? AppColors.soft : null,
+  lib\screens\recipes_screen.dart:146:                  margin: const EdgeInsets.only(bottom: 10),
+> lib\screens\recipes_screen.dart:147:                  shape: RoundedRectangleBorder(
+  lib\screens\recipes_screen.dart:148:                    borderRadius:
+  lib\screens\recipes_screen.dart:149:                    BorderRadius.circular(WeaveRadius.card),
+  lib\screens\recipes_screen.dart:150:                    side: BorderSide(
+  lib\screens\story_detail_screen.dart:97:    final choice = await showDialog<String>(
+  lib\screens\story_detail_screen.dart:98:      context: context,
+  lib\screens\story_detail_screen.dart:99:      builder: (ctx) => AlertDialog(
+> lib\screens\story_detail_screen.dart:100:        shape: RoundedRectangleBorder(
+  lib\screens\story_detail_screen.dart:101:          borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\story_detail_screen.dart:102:        ),
+  lib\screens\story_detail_screen.dart:103:        title: Text(tr('Đăng câu chuyện này lên bảng tin?',
+  lib\screens\story_detail_screen.dart:308:      context: context,
+  lib\screens\story_detail_screen.dart:309:      isScrollControlled: true,
+  lib\screens\story_detail_screen.dart:310:      useSafeArea: true,
+> lib\screens\story_detail_screen.dart:311:      shape: const RoundedRectangleBorder(
+  lib\screens\story_detail_screen.dart:312:        borderRadius: BorderRadius.vertical(
+  lib\screens\story_detail_screen.dart:313:          top: Radius.circular(WeaveRadius.card),
+  lib\screens\story_detail_screen.dart:314:        ),
+  lib\screens\user_profile_page.dart:25:    final ok = await showDialog<bool>(
+  lib\screens\user_profile_page.dart:26:      context: context,
+  lib\screens\user_profile_page.dart:27:      builder: (ctx) => AlertDialog(
+> lib\screens\user_profile_page.dart:28:        shape: RoundedRectangleBorder(
+  lib\screens\user_profile_page.dart:29:          borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\screens\user_profile_page.dart:30:        ),
+  lib\screens\user_profile_page.dart:31:        title: Text(tr('Chặn $name?', 'Block $name?')),
+  lib\widgets\account_switcher.dart:15:    context: context,
+  lib\widgets\account_switcher.dart:16:    isScrollControlled: true,
+  lib\widgets\account_switcher.dart:17:    clipBehavior: Clip.antiAlias,
+> lib\widgets\account_switcher.dart:18:    shape: const RoundedRectangleBorder(
+  lib\widgets\account_switcher.dart:19:      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+  lib\widgets\account_switcher.dart:20:    ),
+  lib\widgets\account_switcher.dart:21:    builder: (_) => _AccountSwitcherSheet(onSwitched: onSwitched),
+  lib\widgets\account_switcher.dart:39:      width: size,
+  lib\widgets\account_switcher.dart:40:      height: size,
+  lib\widgets\account_switcher.dart:41:      decoration: BoxDecoration(
+> lib\widgets\account_switcher.dart:42:        shape: BoxShape.circle,
+  lib\widgets\account_switcher.dart:43:        color: Color.fromRGBO(255, 255, 255, opacity),
+  lib\widgets\account_switcher.dart:44:      ),
+  lib\widgets\account_switcher.dart:45:    );
+  lib\widgets\account_switcher.dart:168:    final ok = await showDialog<bool>(
+  lib\widgets\account_switcher.dart:169:      context: context,
+  lib\widgets\account_switcher.dart:170:      builder: (ctx) => AlertDialog(
+> lib\widgets\account_switcher.dart:171:        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  lib\widgets\account_switcher.dart:172:        icon: const Icon(Icons.logout, color: AppColors.danger, size: 32),
+  lib\widgets\account_switcher.dart:173:        title: Text(tr('Đăng xuất?', 'Log out?')),
+  lib\widgets\account_switcher.dart:174:        content: Text(
+  lib\widgets\account_switcher.dart:496:
+  lib\widgets\account_switcher.dart:497:    return Dialog(
+  lib\widgets\account_switcher.dart:498:      clipBehavior: Clip.antiAlias,
+> lib\widgets\account_switcher.dart:499:      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+  lib\widgets\account_switcher.dart:500:      child: ConstrainedBox(
+  lib\widgets\account_switcher.dart:501:        constraints: const BoxConstraints(maxWidth: 420),
+  lib\widgets\account_switcher.dart:502:        child: SingleChildScrollView(
+  lib\widgets\account_switcher.dart:618:                        style: FilledButton.styleFrom(
+  lib\widgets\account_switcher.dart:619:                          minimumSize: const Size.fromHeight(50),
+  lib\widgets\account_switcher.dart:620:                          backgroundColor: AppColors.brand,
+> lib\widgets\account_switcher.dart:621:                          shape: RoundedRectangleBorder(
+  lib\widgets\account_switcher.dart:622:                            borderRadius: BorderRadius.circular(14),
+  lib\widgets\account_switcher.dart:623:                          ),
+  lib\widgets\account_switcher.dart:624:                        ),
+  lib\widgets\account_switcher.dart:651:                          : () => Navigator.of(context).pop(false),
+  lib\widgets\account_switcher.dart:652:                      style: OutlinedButton.styleFrom(
+  lib\widgets\account_switcher.dart:653:                        minimumSize: const Size.fromHeight(46),
+> lib\widgets\account_switcher.dart:654:                        shape: RoundedRectangleBorder(
+  lib\widgets\account_switcher.dart:655:                          borderRadius: BorderRadius.circular(14),
+  lib\widgets\account_switcher.dart:656:                        ),
+  lib\widgets\account_switcher.dart:657:                      ),
+  lib\widgets\post_card.dart:73:    final ok = await showDialog<bool>(
+  lib\widgets\post_card.dart:74:      context: context,
+  lib\widgets\post_card.dart:75:      builder: (ctx) => AlertDialog(
+> lib\widgets\post_card.dart:76:        shape: RoundedRectangleBorder(
+  lib\widgets\post_card.dart:77:          borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\post_card.dart:78:        ),
+  lib\widgets\post_card.dart:79:        title: Text(title),
+  lib\widgets\post_card.dart:388:    final link = 'https://social-app-353f0.web.app/post/${post.id}';
+  lib\widgets\post_card.dart:389:    await showModalBottomSheet<void>(
+  lib\widgets\post_card.dart:390:      context: context,
+> lib\widgets\post_card.dart:391:      shape: const RoundedRectangleBorder(
+  lib\widgets\post_card.dart:392:        borderRadius: BorderRadius.vertical(
+  lib\widgets\post_card.dart:393:          top: Radius.circular(WeaveRadius.card),
+  lib\widgets\post_card.dart:394:        ),
+  lib\widgets\post_card.dart:612:        horizontal: WeaveSpacing.lg,
+  lib\widgets\post_card.dart:613:        vertical: WeaveSpacing.sm,
+  lib\widgets\post_card.dart:614:      ),
+> lib\widgets\post_card.dart:615:      shape: RoundedRectangleBorder(
+  lib\widgets\post_card.dart:616:        borderRadius: BorderRadius.circular(
+  lib\widgets\post_card.dart:617:          isFork ? WeaveRadius.control : WeaveRadius.card,
+  lib\widgets\post_card.dart:618:        ),
+  lib\widgets\post_card.dart:824:  @override
+  lib\widgets\post_card.dart:825:  Widget build(BuildContext context) {
+  lib\widgets\post_card.dart:826:    return AlertDialog(
+> lib\widgets\post_card.dart:827:      shape: RoundedRectangleBorder(
+  lib\widgets\post_card.dart:828:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\post_card.dart:829:      ),
+  lib\widgets\post_card.dart:830:      title: Text(tr('Bổ sung gợi ý', 'Add a hint')),
+  lib\widgets\post_extras.dart:89:      final ok = await showDialog<bool>(
+  lib\widgets\post_extras.dart:90:        context: context,
+  lib\widgets\post_extras.dart:91:        builder: (ctx) => AlertDialog(
+> lib\widgets\post_extras.dart:92:          shape:
+  lib\widgets\post_extras.dart:93:          RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  lib\widgets\post_extras.dart:94:          title: Text(tr('Gộp vào bài gốc?', 'Merge into the original?')),
+  lib\widgets\post_extras.dart:95:          content: Text(tr(
+  lib\widgets\post_extras.dart:369:                                height: 8,
+  lib\widgets\post_extras.dart:370:                                decoration: const BoxDecoration(
+  lib\widgets\post_extras.dart:371:                                  color: Colors.red,
+> lib\widgets\post_extras.dart:372:                                  shape: BoxShape.circle,
+  lib\widgets\post_extras.dart:373:                                ),
+  lib\widgets\post_extras.dart:374:                              ),
+  lib\widgets\post_extras.dart:375:                            ),
+  lib\widgets\settings_widgets.dart:86:    return Material(
+  lib\widgets\settings_widgets.dart:87:      color: AppColors.surface,
+  lib\widgets\settings_widgets.dart:88:      clipBehavior: Clip.antiAlias,
+> lib\widgets\settings_widgets.dart:89:      shape: RoundedRectangleBorder(
+  lib\widgets\settings_widgets.dart:90:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\settings_widgets.dart:91:        side: const BorderSide(color: AppColors.border),
+  lib\widgets\settings_widgets.dart:92:      ),
+  lib\widgets\weave_activity_widgets.dart:153:                  child: Container(
+  lib\widgets\weave_activity_widgets.dart:154:                    padding: const EdgeInsets.all(1.5),
+  lib\widgets\weave_activity_widgets.dart:155:                    decoration: const BoxDecoration(
+> lib\widgets\weave_activity_widgets.dart:156:                        color: AppColors.surface, shape: BoxShape.circle),
+  lib\widgets\weave_activity_widgets.dart:157:                    child: WeaveUserAvatar(uid: shown[i], radius: 12),
+  lib\widgets\weave_activity_widgets.dart:158:                  ),
+  lib\widgets\weave_activity_widgets.dart:159:                ),
+  lib\widgets\weave_activity_widgets.dart:231:      elevation: 0,
+  lib\widgets\weave_activity_widgets.dart:232:      color: AppColors.surface,
+  lib\widgets\weave_activity_widgets.dart:233:      margin: const EdgeInsets.only(bottom: 10),
+> lib\widgets\weave_activity_widgets.dart:234:      shape: RoundedRectangleBorder(
+  lib\widgets\weave_activity_widgets.dart:235:        borderRadius: BorderRadius.circular(WeaveRadius.card),
+  lib\widgets\weave_activity_widgets.dart:236:        side: const BorderSide(color: AppColors.border),
+  lib\widgets\weave_activity_widgets.dart:237:      ),
+
+

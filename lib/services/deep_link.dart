@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Đọc địa chỉ trang web lúc mở ứng dụng để mở thẳng một bài viết.
-/// Liên kết có dạng: https://social-app-353f0.web.app/post/<mã bài viết>
+/// Liên kết có dạng: `https://social-app-353f0.web.app/post/<mã bài viết>`
 class DeepLink {
   static String? _pendingPostId;
 

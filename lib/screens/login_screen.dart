@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/l10n.dart';
 import '../services/user_prefs.dart';
+import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
 import 'register_screen.dart';
 
@@ -81,10 +82,11 @@ class _LoginScreenState extends State<LoginScreen> {
       final selected = lang == code;
       return TextButton(
         onPressed: () => UserPrefs.instance.setLanguage(code),
+        // Nút nằm trên nền gradient nên chữ trắng (theme mặc định là Brand Indigo)
+        style: TextButton.styleFrom(foregroundColor: Colors.white),
         child: Text(
           label,
           style: TextStyle(
-            color: Colors.white,
             fontWeight: selected ? FontWeight.w800 : FontWeight.w400,
             decoration: selected ? TextDecoration.underline : TextDecoration.none,
             decorationColor: Colors.white,
@@ -131,6 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -166,19 +169,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (_loading)
                       const Center(child: CircularProgressIndicator())
                     else
+                    // Nút chính duy nhất của màn hình: kiểu nút theo theme
                       FilledButton(
                         onPressed: _login,
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                          backgroundColor: const Color(0xFF4F46E5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          tr('Đăng nhập', 'Log in'),
-                          style: const TextStyle(fontSize: 16),
-                        ),
+                        child: Text(tr('Đăng nhập', 'Log in')),
                       ),
                     const SizedBox(height: 16),
                     Row(
@@ -202,16 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         );
                       },
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(
-                        tr('Tạo tài khoản mới', 'Create new account'),
-                        style: const TextStyle(fontSize: 16),
-                      ),
+                      child: Text(tr('Tạo tài khoản mới', 'Create new account')),
                     ),
                   ],
                 ),

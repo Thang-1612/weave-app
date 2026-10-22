@@ -81,7 +81,7 @@ class AiAssistant {
     );
 
     final order = <int>[
-      if (_working != null) _working!,
+      ?_working,
       for (var i = 0; i < _models.length; i++)
         if (i != _working) i,
     ];

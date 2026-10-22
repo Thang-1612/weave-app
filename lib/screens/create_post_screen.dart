@@ -789,9 +789,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             buildDefaultDragHandles: false,
             padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
             itemCount: _drafts.length,
-            onReorder: (oldIndex, newIndex) {
+            onReorderItem: (oldIndex, newIndex) {
               setState(() {
-                if (newIndex > oldIndex) newIndex -= 1;
                 final d = _drafts.removeAt(oldIndex);
                 _drafts.insert(newIndex, d);
               });
@@ -882,6 +881,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Widget build(BuildContext context) {
     final twoColumns =
         MediaQuery.sizeOf(context).width >= _kTwoColumnBreakpoint;
+    // Bàn phím đang mở: ở màn hình hẹp ẩn khối tùy chọn để nhường chỗ soạn bài
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
 
     final Widget body;
     if (twoColumns) {
@@ -939,13 +940,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           constraints: const BoxConstraints(maxWidth: 680),
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: _buildOptions(),
+              if (!keyboardOpen)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _buildOptions(),
+                  ),
                 ),
-              ),
               Expanded(child: _buildEditor()),
             ],
           ),

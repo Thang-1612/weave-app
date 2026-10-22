@@ -47,8 +47,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void initState() {
     super.initState();
     svc.cleanupExpired(widget.chatId);
+    // Chỉ vẽ lại định kỳ khi thật sự cần: có chỉ báo "đang soạn" hoặc có
+    // tin tự hủy sắp hết hạn. Tránh dựng lại cả màn mỗi 2 giây.
     _tick = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      final needs = (_chat?.typing.isNotEmpty ?? false) ||
+          _cur.any((m) => m.expireAt != null);
+      if (needs) setState(() {});
     });
     _scroll.addListener(() {
       if (_canLoadMore &&
@@ -74,6 +79,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void _err(String m) {
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
   }
+
+  /// Canh giữa và giới hạn bề ngang cho các thanh cố định (banner, gợi ý, composer).
+  /// Danh sách tin nhắn không dùng hàm này để lăn chuột ở lề vẫn cuộn được.
+  Widget _centered(Widget child) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+      child: child,
+    ),
+  );
 
   bool _otherTyping(Chat c) {
     final now = DateTime.now();
@@ -297,60 +311,55 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
             ],
           ),
-          // Canh giữa + giới hạn bề ngang để màn rộng không bị loãng
-          body: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-              child: Column(children: [
-                if (isRequest)
-                  Container(
-                    width: double.infinity,
-                    // Màu vàng nhạt giữ nguyên: màu ngữ nghĩa "cần chú ý"
-                    color: Colors.amber.withValues(alpha: .2),
-                    padding: const EdgeInsets.all(10),
-                    child: Column(children: [
-                      const Text('Người này chưa có trong danh sách của bạn. Trả lời hoặc chấp nhận để trò chuyện.'),
-                      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        TextButton(onPressed: () => svc.accept(chat), child: const Text('Chấp nhận')),
-                        TextButton(
-                            onPressed: () => svc.setBlocked(chat, true),
-                            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-                            child: const Text('Chặn')),
-                      ]),
-                    ]),
-                  ),
-                if (chat.disappearAfterSec > 0)
-                  Container(
-                    width: double.infinity,
-                    color: AppColors.soft,
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text('⏱ Tin nhắn tự hủy sau ${disappearLabel(chat.disappearAfterSec)}',
-                        textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
-                  ),
-                Expanded(child: _messages(chat)),
-                if (_suggest.isNotEmpty)
-                  SizedBox(
-                    height: 44,
-                    child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8), children: [
-                      for (final s in _suggest)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: ActionChip(
-                              backgroundColor: AppColors.surface,
-                              side: const BorderSide(color: AppColors.border),
-                              label: Text(s),
-                              onPressed: () => setState(() {
-                                _ctrl.text = s;
-                                _suggest = [];
-                              })),
-                        ),
-                    ]),
-                  ),
-                blocked ? _blockedBar(chat, me) : _composer(chat),
-              ]),
-            ),
-          ),
+          // Không bọc cả cột trong ConstrainedBox: danh sách tin nhắn chiếm full
+          // bề ngang (lăn chuột ở lề vẫn cuộn), các thanh cố định tự canh giữa.
+          body: Column(children: [
+            if (isRequest)
+              _centered(Container(
+                width: double.infinity,
+                // Màu vàng nhạt giữ nguyên: màu ngữ nghĩa "cần chú ý"
+                color: Colors.amber.withValues(alpha: .2),
+                padding: const EdgeInsets.all(10),
+                child: Column(children: [
+                  const Text('Người này chưa có trong danh sách của bạn. Trả lời hoặc chấp nhận để trò chuyện.'),
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    TextButton(onPressed: () => svc.accept(chat), child: const Text('Chấp nhận')),
+                    TextButton(
+                        onPressed: () => svc.setBlocked(chat, true),
+                        style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                        child: const Text('Chặn')),
+                  ]),
+                ]),
+              )),
+            if (chat.disappearAfterSec > 0)
+              _centered(Container(
+                width: double.infinity,
+                color: AppColors.soft,
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text('⏱ Tin nhắn tự hủy sau ${disappearLabel(chat.disappearAfterSec)}',
+                    textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+              )),
+            Expanded(child: _messages(chat)),
+            if (_suggest.isNotEmpty)
+              _centered(SizedBox(
+                height: 44,
+                child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8), children: [
+                  for (final s in _suggest)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ActionChip(
+                          backgroundColor: AppColors.surface,
+                          side: const BorderSide(color: AppColors.border),
+                          label: Text(s),
+                          onPressed: () => setState(() {
+                            _ctrl.text = s;
+                            _suggest = [];
+                          })),
+                    ),
+                ]),
+              )),
+            _centered(blocked ? _blockedBar(chat, me) : _composer(chat)),
+          ]),
         );
       },
     );
@@ -418,74 +427,78 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         if (msgs.isEmpty) return _emptyState(chat);
 
         final myLast = msgs.indexWhere((m) => m.senderId == me && !m.pending && m.type != 'system');
-        return ListView.builder(
-          reverse: true,
-          controller: _scroll,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          itemCount: msgs.length,
-          itemBuilder: (c, i) {
-            final m = msgs[i];
-            final older = i + 1 < msgs.length ? msgs[i + 1] : null;
-            final newDay = older == null || !sameDay(older.createdAt, m.createdAt);
-            final dayChip = newDay
-                ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(10),
+        return LayoutBuilder(
+          builder: (context, box) => ListView.builder(
+            reverse: true,
+            controller: _scroll,
+            // Canh giữa cột tối đa 900 bằng padding (ListView vẫn full bề ngang)
+            padding: weaveCenteredPadding(box.maxWidth,
+                maxWidth: _maxContentWidth, h: 0, top: 8, bottom: 8),
+            itemCount: msgs.length,
+            itemBuilder: (c, i) {
+              final m = msgs[i];
+              final older = i + 1 < msgs.length ? msgs[i + 1] : null;
+              final newDay = older == null || !sameDay(older.createdAt, m.createdAt);
+              final dayChip = newDay
+                  ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(dayLabel(m.createdAt),
+                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ),
-                  child: Text(dayLabel(m.createdAt),
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                 ),
-              ),
-            )
-                : null;
+              )
+                  : null;
 
-            if (m.type == 'system') {
-              return Column(children: [
-                if (dayChip != null) dayChip,
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 20),
-                  child: Text(m.text, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                ),
-              ]);
-            }
-
-            final mine = m.senderId == me;
-            final showName = chat.isGroup && !mine && (older == null || older.senderId != m.senderId || newDay);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (dayChip != null) dayChip,
-                MessageBubble(
-                  msg: m,
-                  mine: mine,
-                  me: me,
-                  showName: showName,
-                  onLongPress: () => _showActions(m),
-                  onReply: () => setState(() {
-                    if (!m.deleted) {
-                      _reply = m;
-                      _editing = null;
-                    }
-                  }),
-                  onReact: (e) => svc.react(chat.id, m, e).catchError((x) => _err('$x')),
-                  onOpenPost: m.postId == null
-                      ? null
-                      : () => ChatConfig.openPost?.call(context, m.postId!),
-                ),
-                if (i == myLast)
+              if (m.type == 'system') {
+                return Column(children: [
+                  ?dayChip,
                   Padding(
-                    padding: const EdgeInsets.only(right: 16, top: 1),
-                    child: Text(_seenText(chat, m) ?? '',
-                        textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 20),
+                    child: Text(m.text, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   ),
-              ],
-            );
-          },
+                ]);
+              }
+
+              final mine = m.senderId == me;
+              final showName = chat.isGroup && !mine && (older == null || older.senderId != m.senderId || newDay);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ?dayChip,
+                  MessageBubble(
+                    msg: m,
+                    mine: mine,
+                    me: me,
+                    showName: showName,
+                    onLongPress: () => _showActions(m),
+                    onReply: () => setState(() {
+                      if (!m.deleted) {
+                        _reply = m;
+                        _editing = null;
+                      }
+                    }),
+                    onReact: (e) => svc.react(chat.id, m, e).catchError((x) => _err('$x')),
+                    onOpenPost: m.postId == null
+                        ? null
+                        : () => ChatConfig.openPost?.call(context, m.postId!),
+                  ),
+                  if (i == myLast)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16, top: 1),
+                      child: Text(_seenText(chat, m) ?? '',
+                          textAlign: TextAlign.right, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                    ),
+                ],
+              );
+            },
+          ),
         );
       },
     );

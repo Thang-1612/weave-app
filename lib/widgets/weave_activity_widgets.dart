@@ -39,6 +39,9 @@ String weaveRsvpLabel(RsvpStatus s) {
   }
 }
 
+/// Chip trạng thái hoạt động, cùng bảng màu và hình dạng với chip bình chọn:
+/// đang lên kế hoạch = Soft Indigo, đang diễn ra = Teal, đã kết thúc = trung tính.
+/// Trạng thái luôn có nhãn chữ, không chỉ phân biệt bằng màu.
 class WeaveStatusChip extends StatelessWidget {
   final WeaveStatus status;
   const WeaveStatusChip({super.key, required this.status});
@@ -49,25 +52,27 @@ class WeaveStatusChip extends StatelessWidget {
     late final Color fg;
     switch (status) {
       case WeaveStatus.planning:
-        bg = const Color(0xFFFFF3E0);
-        fg = const Color(0xFFE65100);
+        bg = AppColors.soft;
+        fg = AppColors.brand;
         break;
       case WeaveStatus.active:
-        bg = const Color(0xFFE7F7EC);
-        fg = const Color(0xFF2E7D32);
+        bg = AppColors.teal.withValues(alpha: 0.10);
+        fg = AppColors.teal;
         break;
       case WeaveStatus.ended:
-        bg = const Color(0xFFEEEEEE);
-        fg = const Color(0xFF616161);
+        bg = AppColors.background;
+        fg = AppColors.textSecondary;
         break;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration:
-      BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(WeaveRadius.pill),
+      ),
       child: Text(
         weaveStatusLabel(status),
-        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700),
+        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -148,7 +153,7 @@ class WeaveAvatarStack extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(1.5),
                     decoration: const BoxDecoration(
-                        color: Colors.white, shape: BoxShape.circle),
+                        color: AppColors.surface, shape: BoxShape.circle),
                     child: WeaveUserAvatar(uid: shown[i], radius: 12),
                   ),
                 ),
@@ -167,6 +172,8 @@ class WeaveAvatarStack extends StatelessWidget {
 }
 
 /// Chọn RSVP của chính mình (pending = chưa chọn gì).
+/// Cùng kiểu với các nút chọn khác của Weave: nền trắng, viền mảnh,
+/// đang chọn = Soft Indigo + chữ Brand Indigo.
 class WeaveRsvpSelector extends StatelessWidget {
   final RsvpStatus current;
   final ValueChanged<RsvpStatus> onChanged;
@@ -183,6 +190,13 @@ class WeaveRsvpSelector extends StatelessWidget {
     return SegmentedButton<RsvpStatus>(
       emptySelectionAllowed: true,
       showSelectedIcon: false,
+      style: SegmentedButton.styleFrom(
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.textPrimary,
+        selectedBackgroundColor: AppColors.soft,
+        selectedForegroundColor: AppColors.brand,
+        side: const BorderSide(color: AppColors.border),
+      ),
       segments: [
         for (final s in const [
           RsvpStatus.going,
@@ -213,16 +227,11 @@ class WeaveActivityCard extends StatelessWidget {
     final when = a.lockedDate != null
         ? weaveDate(a.lockedDate!)
         : weaveRange(a.startAt, a.endAt);
+    // Nền, viền, bo góc và elevation lấy từ cardTheme trong app_theme.dart.
     return Card(
-      elevation: 0,
-      color: Colors.white,
       margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.border),
-      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -258,6 +267,7 @@ class WeaveActivityCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                       child: Text(when,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontSize: 13, color: AppColors.textSecondary))),
                   if (a.lockedPlace != null) ...[

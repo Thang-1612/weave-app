@@ -69,6 +69,23 @@ class WeavePagePadding {
   static const double desktop = WeaveSpacing.xxl; // 32
 }
 
+/// Căn giữa nội dung tối đa [maxWidth], nhưng ListView vẫn chiếm full chiều
+/// rộng khung chứa. Nhờ vậy lăn chuột ở hai lề trên desktop vẫn cuộn được
+/// (khác với bọc ListView trong ConstrainedBox).
+///
+/// Dùng: ListView(padding: weaveCenteredPadding(constraints.maxWidth), ...)
+EdgeInsets weaveCenteredPadding(
+    double width, {
+      double maxWidth = 600,
+      double h = WeavePagePadding.mobile,
+      double top = WeaveSpacing.lg,
+      double bottom = WeaveSpacing.lg,
+    }) {
+  final extra = width > maxWidth ? (width - maxWidth) / 2 : 0.0;
+  final side = extra + h;
+  return EdgeInsets.fromLTRB(side, top, side, bottom);
+}
+
 ThemeData buildAppTheme() {
   final scheme = ColorScheme.fromSeed(
     seedColor: AppColors.brand,
@@ -191,6 +208,45 @@ ThemeData buildAppTheme() {
       ),
     ),
 
+    // Hộp thoại, bottom sheet, chip: nền trắng, bo 16, không bị tô tím của M3.
+    dialogTheme: DialogThemeData(
+      backgroundColor: AppColors.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
+      ),
+      titleTextStyle: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+      ),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: AppColors.surface,
+      surfaceTintColor: Colors.transparent,
+      showDragHandle: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(WeaveRadius.card),
+        ),
+      ),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: AppColors.surface,
+      selectedColor: AppColors.soft,
+      checkmarkColor: AppColors.brand,
+      side: const BorderSide(color: AppColors.border),
+      labelStyle: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+      secondaryLabelStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: AppColors.brand,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(WeaveRadius.control),
+      ),
+    ),
+
     // Nút: cao 48, bo 12. Chỉ FilledButton là nút nổi bật (một hành động chính/màn hình).
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
@@ -295,16 +351,4 @@ ThemeData buildAppTheme() {
       ),
     ),
   );
-}
-
-/// Tương thích màn hình cũ còn viết AppBar(flexibleSpace: GradientAppBarBackground()).
-/// Giờ vẽ nền Surface phẳng để chữ tối của AppBar vẫn đọc được.
-/// Màn hình mới không cần dùng; có thể xóa dòng flexibleSpace.
-class GradientAppBarBackground extends StatelessWidget {
-  const GradientAppBarBackground({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const ColoredBox(color: AppColors.surface);
-  }
 }

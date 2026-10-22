@@ -6,6 +6,15 @@ import 'dart:async';
 class CapsuleService {
   static final _col = FirebaseFirestore.instance.collection('capsules');
 
+  /// Mốc lùi so với giờ máy khi lọc hộp đã tới hạn. Việc quyết định ai được
+  /// đọc nằm ở firestore.rules (so với giờ máy chủ); mốc này chỉ để truy vấn
+  /// không bị từ chối khi đồng hồ máy chạy nhanh hơn giờ thật. Sai lệch chỉ
+  /// làm hộp hiện muộn vài phút, không làm lộ nội dung.
+  static const _clockSkew = Duration(minutes: 5);
+
+  static Timestamp _safeNow() =>
+      Timestamp.fromDate(DateTime.now().subtract(_clockSkew));
+
   static String fmtDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
@@ -25,6 +34,7 @@ class CapsuleService {
     }
     return out.take(500).toList();
   }
+
   /// Luồng hộp đã mở (của mình và gửi cho mình) để trộn vào bảng tin.
   /// Dùng snapshots nên hộp bị xóa biến mất ngay. Mỗi 5 phút nghe lại với mốc
   /// thời gian mới để hộp vừa tới hạn tự hiện, không cần mở lại app.
@@ -51,8 +61,7 @@ class CapsuleService {
         s.cancel();
       }
       subs.clear();
-      final safeNow = Timestamp.fromDate(
-          DateTime.now().subtract(const Duration(minutes: 2)));
+      final safeNow = _safeNow();
 
       subs.add(_col
           .where('audience', arrayContains: uid)
@@ -121,7 +130,8 @@ class CapsuleService {
       'reactions': 0,
       'comments': 0,
       'reactionSummary': <String, dynamic>{},
-      'createdAt': Timestamp.now(),
+      // Giờ máy chủ: firestore.rules yêu cầu createdAt == request.time
+      'createdAt': FieldValue.serverTimestamp(),
       'openAt': Timestamp.fromDate(openAt),
       'visibility': visibility,
       'audience': visibility == 'friends' ? await _friendIds(user.uid) : <String>[],
@@ -129,15 +139,12 @@ class CapsuleService {
   }
 
   /// Hộp người khác gửi cho mình và đã tới hạn mở.
-  /// Lùi 2 phút so với giờ máy để không lệch giờ máy chủ.
   static Future<List<Post>> openedForMe() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return [];
-    final safeNow = Timestamp.fromDate(
-        DateTime.now().subtract(const Duration(minutes: 2)));
     final s = await _col
         .where('audience', arrayContains: uid)
-        .where('openAt', isLessThanOrEqualTo: safeNow)
+        .where('openAt', isLessThanOrEqualTo: _safeNow())
         .orderBy('openAt', descending: true)
         .limit(30)
         .get();

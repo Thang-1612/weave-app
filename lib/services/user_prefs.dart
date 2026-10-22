@@ -102,7 +102,6 @@ String notifGroupOf(String type) {
       return 'milestones';
     case 'post_created':
       return 'posted';
-    case 'comment':
     case 'feedback':
       return 'comments';
     default:

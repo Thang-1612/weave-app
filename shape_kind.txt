@@ -1,0 +1,183 @@
+﻿
+  lib\screens\capsules_screen.dart:176:    // Màu và viền đã có trong chipTheme chung; chỉ giữ dạng viên thuốc, không tick.
+  lib\screens\capsules_screen.dart:177:    return ChipTheme(
+  lib\screens\capsules_screen.dart:178:      data: ChipTheme.of(context).copyWith(
+> lib\screens\capsules_screen.dart:179:        shape: const StadiumBorder(),
+  lib\screens\chat_list_screen.dart:121:        backgroundColor: AppColors.surface,
+  lib\screens\chat_list_screen.dart:122:        selectedColor: AppColors.soft,
+  lib\screens\chat_list_screen.dart:123:        side: const BorderSide(color: AppColors.border),
+> lib\screens\chat_list_screen.dart:124:        shape: const StadiumBorder(),
+  lib\screens\comments_screen.dart:324:    final ok = await showDialog<bool>(
+  lib\screens\comments_screen.dart:325:      context: context,
+  lib\screens\comments_screen.dart:326:      builder: (ctx) => AlertDialog(
+> lib\screens\comments_screen.dart:327:        shape: RoundedRectangleBorder(
+  lib\screens\comments_screen.dart:1197:  @override
+  lib\screens\comments_screen.dart:1198:  Widget build(BuildContext context) {
+  lib\screens\comments_screen.dart:1199:    return AlertDialog(
+> lib\screens\comments_screen.dart:1200:      shape: RoundedRectangleBorder(
+  lib\screens\create_post_screen.dart:615:        backgroundColor: AppColors.surface,
+  lib\screens\create_post_screen.dart:616:        selectedColor: AppColors.soft,
+  lib\screens\create_post_screen.dart:617:        side: const BorderSide(color: AppColors.border),
+> lib\screens\create_post_screen.dart:618:        shape: const StadiumBorder(),
+  lib\screens\create_post_screen.dart:1019:  @override
+  lib\screens\create_post_screen.dart:1020:  Widget build(BuildContext context) {
+  lib\screens\create_post_screen.dart:1021:    return AlertDialog(
+> lib\screens\create_post_screen.dart:1022:      shape: RoundedRectangleBorder(
+  lib\screens\edit_profile_screen.dart:147:                        style: FilledButton.styleFrom(
+  lib\screens\edit_profile_screen.dart:148:                          minimumSize: const Size.fromHeight(50),
+  lib\screens\edit_profile_screen.dart:149:                          backgroundColor: AppColors.brand,
+> lib\screens\edit_profile_screen.dart:150:                          shape: RoundedRectangleBorder(
+  lib\screens\feed_screen.dart:119:  Future<void> _openRecipeSheet() async {
+  lib\screens\feed_screen.dart:120:    await showModalBottomSheet<void>(
+  lib\screens\feed_screen.dart:121:      context: context,
+> lib\screens\feed_screen.dart:122:      shape: const RoundedRectangleBorder(
+  lib\screens\feed_screen.dart:251:              side: BorderSide(
+  lib\screens\feed_screen.dart:252:                color: _budgetMin == m ? AppColors.brand : AppColors.border,
+  lib\screens\feed_screen.dart:253:              ),
+> lib\screens\feed_screen.dart:254:              shape: const StadiumBorder(),
+  lib\screens\feed_screen.dart:262:              side: BorderSide(
+  lib\screens\feed_screen.dart:263:                color: rec != null ? AppColors.brand : AppColors.border,
+  lib\screens\feed_screen.dart:264:              ),
+> lib\screens\feed_screen.dart:265:              shape: const StadiumBorder(),
+  lib\screens\on_this_day_screen.dart:214:      // Màu và viền đã có trong chipTheme chung; chỉ giữ dạng viên thuốc, không tick.
+  lib\screens\on_this_day_screen.dart:215:      child: ChipTheme(
+  lib\screens\on_this_day_screen.dart:216:        data: ChipTheme.of(context).copyWith(
+> lib\screens\on_this_day_screen.dart:217:          shape: const StadiumBorder(),
+  lib\screens\recipes_screen.dart:144:                  // Công thức đang dùng: nền soft và viền Brand.
+  lib\screens\recipes_screen.dart:145:                  color: s.activeId == r.id ? AppColors.soft : null,
+  lib\screens\recipes_screen.dart:146:                  margin: const EdgeInsets.only(bottom: 10),
+> lib\screens\recipes_screen.dart:147:                  shape: RoundedRectangleBorder(
+  lib\screens\story_create_screen.dart:209:        // chỉ giữ hai điểm riêng của nhóm chọn loại: dạng viên thuốc, không dấu tick.
+  lib\screens\story_create_screen.dart:210:        ChipTheme(
+  lib\screens\story_create_screen.dart:211:          data: ChipTheme.of(context).copyWith(
+> lib\screens\story_create_screen.dart:212:            shape: const StadiumBorder(),
+  lib\screens\story_detail_screen.dart:97:    final choice = await showDialog<String>(
+  lib\screens\story_detail_screen.dart:98:      context: context,
+  lib\screens\story_detail_screen.dart:99:      builder: (ctx) => AlertDialog(
+> lib\screens\story_detail_screen.dart:100:        shape: RoundedRectangleBorder(
+  lib\screens\story_detail_screen.dart:308:      context: context,
+  lib\screens\story_detail_screen.dart:309:      isScrollControlled: true,
+  lib\screens\story_detail_screen.dart:310:      useSafeArea: true,
+> lib\screens\story_detail_screen.dart:311:      shape: const RoundedRectangleBorder(
+  lib\screens\user_profile_page.dart:25:    final ok = await showDialog<bool>(
+  lib\screens\user_profile_page.dart:26:      context: context,
+  lib\screens\user_profile_page.dart:27:      builder: (ctx) => AlertDialog(
+> lib\screens\user_profile_page.dart:28:        shape: RoundedRectangleBorder(
+  lib\screens\settings\settings_hub_screen.dart:89:    final ok = await showDialog<bool>(
+  lib\screens\settings\settings_hub_screen.dart:90:      context: context,
+  lib\screens\settings\settings_hub_screen.dart:91:      builder: (ctx) => AlertDialog(
+> lib\screens\settings\settings_hub_screen.dart:92:        shape: RoundedRectangleBorder(
+  lib\services\usage_service.dart:192:      context: ctx,
+  lib\services\usage_service.dart:193:      barrierDismissible: false,
+  lib\services\usage_service.dart:194:      builder: (c) => AlertDialog(
+> lib\services\usage_service.dart:195:        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  lib\services\usage_service.dart:228:    await showDialog<void>(
+  lib\services\usage_service.dart:229:      context: ctx,
+  lib\services\usage_service.dart:230:      builder: (c) => AlertDialog(
+> lib\services\usage_service.dart:231:        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  lib\widgets\account_switcher.dart:15:    context: context,
+  lib\widgets\account_switcher.dart:16:    isScrollControlled: true,
+  lib\widgets\account_switcher.dart:17:    clipBehavior: Clip.antiAlias,
+> lib\widgets\account_switcher.dart:18:    shape: const RoundedRectangleBorder(
+  lib\widgets\account_switcher.dart:168:    final ok = await showDialog<bool>(
+  lib\widgets\account_switcher.dart:169:      context: context,
+  lib\widgets\account_switcher.dart:170:      builder: (ctx) => AlertDialog(
+> lib\widgets\account_switcher.dart:171:        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  lib\widgets\account_switcher.dart:496:
+  lib\widgets\account_switcher.dart:497:    return Dialog(
+  lib\widgets\account_switcher.dart:498:      clipBehavior: Clip.antiAlias,
+> lib\widgets\account_switcher.dart:499:      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+  lib\widgets\account_switcher.dart:618:                        style: FilledButton.styleFrom(
+  lib\widgets\account_switcher.dart:619:                          minimumSize: const Size.fromHeight(50),
+  lib\widgets\account_switcher.dart:620:                          backgroundColor: AppColors.brand,
+> lib\widgets\account_switcher.dart:621:                          shape: RoundedRectangleBorder(
+  lib\widgets\account_switcher.dart:651:                          : () => Navigator.of(context).pop(false),
+  lib\widgets\account_switcher.dart:652:                      style: OutlinedButton.styleFrom(
+  lib\widgets\account_switcher.dart:653:                        minimumSize: const Size.fromHeight(46),
+> lib\widgets\account_switcher.dart:654:                        shape: RoundedRectangleBorder(
+  lib\widgets\audience_picker.dart:55:    }) {
+  lib\widgets\audience_picker.dart:56:  return showModalBottomSheet<String>(
+  lib\widgets\audience_picker.dart:57:    context: context,
+> lib\widgets\audience_picker.dart:58:    shape: const RoundedRectangleBorder(
+  lib\widgets\chat_widgets.dart:335:  return showModalBottomSheet(
+  lib\widgets\chat_widgets.dart:336:    context: context,
+  lib\widgets\chat_widgets.dart:337:    isScrollControlled: true,
+> lib\widgets\chat_widgets.dart:338:    shape: const RoundedRectangleBorder(
+  lib\widgets\friend_button.dart:45:    final ok = await showDialog<bool>(
+  lib\widgets\friend_button.dart:46:      context: context,
+  lib\widgets\friend_button.dart:47:      builder: (ctx) => AlertDialog(
+> lib\widgets\friend_button.dart:48:        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  lib\widgets\layer_audience_picker.dart:47:    }) async {
+  lib\widgets\layer_audience_picker.dart:48:  final type = await showModalBottomSheet<String>(
+  lib\widgets\layer_audience_picker.dart:49:    context: context,
+> lib\widgets\layer_audience_picker.dart:50:    shape: const RoundedRectangleBorder(
+  lib\widgets\layer_audience_picker.dart:90:  final group = await showModalBottomSheet<GroupInfo>(
+  lib\widgets\layer_audience_picker.dart:91:    context: context,
+  lib\widgets\layer_audience_picker.dart:92:    isScrollControlled: true,
+> lib\widgets\layer_audience_picker.dart:93:    shape: const RoundedRectangleBorder(
+  lib\widgets\layer_audience_picker.dart:262:  @override
+  lib\widgets\layer_audience_picker.dart:263:  Widget build(BuildContext context) {
+  lib\widgets\layer_audience_picker.dart:264:    return AlertDialog(
+> lib\widgets\layer_audience_picker.dart:265:      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  lib\widgets\post_card.dart:73:    final ok = await showDialog<bool>(
+  lib\widgets\post_card.dart:74:      context: context,
+  lib\widgets\post_card.dart:75:      builder: (ctx) => AlertDialog(
+> lib\widgets\post_card.dart:76:        shape: RoundedRectangleBorder(
+  lib\widgets\post_card.dart:388:    final link = 'https://social-app-353f0.web.app/post/${post.id}';
+  lib\widgets\post_card.dart:389:    await showModalBottomSheet<void>(
+  lib\widgets\post_card.dart:390:      context: context,
+> lib\widgets\post_card.dart:391:      shape: const RoundedRectangleBorder(
+  lib\widgets\post_card.dart:612:        horizontal: WeaveSpacing.lg,
+  lib\widgets\post_card.dart:613:        vertical: WeaveSpacing.sm,
+  lib\widgets\post_card.dart:614:      ),
+> lib\widgets\post_card.dart:615:      shape: RoundedRectangleBorder(
+  lib\widgets\post_card.dart:824:  @override
+  lib\widgets\post_card.dart:825:  Widget build(BuildContext context) {
+  lib\widgets\post_card.dart:826:    return AlertDialog(
+> lib\widgets\post_card.dart:827:      shape: RoundedRectangleBorder(
+  lib\widgets\reaction_picker.dart:21:  return showModalBottomSheet<String>(
+  lib\widgets\reaction_picker.dart:22:    context: context,
+  lib\widgets\reaction_picker.dart:23:    isScrollControlled: true,
+> lib\widgets\reaction_picker.dart:24:    shape: const RoundedRectangleBorder(
+  lib\widgets\response_bar.dart:72:                  side: BorderSide(
+  lib\widgets\response_bar.dart:73:                    color: mine == r.id ? AppColors.brand : AppColors.border,
+  lib\widgets\response_bar.dart:74:                  ),
+> lib\widgets\response_bar.dart:75:                  shape: const StadiumBorder(),
+  lib\widgets\settings_widgets.dart:86:    return Material(
+  lib\widgets\settings_widgets.dart:87:      color: AppColors.surface,
+  lib\widgets\settings_widgets.dart:88:      clipBehavior: Clip.antiAlias,
+> lib\widgets\settings_widgets.dart:89:      shape: RoundedRectangleBorder(
+  lib\widgets\space_picker.dart:41:    context: context,
+  lib\widgets\space_picker.dart:42:    isScrollControlled: true,
+  lib\widgets\space_picker.dart:43:    useSafeArea: true,
+> lib\widgets\space_picker.dart:44:    shape: const RoundedRectangleBorder(
+  lib\widgets\story_widgets.dart:78:  return showDialog<String>(
+  lib\widgets\story_widgets.dart:79:    context: context,
+  lib\widgets\story_widgets.dart:80:    builder: (ctx) => AlertDialog(
+> lib\widgets\story_widgets.dart:81:      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  lib\widgets\story_widgets.dart:111:  showModalBottomSheet<void>(
+  lib\widgets\story_widgets.dart:112:    context: context,
+  lib\widgets\story_widgets.dart:113:    isScrollControlled: true,
+> lib\widgets\story_widgets.dart:114:    shape: const RoundedRectangleBorder(
+  lib\widgets\story_widgets.dart:364:  return showModalBottomSheet<String>(
+  lib\widgets\story_widgets.dart:365:    context: context,
+  lib\widgets\story_widgets.dart:366:    isScrollControlled: true,
+> lib\widgets\story_widgets.dart:367:    shape: const RoundedRectangleBorder(
+  lib\widgets\text_prompt.dart:63:  @override
+  lib\widgets\text_prompt.dart:64:  Widget build(BuildContext context) {
+  lib\widgets\text_prompt.dart:65:    return AlertDialog(
+> lib\widgets\text_prompt.dart:66:      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  lib\widgets\weave_activity_widgets.dart:231:      elevation: 0,
+  lib\widgets\weave_activity_widgets.dart:232:      color: AppColors.surface,
+  lib\widgets\weave_activity_widgets.dart:233:      margin: const EdgeInsets.only(bottom: 10),
+> lib\widgets\weave_activity_widgets.dart:234:      shape: RoundedRectangleBorder(
+  lib\widgets\weave_extras_widgets.dart:295:      isScrollControlled: true,
+  lib\widgets\weave_extras_widgets.dart:296:      showDragHandle: true,
+  lib\widgets\weave_extras_widgets.dart:297:      constraints: const BoxConstraints(maxWidth: 560),
+> lib\widgets\weave_extras_widgets.dart:298:      shape: const RoundedRectangleBorder(
+  lib\widgets\weave_moments_tab.dart:74:      context: context,
+  lib\widgets\weave_moments_tab.dart:75:      isScrollControlled: true,
+  lib\widgets\weave_moments_tab.dart:76:      showDragHandle: true,
+> lib\widgets\weave_moments_tab.dart:77:      shape: const RoundedRectangleBorder(
+
+

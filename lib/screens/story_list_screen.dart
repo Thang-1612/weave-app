@@ -115,26 +115,28 @@ class StoryListScreen extends StatelessWidget {
               const gap = WeaveSpacing.md;
               final cardWidth = wide ? (contentWidth - gap) / 2 : contentWidth;
 
-              return Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxW),
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(padH, 12, padH, 88),
+              // ListView full chiều rộng để lăn chuột ở hai lề vẫn hoạt động;
+              // nội dung được căn giữa bằng padding.
+              return ListView(
+                padding: weaveCenteredPadding(
+                  constraints.maxWidth,
+                  maxWidth: maxW,
+                  h: padH,
+                  top: 12,
+                  bottom: 88,
+                ),
+                children: [
+                  Wrap(
+                    spacing: gap,
                     children: [
-                      Wrap(
-                        spacing: gap,
-                        children: [
-                          for (final s in list)
-                            SizedBox(
-                              width: cardWidth,
-                              child: _card(context, s, me),
-                            ),
-                        ],
-                      ),
+                      for (final s in list)
+                        SizedBox(
+                          width: cardWidth,
+                          child: _card(context, s, me),
+                        ),
                     ],
                   ),
-                ),
+                ],
               );
             },
           );

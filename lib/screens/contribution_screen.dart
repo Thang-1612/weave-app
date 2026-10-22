@@ -103,10 +103,11 @@ class _ContributionScreenState extends State<ContributionScreen> {
   }
 
   Widget _card(String emoji, String value, String label) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
@@ -128,7 +129,8 @@ class _ContributionScreenState extends State<ContributionScreen> {
             label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+            style:
+            const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -139,7 +141,6 @@ class _ContributionScreenState extends State<ContributionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Dấu vết đóng góp', 'Contribution trail')),
       ),
       body: FutureBuilder<_Stats>(
@@ -184,8 +185,7 @@ class _ContributionScreenState extends State<ContributionScreen> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
                         widget.name,
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w800),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
                   GridView.count(
@@ -204,7 +204,9 @@ class _ContributionScreenState extends State<ContributionScreen> {
                       'Post stats are counted over the account\'s latest $_cap public posts at most. Accepted answers only count on public questions. Thank-yous are private, so only the account owner sees that number.',
                     ),
                     style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        height: 1.4),
                   ),
                 ],
               ),

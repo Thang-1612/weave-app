@@ -23,7 +23,6 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Lời cảm ơn', 'Thank-yous')),
       ),
       body: FutureBuilder<List<ThanksItem>>(
@@ -51,7 +50,8 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
                     'No thank-yous yet.\nWhen someone taps "Thank" under your post, it shows up here.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, height: 1.4),
                 ),
               ),
             );
@@ -71,8 +71,8 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(WeaveRadius.card),
                         border: Border.all(color: AppColors.border),
                       ),
                       child: Row(
@@ -112,6 +112,7 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
                           ),
                           IconButton(
                             visualDensity: VisualDensity.compact,
+                            tooltip: tr('Xóa', 'Remove'),
                             icon: const Icon(Icons.close, size: 18),
                             onPressed: () async {
                               await ThanksService.delete(t.id);

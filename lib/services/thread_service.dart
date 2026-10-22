@@ -9,6 +9,7 @@ import 'l10n.dart';
 
 /// Bình luận nâng cao: trả lời, tag bạn bè, cảm xúc, báo cáo, bình luận của AI.
 class ThreadService {
+  // ignore: unused_field
   static final _posts = FirebaseFirestore.instance.collection('posts');
 
   static const List<String> reportReasons = [

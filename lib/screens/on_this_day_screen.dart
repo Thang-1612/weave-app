@@ -12,6 +12,7 @@ String _fmtDate(DateTime d) => '${_two(d.day)}/${_two(d.month)}/${d.year}';
 /// Dưới mức này: hàng chip năm ở đầu trang.
 const double _kOtdWideBreakpoint = 900;
 const double _kOtdFilterWidth = 260;
+const double _kOtdContentMaxWidth = 1040;
 
 /// Màn hình "Ngày này năm xưa": các bài của mình đăng vào hôm nay của những
 /// năm trước, nhóm theo năm.
@@ -51,10 +52,12 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
     yearsAgo == 1 ? '1 year ago' : '$yearsAgo years ago',
   );
 
-  Widget _empty() {
+  /// Trạng thái trống. [width] là bề rộng khung chứa, để căn giữa nội dung
+  /// mà ListView vẫn full chiều rộng (lăn chuột ở lề vẫn hoạt động).
+  Widget _empty(double width) {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(32),
+      padding: weaveCenteredPadding(width, h: 32, top: 32, bottom: 32),
       children: [
         const SizedBox(height: 60),
         const Icon(Icons.history, size: 56, color: AppColors.textSecondary),
@@ -84,11 +87,11 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
     );
   }
 
-  Widget _error(Object error) {
+  Widget _error(Object error, double width) {
     final detail = '$error';
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(32),
+      padding: weaveCenteredPadding(width, h: 32, top: 32, bottom: 32),
       children: [
         const SizedBox(height: 60),
         Text(
@@ -208,11 +211,9 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
   Widget _yearChips(List<OnThisDayGroup> groups) {
     return SizedBox(
       height: 52,
+      // Màu và viền đã có trong chipTheme chung; chỉ giữ dạng viên thuốc, không tick.
       child: ChipTheme(
         data: ChipTheme.of(context).copyWith(
-          backgroundColor: AppColors.surface,
-          selectedColor: AppColors.soft,
-          side: const BorderSide(color: AppColors.border),
           shape: const StadiumBorder(),
           showCheckmark: false,
         ),
@@ -251,60 +252,69 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= _kOtdWideBreakpoint;
+        final w = constraints.maxWidth;
+        final wide = w >= _kOtdWideBreakpoint;
 
         if (wide) {
-          // Rộng: bộ lọc năm | danh sách cuộn riêng.
-          return Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1040),
-              child: Padding(
-                padding: const EdgeInsets.all(WeaveSpacing.xl),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: _kOtdFilterWidth,
-                      child: SingleChildScrollView(child: _yearMenu(groups)),
-                    ),
-                    const SizedBox(width: WeaveSpacing.sm),
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: _refresh,
-                        child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: _groupWidgets(groups),
-                        ),
-                      ),
-                    ),
-                  ],
+          // Rộng: bộ lọc năm | danh sách cuộn riêng. Danh sách kéo dài tới
+          // mép phải cửa sổ để lăn chuột ở lề phải vẫn cuộn được; nội dung
+          // vẫn căn trong 1040 px.
+          final margin = w > _kOtdContentMaxWidth
+              ? (w - _kOtdContentMaxWidth) / 2
+              : 0.0;
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: margin + WeaveSpacing.xl),
+              SizedBox(
+                width: _kOtdFilterWidth,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(top: WeaveSpacing.xl),
+                  child: _yearMenu(groups),
                 ),
               ),
-            ),
+              const SizedBox(width: WeaveSpacing.sm),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      0,
+                      WeaveSpacing.xl,
+                      margin + WeaveSpacing.xl,
+                      0,
+                    ),
+                    children: _groupWidgets(groups),
+                  ),
+                ),
+              ),
+            ],
           );
         }
 
-        // Hẹp: chip năm ở đầu trang, danh sách cuộn bên dưới.
-        return Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Column(
-              children: [
-                _yearChips(groups),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _refresh,
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: _groupWidgets(groups),
-                    ),
-                  ),
-                ),
-              ],
+        // Hẹp: chip năm ở đầu trang (căn giữa tối đa 600), danh sách bên dưới
+        // full chiều rộng, nội dung căn giữa bằng padding.
+        return Column(
+          children: [
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: _yearChips(groups),
+              ),
             ),
-          ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: weaveCenteredPadding(w, h: 0, top: 0, bottom: 0),
+                  children: _groupWidgets(groups),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -322,32 +332,29 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
           if (snap.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          // Trạng thái lỗi / trống: vẫn kéo để làm mới được, giới hạn bề ngang 600
+          // Trạng thái lỗi / trống: vẫn kéo để làm mới được.
           if (snap.hasError) {
-            return _centered(RefreshIndicator(
-              onRefresh: _refresh,
-              child: _error(snap.error!),
-            ));
+            return LayoutBuilder(
+              builder: (context, c) => RefreshIndicator(
+                onRefresh: _refresh,
+                child: _error(snap.error!, c.maxWidth),
+              ),
+            );
           }
           final groups = snap.data ?? const <OnThisDayGroup>[];
           if (groups.isEmpty) {
-            return _centered(RefreshIndicator(
-              onRefresh: _refresh,
-              child: _empty(),
-            ));
+            return LayoutBuilder(
+              builder: (context, c) => RefreshIndicator(
+                onRefresh: _refresh,
+                child: _empty(c.maxWidth),
+              ),
+            );
           }
           return _body(groups);
         },
       ),
     );
   }
-
-  Widget _centered(Widget child) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 600),
-      child: child,
-    ),
-  );
 }
 
 /// Mục bấm để mở "Ngày này năm xưa". Đặt vào menu, ngăn kéo hoặc trang cá

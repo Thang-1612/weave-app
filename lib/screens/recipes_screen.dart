@@ -57,6 +57,26 @@ class _RecipesScreenState extends State<RecipesScreen> {
   Future<void> _delete(FeedRecipe r) async {
     final cur = _s;
     if (cur == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Xóa công thức "${r.name}"?', 'Delete recipe "${r.name}"?')),
+        content: Text(tr('Công thức sẽ bị xóa và không thể khôi phục.',
+            'The recipe will be deleted and cannot be restored.')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(tr('Hủy', 'Cancel')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(tr('Xóa', 'Delete')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     await _persist(FeedRecipeState(
       cur.items.where((e) => e.id != r.id).toList(),
       cur.activeId == r.id ? null : cur.activeId,
@@ -79,7 +99,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
     if (r.withUpdates) parts.add(tr('bài sống', 'living posts'));
     if (r.withImages) parts.add(tr('có ảnh', 'with images'));
     if (r.maxAgeDays > 0) {
-      parts.add(tr('trong ${r.maxAgeDays} ngày', 'within ${r.maxAgeDays} days'));
+      parts.add(
+          tr('trong ${r.maxAgeDays} ngày', 'within ${r.maxAgeDays} days'));
     }
     return parts.join(' · ');
   }
@@ -89,12 +110,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
     final s = _s;
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Công thức bảng tin', 'Feed recipes')),
       ),
+      // Màu và bo góc của FAB lấy từ floatingActionButtonTheme.
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.brand,
-        foregroundColor: Colors.white,
         onPressed: s == null ? null : () => _edit(),
         icon: const Icon(Icons.add),
         label: Text(tr('Công thức mới', 'New recipe')),
@@ -122,13 +141,12 @@ class _RecipesScreenState extends State<RecipesScreen> {
               ),
               for (final r in s.items)
                 Card(
-                  elevation: 0,
-                  color: s.activeId == r.id
-                      ? AppColors.soft
-                      : Colors.white,
+                  // Công thức đang dùng: nền soft và viền Brand.
+                  color: s.activeId == r.id ? AppColors.soft : null,
                   margin: const EdgeInsets.only(bottom: 10),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius:
+                    BorderRadius.circular(WeaveRadius.card),
                     side: BorderSide(
                       color: s.activeId == r.id
                           ? AppColors.brand
@@ -154,13 +172,15 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
+                          tooltip: tr('Sửa', 'Edit'),
                           icon: const Icon(Icons.edit_outlined,
                               size: 20),
                           onPressed: () => _edit(r),
                         ),
                         IconButton(
+                          tooltip: tr('Xóa', 'Delete'),
                           icon: const Icon(Icons.delete_outline,
-                              size: 20),
+                              size: 20, color: AppColors.danger),
                           onPressed: () => _delete(r),
                         ),
                       ],
@@ -173,7 +193,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   child: Text(
                     tr('Chưa có công thức nào.', 'No recipes yet.'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: const TextStyle(
+                        color: AppColors.textSecondary),
                   ),
                 ),
             ],
@@ -240,7 +261,6 @@ class _RecipeDialogState extends State<_RecipeDialog> {
   Widget build(BuildContext context) {
     final canSave = _name.text.trim().isNotEmpty;
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text(widget.initial == null
           ? tr('Công thức mới', 'New recipe')
           : tr('Sửa công thức', 'Edit recipe')),
@@ -256,8 +276,6 @@ class _RecipeDialogState extends State<_RecipeDialog> {
                 maxLength: 30,
                 decoration: InputDecoration(
                   labelText: tr('Tên công thức', 'Recipe name'),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14)),
                 ),
               ),
               Text(tr('Chủ đề (để trống = mọi chủ đề)',
@@ -272,8 +290,8 @@ class _RecipeDialogState extends State<_RecipeDialog> {
                       label: Text(
                         '${findSpace(id)?.emoji ?? ''} ${tr(findSpace(id)?.name ?? id, findSpace(id)?.nameEn ?? findSpace(id)?.name ?? id)}',
                       ),
-                      onDeleted: () => setState(
-                              () => _spaces = _spaces.where((e) => e != id).toList()),
+                      onDeleted: () => setState(() =>
+                      _spaces = _spaces.where((e) => e != id).toList()),
                     ),
                   ActionChip(
                     avatar: const Icon(Icons.add, size: 16),
@@ -335,7 +353,6 @@ class _RecipeDialogState extends State<_RecipeDialog> {
           child: Text(tr('Hủy', 'Cancel')),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
           onPressed: canSave
               ? () => Navigator.of(context).pop(FeedRecipe(
             id: widget.initial?.id ??

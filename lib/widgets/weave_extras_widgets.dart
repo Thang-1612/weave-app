@@ -72,30 +72,35 @@ class WeavePollCard extends StatelessWidget {
     }
   }
 
+  /// Chip trạng thái bình chọn, dùng bảng màu chung:
+  /// đang mở = Teal, hết hạn = đỏ Danger nhạt, đã chốt = xám trung tính.
   Widget _statusChip() {
     final String text;
     final Color bg;
     final Color fg;
     if (poll.closed) {
       text = tr('Đã chốt', 'Closed');
-      bg = const Color(0xFFEEEEEE);
-      fg = const Color(0xFF616161);
+      bg = AppColors.background;
+      fg = AppColors.textSecondary;
     } else if (poll.isExpired) {
       text = tr('Hết hạn', 'Expired');
-      bg = const Color(0xFFFFF3E0);
-      fg = const Color(0xFFE65100);
+      bg = AppColors.danger.withValues(alpha: 0.10);
+      fg = AppColors.danger;
     } else {
       text = tr('Đang mở', 'Open');
-      bg = const Color(0xFFE7F7EC);
-      fg = const Color(0xFF2E7D32);
+      bg = AppColors.teal.withValues(alpha: 0.10);
+      fg = AppColors.teal;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration:
-      BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(text,
-          style:
-          TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(WeaveRadius.pill),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
+      ),
     );
   }
 
@@ -131,13 +136,13 @@ class WeavePollCard extends StatelessWidget {
                   child: FractionallySizedBox(
                     alignment: Alignment.centerLeft,
                     widthFactor: pct,
-                    child:
-                    Container(color: AppColors.brand.withValues(alpha: 0.12)),
+                    child: Container(
+                        color: AppColors.brand.withValues(alpha: 0.12)),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   child: Row(
                     children: [
                       Icon(
@@ -162,7 +167,8 @@ class WeavePollCard extends StatelessWidget {
                             if ((o.address ?? '').isNotEmpty)
                               Text(o.address!,
                                   style: const TextStyle(
-                                      fontSize: 12, color: AppColors.textSecondary)),
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary)),
                           ],
                         ),
                       ),
@@ -197,14 +203,9 @@ class WeavePollCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Card lấy nền trắng, viền #E6E7EF và bo góc 16 từ theme
     return Card(
-      elevation: 0,
-      color: Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.border),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: StreamBuilder<List<WeaveVote>>(
@@ -246,7 +247,8 @@ class WeavePollCard extends StatelessWidget {
                     if (poll.closesAt != null && !poll.closed)
                       '${tr('hạn', 'ends')} ${weaveDate(poll.closesAt!)}',
                   ].join(' · '),
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 10),
                 for (final o in poll.options)
@@ -266,7 +268,13 @@ class WeavePollCard extends StatelessWidget {
                 if (isHost && !poll.closed)
                   Align(
                     alignment: Alignment.centerRight,
+                    // Nút tonal mặc định lấy màu phụ Teal của theme nên đặt rõ
+                    // màu Soft Indigo / Brand Indigo cho hợp tông
                     child: FilledButton.tonal(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.soft,
+                        foregroundColor: AppColors.brand,
+                      ),
                       onPressed: () => _close(context),
                       child: Text(tr('Chốt kết quả', 'Close poll')),
                     ),
@@ -286,6 +294,11 @@ Future<void> showWeaveCreatePollSheet(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      constraints: const BoxConstraints(maxWidth: 560),
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+        BorderRadius.vertical(top: Radius.circular(WeaveRadius.card)),
+      ),
       builder: (_) => _CreatePollSheet(activityId: activityId),
     );
 
@@ -404,6 +417,7 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // Viền, bo góc và màu focus của mọi ô nhập lấy từ theme
     return Padding(
       padding:
       EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -413,11 +427,20 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(tr('Tạo bình chọn', 'New poll'),
-                style:
-                const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    color: AppColors.textPrimary)),
             const SizedBox(height: 12),
             SegmentedButton<PollKind>(
               showSelectedIcon: false,
+              style: SegmentedButton.styleFrom(
+                backgroundColor: AppColors.surface,
+                foregroundColor: AppColors.textPrimary,
+                selectedBackgroundColor: AppColors.soft,
+                selectedForegroundColor: AppColors.brand,
+                side: const BorderSide(color: AppColors.border),
+              ),
               segments: [
                 ButtonSegment(
                     value: PollKind.place,
@@ -437,7 +460,6 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
               decoration: InputDecoration(
                 labelText: tr('Câu hỏi', 'Question'),
                 hintText: _defaultQuestion,
-                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -449,7 +471,6 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
                     controller: _places[i],
                     decoration: InputDecoration(
                       labelText: '${tr('Địa điểm', 'Place')} ${i + 1}',
-                      border: const OutlineInputBorder(),
                       suffixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -495,6 +516,8 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
                 children: [
                   for (final d in (List<DateTime>.of(_dates)..sort()))
                     InputChip(
+                      backgroundColor: AppColors.surface,
+                      side: const BorderSide(color: AppColors.border),
                       label: Text(weaveDate(d)),
                       onDeleted: () => setState(() => _dates.remove(d)),
                     ),
@@ -516,25 +539,27 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
               onChanged: (v) => setState(() => _multi = v),
             ),
             DropdownButtonFormField<int?>(
-              value: _closeHours,
+              key: ValueKey(_closeHours),
+              initialValue: _closeHours,
               decoration: InputDecoration(
                 labelText: tr('Hạn bình chọn', 'Deadline'),
-                border: const OutlineInputBorder(),
               ),
               items: [
                 DropdownMenuItem(
-                    value: null, child: Text(tr('Không giới hạn', 'No deadline'))),
-                DropdownMenuItem(value: 24, child: Text(tr('24 giờ', '24 hours'))),
-                DropdownMenuItem(value: 72, child: Text(tr('3 ngày', '3 days'))),
-                DropdownMenuItem(value: 168, child: Text(tr('7 ngày', '7 days'))),
+                    value: null,
+                    child: Text(tr('Không giới hạn', 'No deadline'))),
+                DropdownMenuItem(
+                    value: 24, child: Text(tr('24 giờ', '24 hours'))),
+                DropdownMenuItem(
+                    value: 72, child: Text(tr('3 ngày', '3 days'))),
+                DropdownMenuItem(
+                    value: 168, child: Text(tr('7 ngày', '7 days'))),
               ],
               onChanged: (v) => setState(() => _closeHours = v),
             ),
             const SizedBox(height: 16),
+            // Nút chính duy nhất của bảng: kiểu nút theo theme (cao 48, bo 12)
             FilledButton(
-              style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.brand,
-                  padding: const EdgeInsets.symmetric(vertical: 14)),
               onPressed: _busy ? null : _submit,
               child: Text(tr('Tạo bình chọn', 'Create poll')),
             ),

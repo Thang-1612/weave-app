@@ -7,6 +7,10 @@ import '../models/post.dart';
 import '../theme/app_theme.dart';
 import '../services/l10n.dart';
 
+/// Chiều cao tối đa của một ảnh trong bài. Trên desktop, ảnh dọc ở cột rộng
+/// sẽ không kéo dài quá cỡ một màn hình.
+const double _kMaxImageHeight = 520;
+
 /// Hiển thị nội dung theo từng khối.
 ///
 /// - `PostBlocks(post: p)`: nội dung bài đăng (lớp gốc), dùng như cũ.
@@ -134,17 +138,27 @@ class _Base64ImageState extends State<_Base64Image> {
           MaterialPageRoute(builder: (_) => _ImageViewer(bytes: _bytes)),
         );
       },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: AspectRatio(
-          aspectRatio: ratio,
-          child: Image.memory(
-            _bytes,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            gaplessPlayback: true,
-          ),
-        ),
+      // Co theo chiều rộng khung, chiều cao theo tỷ lệ nhưng không vượt
+      // _kMaxImageHeight (ảnh dọc ở cột rộng không bị kéo quá dài).
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final w = c.maxWidth.isFinite ? c.maxWidth : 400.0;
+          final h = (w / ratio).clamp(0.0, _kMaxImageHeight).toDouble();
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(WeaveRadius.control),
+            child: SizedBox(
+              width: w,
+              height: h,
+              child: Image.memory(
+                _bytes,
+                fit: BoxFit.cover,
+                width: w,
+                height: h,
+                gaplessPlayback: true,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -205,13 +219,13 @@ class LinkCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final host = _hostOf(url);
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(WeaveRadius.control),
       onTap: () => _open(context),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(WeaveRadius.control),
           border: Border.all(color: AppColors.border),
         ),
         child: Row(
@@ -221,7 +235,7 @@ class LinkCard extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: AppColors.soft,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(WeaveRadius.control),
               ),
               child: const Icon(Icons.link, color: AppColors.brand),
             ),

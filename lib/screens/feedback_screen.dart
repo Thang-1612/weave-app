@@ -86,15 +86,51 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     }
   }
 
+  Future<void> _confirmDelete(FeedbackItem f) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final scheme = Theme.of(ctx).colorScheme;
+        return AlertDialog(
+          title: Text(tr('Xóa góp ý này?', 'Delete this feedback?')),
+          content: Text(tr('Góp ý sẽ bị xóa và không thể khôi phục.',
+              'This feedback will be deleted and cannot be restored.')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(tr('Hủy', 'Cancel')),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: scheme.error,
+                foregroundColor: scheme.onError,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(tr('Xóa', 'Delete')),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true) return;
+    try {
+      await FeedbackService.delete(widget.post, f.id);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   /// [root] là góp ý gốc của chuỗi (chính nó nếu f là góp ý gốc).
   Widget _tile(FeedbackItem f, FeedbackItem root, String? me) {
+    final scheme = Theme.of(context).colorScheme;
     final canDelete = f.authorId == me;
     final byPostAuthor = f.authorId == widget.post.authorId;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
@@ -124,13 +160,16 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     : (byPostAuthor
                     ? '🔒 ${tr('Chỉ tác giả thấy', 'Author only')}'
                     : '🔒 ${tr('Riêng tư', 'Private')}'),
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary),
               ),
               if (canDelete)
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  onPressed: () => FeedbackService.delete(widget.post, f.id),
+                  tooltip: tr('Xóa', 'Delete'),
+                  icon: Icon(Icons.delete_outline,
+                      size: 18, color: scheme.error),
+                  onPressed: () => _confirmDelete(f),
                 ),
             ],
           ),
@@ -152,7 +191,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           Row(
             children: [
               Text(_ago(f.createdAt),
-                  style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
+                  style: const TextStyle(
+                      fontSize: 11.5, color: AppColors.textSecondary)),
               if (me != null) ...[
                 const SizedBox(width: 12),
                 InkWell(
@@ -207,149 +247,166 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final me = FirebaseAuth.instance.currentUser?.uid;
     final isOwner = widget.post.authorId == me;
     final root = _replyRoot;
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: Text(tr('Góp ý cho bài viết', 'Feedback'))),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<List<FeedbackItem>>(
-              stream: FeedbackService.watch(widget.post),
-              builder: (context, snap) {
-                if (snap.hasError) {
-                  return Center(child: Text('${snap.error}'));
-                }
-                if (!snap.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final items = snap.data!;
-                if (items.isEmpty) {
-                  return Center(
-                    child: Text(
-                      tr('Chưa có góp ý nào', 'No feedback yet'),
-                      style: const TextStyle(color: AppColors.textSecondary),
-                    ),
-                  );
-                }
-                return ListView(
-                  padding: const EdgeInsets.all(12),
-                  children: _buildThreads(items, me),
-                );
-              },
-            ),
-          ),
-          if (me != null)
-            SafeArea(
-              top: false,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: AppColors.border)),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: Column(
+            children: [
+              Expanded(
+                child: StreamBuilder<List<FeedbackItem>>(
+                  stream: FeedbackService.watch(widget.post),
+                  builder: (context, snap) {
+                    if (snap.hasError) {
+                      return Center(child: Text('${snap.error}'));
+                    }
+                    if (!snap.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final items = snap.data!;
+                    if (items.isEmpty) {
+                      return Center(
+                        child: Text(
+                          tr('Chưa có góp ý nào', 'No feedback yet'),
+                          style:
+                          const TextStyle(color: AppColors.textSecondary),
+                        ),
+                      );
+                    }
+                    return ListView(
+                      padding: const EdgeInsets.all(12),
+                      children: _buildThreads(items, me),
+                    );
+                  },
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (root != null)
-                    // Đang trả lời: chế độ theo góp ý gốc, không chọn lại
-                      Row(
-                        children: [
-                          const Icon(Icons.reply,
-                              size: 16, color: AppColors.brand),
-                          const SizedBox(width: 6),
-                          Expanded(
+              ),
+              if (me != null)
+                SafeArea(
+                  top: false,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      border:
+                      const Border(top: BorderSide(color: AppColors.border)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (root != null)
+                        // Đang trả lời: chế độ theo góp ý gốc, không chọn lại
+                          Row(
+                            children: [
+                              const Icon(Icons.reply,
+                                  size: 16, color: AppColors.brand),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  '${tr('Đang trả lời', 'Replying to')} $_replyToName'
+                                      ' · ${root.isPublic ? tr('công khai', 'public') : tr('riêng tư', 'private')}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    color: AppColors.brand,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                tooltip: tr('Hủy trả lời', 'Cancel reply'),
+                                icon: const Icon(Icons.close, size: 18),
+                                onPressed: _cancelReply,
+                              ),
+                            ],
+                          )
+                        else ...[
+                          SegmentedButton<bool>(
+                            showSelectedIcon: false,
+                            segments: [
+                              ButtonSegment(
+                                value: true,
+                                icon: const Icon(Icons.public, size: 16),
+                                label: Text(tr('Công khai', 'Public')),
+                              ),
+                              ButtonSegment(
+                                value: false,
+                                icon: const Icon(Icons.lock_outline, size: 16),
+                                label: Text(tr('Riêng tư', 'Private')),
+                              ),
+                            ],
+                            selected: {_public},
+                            onSelectionChanged: (s) =>
+                                setState(() => _public = s.first),
+                          ),
+                          const SizedBox(height: 4),
+                          Align(
+                            alignment: Alignment.centerLeft,
                             child: Text(
-                              '${tr('Đang trả lời', 'Replying to')} $_replyToName'
-                                  ' · ${root.isPublic ? tr('công khai', 'public') : tr('riêng tư', 'private')}',
-                              overflow: TextOverflow.ellipsis,
+                              _public
+                                  ? tr('Mọi người đều thấy góp ý này',
+                                  'Everyone can see this')
+                                  : isOwner
+                                  ? tr('Chỉ mình bạn thấy',
+                                  'Only you can see this')
+                                  : tr('Chỉ tác giả bài và bạn thấy',
+                                  'Only the author and you can see this'),
                               style: const TextStyle(
-                                fontSize: 12.5,
-                                color: AppColors.brand,
-                                fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _ctrl,
+                                focusNode: _focus,
+                                maxLength: 500,
+                                minLines: 1,
+                                maxLines: 4,
+                                decoration: InputDecoration(
+                                  hintText: root != null
+                                      ? tr('Viết câu trả lời...',
+                                      'Write your reply...')
+                                      : tr('Viết góp ý của bạn...',
+                                      'Write your feedback...'),
+                                  counterText: '',
+                                  // Theme đã có viền cho mọi ô nhập, nên ô này
+                                  // phải tắt rõ từng trạng thái.
+                                  filled: false,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                ),
                               ),
                             ),
-                          ),
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            tooltip: tr('Hủy trả lời', 'Cancel reply'),
-                            icon: const Icon(Icons.close, size: 18),
-                            onPressed: _cancelReply,
-                          ),
-                        ],
-                      )
-                    else ...[
-                      SegmentedButton<bool>(
-                        showSelectedIcon: false,
-                        segments: [
-                          ButtonSegment(
-                            value: true,
-                            icon: const Icon(Icons.public, size: 16),
-                            label: Text(tr('Công khai', 'Public')),
-                          ),
-                          ButtonSegment(
-                            value: false,
-                            icon: const Icon(Icons.lock_outline, size: 16),
-                            label: Text(tr('Riêng tư', 'Private')),
-                          ),
-                        ],
-                        selected: {_public},
-                        onSelectionChanged: (s) =>
-                            setState(() => _public = s.first),
-                      ),
-                      const SizedBox(height: 4),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          _public
-                              ? tr('Mọi người đều thấy góp ý này',
-                              'Everyone can see this')
-                              : isOwner
-                              ? tr('Chỉ mình bạn thấy',
-                              'Only you can see this')
-                              : tr('Chỉ tác giả bài và bạn thấy',
-                              'Only the author and you can see this'),
-                          style:
-                          const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                        ),
-                      ),
-                    ],
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _ctrl,
-                            focusNode: _focus,
-                            maxLength: 500,
-                            minLines: 1,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              hintText: root != null
-                                  ? tr('Viết câu trả lời...',
-                                  'Write your reply...')
-                                  : tr('Viết góp ý của bạn...',
-                                  'Write your feedback...'),
-                              counterText: '',
-                              border: InputBorder.none,
+                            IconButton(
+                              tooltip: tr('Gửi', 'Send'),
+                              icon: _sending
+                                  ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2))
+                                  : const Icon(Icons.send,
+                                  color: AppColors.brand),
+                              onPressed: _sending ? null : _send,
                             ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: _sending
-                              ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2))
-                              : const Icon(Icons.send, color: AppColors.brand),
-                          onPressed: _sending ? null : _send,
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

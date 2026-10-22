@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter/foundation.dart';
@@ -76,7 +75,7 @@ class AiClassifier {
     if (imageBytes != null) parts.add(InlineDataPart('image/jpeg', imageBytes));
 
     final order = <int>[
-      if (_working != null) _working!,
+      ?_working,
       for (var i = 0; i < _models.length; i++)
         if (i != _working) i,
     ];
@@ -115,7 +114,7 @@ class AiClassifier {
         Duration timeout = const Duration(seconds: 60),
       }) async {
     final order = <int>[
-      if (_working != null) _working!,
+      ?_working,
       for (var i = 0; i < _models.length; i++)
         if (i != _working) i,
     ];

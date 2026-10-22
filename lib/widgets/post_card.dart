@@ -73,9 +73,6 @@ class PostCard extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(WeaveRadius.card),
-        ),
         title: Text(title),
         content: content == null ? null : Text(content),
         actions: [
@@ -530,6 +527,53 @@ class PostCard extends StatelessWidget {
     );
   }
 
+  /// Hàng thao tác dưới bài: cảm xúc, bình luận, lưu, chia sẻ.
+  /// Mọi nút cùng chiều cao với ReactionButton, icon 20; khi hẹp thì nút bình luận chỉ còn icon.
+  Widget _buildActionRow(BuildContext context, bool isQuestion) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final compact = c.maxWidth < 340;
+        final commentText =
+        isQuestion ? tr('Trả lời', 'Answer') : tr('Bình luận', 'Comment');
+        return Row(
+          children: [
+            ReactionButton(post: post),
+            _PostAction(
+              icon: isQuestion
+                  ? Icons.question_answer_outlined
+                  : Icons.chat_bubble_outline,
+              label: compact ? null : commentText,
+              tooltip: commentText,
+              onPressed:
+              openCommentsOnTap ? () => _openComments(context) : null,
+            ),
+            const Spacer(),
+            ListenableBuilder(
+              listenable: UserPrefs.instance,
+              builder: (context, _) {
+                final saved = UserPrefs.instance.isSaved(post.id);
+                return _PostAction(
+                  icon: saved ? Icons.bookmark : Icons.bookmark_border,
+                  active: saved,
+                  tooltip: saved
+                      ? tr('Bỏ lưu', 'Unsave')
+                      : tr('Lưu bài viết', 'Save post'),
+                  onPressed: () => UserPrefs.instance.toggleSaved(post),
+                );
+              },
+            ),
+            // Bài không công khai: liên kết chỉ mở được với người có quyền xem
+            _PostAction(
+              icon: Icons.share_outlined,
+              tooltip: tr('Chia sẻ', 'Share'),
+              onPressed: () => _share(context),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMine = post.authorId == FirebaseAuth.instance.currentUser?.uid;
@@ -689,59 +733,68 @@ class PostCard extends StatelessWidget {
               PostExtras(post: post),
             ],
             const Divider(height: 16),
-            Row(
+            _buildActionRow(context, isQuestion),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Nút thao tác dùng chung cho hàng dưới bài viết: cùng chiều cao với ReactionButton, icon 20,
+/// ba trạng thái (thường, đã chọn, vô hiệu).
+class _PostAction extends StatelessWidget {
+  final IconData icon;
+  final String? label;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final bool active;
+
+  const _PostAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.label,
+    this.active = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+    final color = !enabled
+        ? AppColors.textSecondary.withValues(alpha: 0.5)
+        : (active ? AppColors.brand : AppColors.textSecondary);
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(WeaveRadius.control),
+        onTap: onPressed,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: WeaveSizes.buttonHeightCompact,
+            minWidth: WeaveSizes.buttonHeightCompact,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: WeaveSpacing.md),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ReactionButton(post: post),
-                TextButton.icon(
-                  onPressed:
-                  openCommentsOnTap ? () => _openComments(context) : null,
-                  icon: Icon(
-                    isQuestion
-                        ? Icons.question_answer_outlined
-                        : Icons.chat_bubble_outline,
-                    size: 20,
+                Icon(icon, size: 20, color: color),
+                if (label != null) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    label!,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
                   ),
-                  label: Text(
-                    isQuestion
-                        ? tr('Trả lời', 'Answer')
-                        : tr('Bình luận', 'Comment'),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                    minimumSize: const Size(64, WeaveSizes.buttonHeightCompact),
-                  ),
-                ),
-                const Spacer(),
-                ListenableBuilder(
-                  listenable: UserPrefs.instance,
-                  builder: (context, _) {
-                    final saved = UserPrefs.instance.isSaved(post.id);
-                    return IconButton(
-                      tooltip: saved
-                          ? tr('Bỏ lưu', 'Unsave')
-                          : tr('Lưu bài viết', 'Save post'),
-                      icon: Icon(
-                        saved ? Icons.bookmark : Icons.bookmark_border,
-                        size: 22,
-                        color: saved ? AppColors.brand : AppColors.textSecondary,
-                      ),
-                      onPressed: () => UserPrefs.instance.toggleSaved(post),
-                    );
-                  },
-                ),
-                // Bài không công khai: liên kết chỉ mở được với người có quyền xem
-                IconButton(
-                  tooltip: tr('Chia sẻ', 'Share'),
-                  icon: const Icon(
-                    Icons.share_outlined,
-                    size: 20,
-                    color: AppColors.textSecondary,
-                  ),
-                  onPressed: () => _share(context),
-                ),
+                ],
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

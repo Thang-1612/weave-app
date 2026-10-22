@@ -52,7 +52,6 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
     final text = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(tr('Sửa ghi chú', 'Edit note')),
         content: TextField(
           controller: c,
@@ -67,7 +66,6 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
             child: Text(tr('Hủy', 'Cancel')),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
             onPressed: () => Navigator.of(ctx).pop(c.text),
             child: Text(tr('Lưu', 'Save')),
           ),
@@ -85,6 +83,26 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
 
   Future<void> _delete(BoxNote n) async {
     final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Xóa ghi chú này?', 'Delete this note?')),
+        content: Text(tr('Ghi chú sẽ bị xóa và không thể khôi phục.',
+            'The note will be deleted and cannot be restored.')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(tr('Hủy', 'Cancel')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(tr('Xóa', 'Delete')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
     try {
       await MyBoxService.delete(n.id);
     } catch (e) {
@@ -136,8 +154,8 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.fromLTRB(14, 10, 4, 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
         border: Border.all(
           color: n.pinned ? AppColors.brand.withAlpha(120) : AppColors.border,
         ),
@@ -160,8 +178,8 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
                   children: [
                     Text(
                       extrasAgo(n.createdAt),
-                      style:
-                      const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppColors.textSecondary),
                     ),
                     if (n.pinned)
                       Text(
@@ -226,7 +244,6 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Hộp thư của tôi', 'My box')),
       ),
       body: Column(
@@ -257,7 +274,8 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
                           'A private place for ideas, links and drafts.\nOnly you can see it; when ready, tap ⋮ to post it.',
                         ),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, height: 1.4),
                       ),
                     ),
                   );
@@ -279,36 +297,48 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: Border(top: BorderSide(color: AppColors.border)),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _ctrl,
-                      maxLength: 2000,
-                      minLines: 1,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText: tr('Ghi nhanh cho riêng bạn...',
-                            'Jot something down for yourself...'),
-                        counterText: '',
-                        border: InputBorder.none,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _ctrl,
+                          maxLength: 2000,
+                          minLines: 1,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: tr('Ghi nhanh cho riêng bạn...',
+                                'Jot something down for yourself...'),
+                            counterText: '',
+                            // Theme đã có viền cho mọi ô nhập: tắt rõ từng trạng thái.
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                          ),
+                        ),
                       ),
-                    ),
+                      IconButton(
+                        tooltip: tr('Lưu ghi chú', 'Save note'),
+                        icon: _sending
+                            ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child:
+                          CircularProgressIndicator(strokeWidth: 2),
+                        )
+                            : const Icon(Icons.send, color: AppColors.brand),
+                        onPressed: _sending ? null : _add,
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: _sending
-                        ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                        : const Icon(Icons.send, color: AppColors.brand),
-                    onPressed: _sending ? null : _add,
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -346,7 +376,6 @@ class _PostDialogState extends State<_PostDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text(tr('Đăng thành bài', 'Post as a post')),
       content: SingleChildScrollView(
         child: Column(
@@ -359,7 +388,8 @@ class _PostDialogState extends State<_PostDialog> {
                 child: Text(
                   tr('Chủ đề được gợi ý tự động, bạn có thể đổi.',
                       'Topic suggested automatically, you can change it.'),
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary),
                 ),
               ),
             DropdownButtonFormField<SpaceGroup>(
@@ -438,7 +468,6 @@ class _PostDialogState extends State<_PostDialog> {
           child: Text(tr('Hủy', 'Cancel')),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
           onPressed: () =>
               Navigator.of(context).pop(_PostChoice(_space.id, _visibility)),
           child: Text(tr('Đăng', 'Post')),

@@ -156,6 +156,33 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
     }
   }
 
+  /// Hỏi xác nhận trước khi bỏ bản nháp (nút xác nhận màu Danger).
+  Future<void> _confirmDiscard() async {
+    final nav = Navigator.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Bỏ câu chuyện đang soạn?', 'Discard this draft?')),
+        content: Text(tr(
+          'Ảnh và ghi chú đã thêm sẽ bị xóa.',
+          'The photos and notes you added will be removed.',
+        )),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(tr('Ở lại', 'Stay')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(tr('Bỏ', 'Discard')),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) nav.pop();
+  }
+
   // ---------------------------------------------------------------------
   // Các khối dùng chung cho cả hai bố cục
   // ---------------------------------------------------------------------
@@ -178,11 +205,10 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionLabel(tr('Loại câu chuyện', 'Story type')),
+        // backgroundColor, selectedColor, side đã có trong chipTheme chung;
+        // chỉ giữ hai điểm riêng của nhóm chọn loại: dạng viên thuốc, không dấu tick.
         ChipTheme(
           data: ChipTheme.of(context).copyWith(
-            backgroundColor: AppColors.surface,
-            selectedColor: AppColors.soft,
-            side: const BorderSide(color: AppColors.border),
             shape: const StadiumBorder(),
             showCheckmark: false,
           ),
@@ -280,6 +306,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
               'Date ${fmtDate(_sources[i].date)} (tap to change)')),
           onTap: locked ? null : () => _changeDate(i),
           trailing: IconButton(
+            tooltip: tr('Gỡ', 'Remove'),
             icon: const Icon(Icons.close),
             onPressed:
             locked ? null : () => setState(() => _sources.removeAt(i)),
@@ -472,14 +499,12 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
           ),
         ),
         Expanded(
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [content],
-              ),
+          // ListView full chiều rộng để lăn chuột ở hai lề vẫn hoạt động;
+          // nội dung được căn giữa bằng padding.
+          child: LayoutBuilder(
+            builder: (context, c) => ListView(
+              padding: weaveCenteredPadding(c.maxWidth),
+              children: [content],
             ),
           ),
         ),
@@ -522,9 +547,24 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
     final locked = _busy || _picking;
     final wide =
         MediaQuery.sizeOf(context).width >= _kStoryCreateWideBreakpoint;
-    return Scaffold(
-      appBar: AppBar(title: Text(tr('Tạo câu chuyện', 'Create a story'))),
-      body: wide ? _wide(locked) : _narrow(locked),
+    return PopScope(
+      // Cho thoát tự do khi chưa có gì để mất. Ngược lại:
+      //  - đang dựng: chặn hẳn (tránh mất kết quả và vẫn bị tính lượt),
+      //  - bố cục hẹp, bước > 0: Back lùi một bước,
+      //  - đã thêm ảnh/ghi chú: hỏi xác nhận bỏ.
+      canPop: !_busy && _sources.isEmpty && (wide || _step == 0),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || _busy) return;
+        if (!wide && _step > 0) {
+          setState(() => _step--);
+          return;
+        }
+        _confirmDiscard();
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text(tr('Tạo câu chuyện', 'Create a story'))),
+        body: wide ? _wide(locked) : _narrow(locked),
+      ),
     );
   }
 }

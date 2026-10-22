@@ -86,7 +86,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
-  Widget _buildLists(List<Friendship> all, String me) {
+  /// Padding để ListView full chiều rộng nhưng nội dung căn giữa tối đa
+  /// [_maxContentWidth] (lăn chuột ở hai lề vẫn cuộn được).
+  EdgeInsets _listPadding(double width) => weaveCenteredPadding(
+    width,
+    maxWidth: _maxContentWidth,
+    h: 0,
+    top: 0,
+    bottom: WeaveSpacing.lg,
+  );
+
+  Widget _buildLists(List<Friendship> all, String me, double width) {
     final incoming =
     all.where((f) => !f.accepted && f.requesterId != me).toList();
     final outgoing =
@@ -107,7 +117,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: _listPadding(width),
       children: [
         if (all.isEmpty)
           Padding(
@@ -154,7 +164,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
-  Widget _buildSearch(List<Friendship> friendships) {
+  Widget _buildSearch(List<Friendship> friendships, double width) {
     if (_searching) return const Center(child: CircularProgressIndicator());
     if (_searchError != null) {
       return Center(
@@ -179,6 +189,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       );
     }
     return ListView(
+      padding: _listPadding(width),
       children: [
         for (final p in _results)
           _PersonRow(
@@ -200,28 +211,36 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final me = FirebaseAuth.instance.currentUser?.uid ?? '';
     final query = _search.text.trim();
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-        child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        return Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              // Viền, bo góc 12 và màu focus lấy từ theme (khớp mọi ô nhập khác)
-              child: TextField(
-                controller: _search,
-                onChanged: _onChanged,
-                decoration: InputDecoration(
-                  hintText: tr('Tìm bạn bè theo tên', 'Search friends by name'),
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: query.isEmpty
-                      ? null
-                      : IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      _search.clear();
-                      _onChanged('');
-                    },
+            // Ô tìm kiếm căn giữa tối đa 720; danh sách bên dưới full chiều rộng.
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  // Viền, bo góc 12 và màu focus lấy từ theme (khớp mọi ô nhập khác)
+                  child: TextField(
+                    controller: _search,
+                    onChanged: _onChanged,
+                    decoration: InputDecoration(
+                      hintText:
+                      tr('Tìm bạn bè theo tên', 'Search friends by name'),
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: query.isEmpty
+                          ? null
+                          : IconButton(
+                        tooltip: tr('Xóa', 'Clear'),
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _search.clear();
+                          _onChanged('');
+                        },
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -242,17 +261,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     );
                   }
                   final friendships = snap.data ?? const <Friendship>[];
-                  if (query.isNotEmpty) return _buildSearch(friendships);
+                  if (query.isNotEmpty) {
+                    return _buildSearch(friendships, width);
+                  }
                   if (!snap.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  return _buildLists(friendships, me);
+                  return _buildLists(friendships, me, width);
                 },
               ),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -126,22 +126,21 @@ class WeaveListScreen extends StatelessWidget {
               final contentWidth =
                   (constraints.maxWidth < maxW ? constraints.maxWidth : maxW) -
                       padH * 2;
-              return Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxW),
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(padH, 4, padH, 90),
-                    children: [
-                      _section(context, tr('Đang diễn ra', 'Happening now'),
-                          by(WeaveStatus.active), contentWidth),
-                      _section(context, tr('Đang lên kế hoạch', 'Planning'),
-                          by(WeaveStatus.planning), contentWidth),
-                      _section(context, tr('Đã kết thúc', 'Ended'),
-                          by(WeaveStatus.ended), contentWidth),
-                    ],
-                  ),
-                ),
+              // ListView chiếm toàn bộ chiều rộng (lăn chuột và thanh cuộn
+              // hoạt động ở hai bên lề); cột nội dung được giới hạn bằng đệm.
+              final side = ((constraints.maxWidth - maxW) / 2)
+                  .clamp(0.0, double.infinity)
+                  .toDouble();
+              return ListView(
+                padding: EdgeInsets.fromLTRB(padH + side, 4, padH + side, 90),
+                children: [
+                  _section(context, tr('Đang diễn ra', 'Happening now'),
+                      by(WeaveStatus.active), contentWidth),
+                  _section(context, tr('Đang lên kế hoạch', 'Planning'),
+                      by(WeaveStatus.planning), contentWidth),
+                  _section(context, tr('Đã kết thúc', 'Ended'),
+                      by(WeaveStatus.ended), contentWidth),
+                ],
               );
             },
           );

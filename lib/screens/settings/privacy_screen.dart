@@ -1,4 +1,3 @@
-import '../../theme/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +7,7 @@ import '../../services/activity_service.dart';
 import '../../services/l10n.dart';
 import '../../services/user_prefs.dart';
 import '../../services/user_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/settings_widgets.dart';
 import 'blocked_screen.dart';
 import 'category_settings_screen.dart';
@@ -21,7 +21,6 @@ Future<void> confirmPasswordReset(BuildContext context) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text(tr('Đổi mật khẩu', 'Change password')),
       content: Text(
         tr(
@@ -69,9 +68,8 @@ class PrivacyScreen extends StatefulWidget {
 
 class _PrivacyScreenState extends State<PrivacyScreen> {
   late final String? _uid = FirebaseAuth.instance.currentUser?.uid;
-  late final Stream<UserProfile?> _profile = _uid == null
-      ? Stream.value(null)
-      : UserService.watchProfile(_uid!);
+  late final Stream<UserProfile?> _profile =
+  _uid == null ? Stream.value(null) : UserService.watchProfile(_uid);
   bool _exporting = false;
 
   Future<void> _setPublic(String field, bool value) async {
@@ -98,7 +96,6 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text(tr('Đã sao chép dữ liệu', 'Data copied')),
           content: Text(
             tr(
@@ -177,7 +174,8 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                       subtitle:
                       '${prefs.blocked.length} ${tr('đã chặn', 'blocked')} · ${prefs.mutedUsers.length} ${tr('tắt tiếng', 'muted')}',
                       onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const BlockedScreen()),
+                        MaterialPageRoute(
+                            builder: (_) => const BlockedScreen()),
                       ),
                     ),
                     SettingsTile(
@@ -211,7 +209,8 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                           ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child:
+                        CircularProgressIndicator(strokeWidth: 2),
                       )
                           : null,
                       onTap: _exporting ? null : _export,
@@ -230,11 +229,12 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
                   child: Text(
-              tr(
-              'Lưu ý: bài viết mặc định là công khai. Khi đăng bài, chọn "Chỉ bạn bè" để giới hạn người xem.',
-              'Note: posts are public by default. Choose "Friends only" when posting to limit who can see it.',
+                    tr(
+                      'Lưu ý: bài viết mặc định là công khai. Khi đăng bài, chọn "Chỉ bạn bè" để giới hạn người xem.',
+                      'Note: posts are public by default. Choose "Friends only" when posting to limit who can see it.',
                     ),
-                    style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                    style: const TextStyle(
+                        color: AppColors.textSecondary, height: 1.4),
                   ),
                 ),
               ]);

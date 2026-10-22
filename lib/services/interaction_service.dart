@@ -6,8 +6,6 @@ import '../models/post.dart';
 import 'interest_service.dart';
 import 'l10n.dart';
 
-final _posts = FirebaseFirestore.instance.collection('posts');
-
 // ---------------------------------------------------------------------------
 // Thông báo
 // ---------------------------------------------------------------------------

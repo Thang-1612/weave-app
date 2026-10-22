@@ -70,9 +70,12 @@ class ActivityScreen extends StatelessWidget {
       final segs = d.reference.path.split('/');
       final emoji = d.data()['emoji'] as String? ?? '👍';
       final at = _date(d.data()['createdAt']);
-      if (segs.length == 4 && (segs[0] == 'posts' || segs[0] == 'friend_posts')) {
+      if (segs.length == 4 &&
+          (segs[0] == 'posts' || segs[0] == 'friend_posts')) {
         items.add(_ReactionItem(segs[1], null, emoji, at));
-      } else if (segs.length == 6 && (segs[0] == 'posts' || segs[0] == 'friend_posts') && segs[2] == 'comments') {
+      } else if (segs.length == 6 &&
+          (segs[0] == 'posts' || segs[0] == 'friend_posts') &&
+          segs[2] == 'comments') {
         items.add(_ReactionItem(segs[1], segs[3], emoji, at));
       }
     }
@@ -92,7 +95,10 @@ class ActivityScreen extends StatelessWidget {
     final items = <_CommentItem>[];
     for (final d in snap.docs) {
       final segs = d.reference.path.split('/');
-      if (segs.length != 4 || (segs[0] != 'posts' && segs[0] != 'friend_posts')) continue;
+      if (segs.length != 4 ||
+          (segs[0] != 'posts' && segs[0] != 'friend_posts')) {
+        continue;
+      }
       items.add(_CommentItem(segs[1], Comment.fromDoc(d)));
     }
     items.sort((a, b) => b.comment.createdAt.compareTo(a.comment.createdAt));
@@ -116,12 +122,11 @@ class ActivityScreen extends StatelessWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          flexibleSpace: const GradientAppBarBackground(),
           title: Text(tr('Lịch sử hoạt động', 'Activity history')),
           bottom: TabBar(
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: const Color.fromRGBO(255, 255, 255, 0.7),
+            indicatorColor: AppColors.brand,
+            labelColor: AppColors.brand,
+            unselectedLabelColor: AppColors.textSecondary,
             tabs: [
               Tab(text: tr('Cảm xúc', 'Reactions')),
               Tab(text: tr('Bình luận', 'Comments')),
@@ -174,7 +179,8 @@ class ActivityScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
-  Widget _reactionTile(BuildContext context, _ReactionItem it, VoidCallback reload) {
+  Widget _reactionTile(
+      BuildContext context, _ReactionItem it, VoidCallback reload) {
     return FutureBuilder<Post?>(
       future: _PostCache.post(it.postId),
       builder: (context, snap) {
@@ -221,7 +227,8 @@ class ActivityScreen extends StatelessWidget {
     );
   }
 
-  Widget _commentTile(BuildContext context, _CommentItem it, VoidCallback reload) {
+  Widget _commentTile(
+      BuildContext context, _CommentItem it, VoidCallback reload) {
     return FutureBuilder<Post?>(
       future: _PostCache.post(it.postId),
       builder: (context, snap) {
@@ -236,7 +243,8 @@ class ActivityScreen extends StatelessWidget {
         return ListTile(
           leading: const CircleAvatar(
             backgroundColor: AppColors.soft,
-            child: Icon(Icons.chat_bubble_outline, color: AppColors.brand, size: 20),
+            child: Icon(Icons.chat_bubble_outline,
+                color: AppColors.brand, size: 20),
           ),
           title: Text(
             '${tr('Bạn đã bình luận', 'You commented')}: "${it.comment.text}"',
@@ -250,15 +258,14 @@ class ActivityScreen extends StatelessWidget {
               ? null
               : IconButton(
             tooltip: tr('Xóa bình luận', 'Delete comment'),
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline,
+                color: AppColors.danger),
             onPressed: () async {
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  title: Text(tr('Xóa bình luận?', 'Delete comment?')),
+                  title:
+                  Text(tr('Xóa bình luận?', 'Delete comment?')),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(ctx).pop(false),
@@ -303,7 +310,8 @@ class ActivityScreen extends StatelessWidget {
         return ListTile(
           leading: const CircleAvatar(
             backgroundColor: AppColors.soft,
-            child: Icon(Icons.share_outlined, color: AppColors.brand, size: 20),
+            child:
+            Icon(Icons.share_outlined, color: AppColors.brand, size: 20),
           ),
           title: Text(title),
           subtitle: Text(
@@ -394,7 +402,8 @@ class _ActivityTabState<T> extends State<_ActivityTab<T>>
           const SizedBox(height: 8),
           SelectableText(
             text,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style:
+            const TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -425,7 +434,8 @@ class _ActivityTabState<T> extends State<_ActivityTab<T>>
             return ListView(
               children: [
                 const SizedBox(height: 100),
-                Icon(widget.emptyIcon, size: 64, color: AppColors.textSecondary),
+                Icon(widget.emptyIcon,
+                    size: 64, color: AppColors.textSecondary),
                 const SizedBox(height: 12),
                 Text(
                   widget.emptyText,
@@ -441,7 +451,7 @@ class _ActivityTabState<T> extends State<_ActivityTab<T>>
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
                 itemCount: items.length + 1,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, i) {
                   if (i == 0) {
                     return Padding(

@@ -642,14 +642,20 @@ class _FeedScreenState extends State<FeedScreen> {
                   if (showSeed) '__seed__',
                 ];
 
+                // ListView chiếm toàn bộ chiều rộng (lăn chuột và thanh cuộn
+                // hoạt động ở cả hai bên lề trên desktop/web); cột bài viết
+                // được giới hạn bằng đệm hai bên thay vì ConstrainedBox.
                 return RefreshIndicator(
                   onRefresh: _refresh,
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: widget.maxWidth),
-                      child: ListView.builder(
+                  child: LayoutBuilder(
+                    builder: (context, c) {
+                      final side = ((c.maxWidth - widget.maxWidth) / 2)
+                          .clamp(0.0, double.infinity)
+                          .toDouble();
+                      return ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding:
+                        EdgeInsets.symmetric(vertical: 8, horizontal: side),
                         itemCount: items.length,
                         itemBuilder: (context, i) {
                           final it = items[i];
@@ -671,7 +677,8 @@ class _FeedScreenState extends State<FeedScreen> {
                           }
                           if (it == '__budget__') {
                             return _stopMarker(
-                              tr('Đã đủ $_budgetMin phút', "That's $_budgetMin minutes"),
+                              tr('Đã đủ $_budgetMin phút',
+                                  "That's $_budgetMin minutes"),
                               tr('Bạn có thể nghỉ rồi, hoặc chọn thời gian dài hơn ở phía trên',
                                   'Time to take a break, or pick a longer session above'),
                             );
@@ -691,8 +698,8 @@ class _FeedScreenState extends State<FeedScreen> {
                             ),
                           );
                         },
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 );
               },

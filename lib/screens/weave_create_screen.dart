@@ -170,7 +170,8 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
       if (widget.groupId == null) ...[
         _label(tr('Nhóm', 'Group')),
         DropdownButtonFormField<GroupInfo>(
-          value: _group,
+          key: ValueKey(_group?.id),
+          initialValue: _group,
           isExpanded: true,
           hint: Text(tr('Chọn nhóm', 'Pick a group')),
           items: [

@@ -6,6 +6,10 @@ import '../services/proposal_service.dart';
 import '../services/social_extras_service.dart';
 import '../theme/app_theme.dart';
 
+/// Màu nền cho dòng thêm / dòng bỏ trong màn so sánh (lấy từ bảng màu chung).
+final _addedBg = AppColors.teal.withValues(alpha: 0.12);
+final _removedBg = AppColors.danger.withValues(alpha: 0.10);
+
 /// Hộp "Đề xuất sửa bài": các bài nhánh người khác gửi cho bài gốc của bạn.
 class ProposalsScreen extends StatefulWidget {
   const ProposalsScreen({super.key});
@@ -33,7 +37,6 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('Đề xuất sửa bài', 'Edit proposals')),
       ),
       body: FutureBuilder<List<Proposal>>(
@@ -61,7 +64,8 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
                     'No proposals yet.\nWhen someone forks your post and sends a proposal, it shows up here.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, height: 1.4),
                 ),
               ),
             );
@@ -77,14 +81,9 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
                   itemCount: items.length,
                   itemBuilder: (context, i) {
                     final p = items[i];
+                    // Card lấy màu, viền, bo góc từ cardTheme.
                     return Card(
-                      elevation: 0,
-                      color: Colors.white,
                       margin: const EdgeInsets.only(bottom: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: AppColors.border),
-                      ),
                       child: ListTile(
                         leading: const Icon(Icons.call_merge,
                             color: AppColors.brand),
@@ -168,9 +167,9 @@ class _CompareScreenState extends State<_CompareScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: added
-            ? const Color(0xFFE7F7EC)
+            ? _addedBg
             : removed
-            ? const Color(0xFFFDECEC)
+            ? _removedBg
             : null,
         borderRadius: BorderRadius.circular(8),
       ),
@@ -179,7 +178,7 @@ class _CompareScreenState extends State<_CompareScreen> {
         style: TextStyle(
           height: 1.35,
           decoration: removed ? TextDecoration.lineThrough : null,
-          color: removed ? Colors.red.shade700 : null,
+          color: removed ? AppColors.danger : null,
         ),
       ),
     );
@@ -190,7 +189,6 @@ class _CompareScreenState extends State<_CompareScreen> {
     final p = widget.proposal;
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(tr('So sánh đề xuất', 'Compare proposal')),
       ),
       body: FutureBuilder<List<Post?>>(
@@ -231,8 +229,7 @@ class _CompareScreenState extends State<_CompareScreen> {
                 children: [
                   Text(
                     '${p.fromName} ${tr('đề xuất sửa bài của bạn', 'proposes changes to your post')}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 16),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   if (p.note.isNotEmpty) ...[
                     const SizedBox(height: 6),
@@ -241,16 +238,17 @@ class _CompareScreenState extends State<_CompareScreen> {
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
+                    runSpacing: 4,
                     children: [
                       Chip(
                         label: Text(
                             '+$addedCount ${tr('dòng mới', 'new lines')}'),
-                        backgroundColor: const Color(0xFFE7F7EC),
+                        backgroundColor: _addedBg,
                       ),
                       Chip(
                         label: Text(
                             '−${removed.length} ${tr('dòng bị bỏ', 'removed')}'),
-                        backgroundColor: const Color(0xFFFDECEC),
+                        backgroundColor: _removedBg,
                       ),
                       Chip(
                         label: Text(
@@ -265,18 +263,23 @@ class _CompareScreenState extends State<_CompareScreen> {
                   const SizedBox(height: 12),
                   Text(tr('Bản đề xuất', 'Proposed version'),
                       style: const TextStyle(
-                          fontWeight: FontWeight.w700, color: AppColors.brand)),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.brand)),
                   const SizedBox(height: 6),
                   if (after.isEmpty)
                     Text(tr('(không có chữ)', '(no text)'),
-                        style: const TextStyle(color: AppColors.textSecondary)),
+                        style:
+                        const TextStyle(color: AppColors.textSecondary)),
                   for (final l in after)
                     _line(l, added: !beforeSet.contains(l)),
                   if (removed.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    Text(tr('Các dòng bị bỏ khỏi bản gốc', 'Lines removed from the original'),
+                    Text(
+                        tr('Các dòng bị bỏ khỏi bản gốc',
+                            'Lines removed from the original'),
                         style: const TextStyle(
-                            fontWeight: FontWeight.w700, color: Colors.red)),
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.danger)),
                     const SizedBox(height: 6),
                     for (final l in removed) _line(l, removed: true),
                   ],
@@ -286,7 +289,8 @@ class _CompareScreenState extends State<_CompareScreen> {
                       'Khi nhận, bài gốc sẽ lấy toàn bộ nội dung của bản đề xuất (kể cả ảnh và liên kết) và ghi tên người đóng góp.',
                       'Accepting replaces the original with the whole proposed version (images and links included) and credits the contributor.',
                     ),
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -297,7 +301,8 @@ class _CompareScreenState extends State<_CompareScreen> {
                               ? null
                               : () => _run(
                                 () => ProposalService.decline(p),
-                            tr('Đã từ chối đề xuất', 'Proposal declined'),
+                            tr('Đã từ chối đề xuất',
+                                'Proposal declined'),
                           ),
                           child: Text(tr('Từ chối', 'Decline')),
                         ),
@@ -305,8 +310,6 @@ class _CompareScreenState extends State<_CompareScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton(
-                          style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.brand),
                           onPressed: _busy
                               ? null
                               : () => _run(

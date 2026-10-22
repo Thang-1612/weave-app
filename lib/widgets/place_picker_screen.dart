@@ -202,14 +202,15 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            // Viền, bo góc và màu focus của ô nhập lấy từ theme
             child: TextField(
               controller: _search,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _runSearch(),
               decoration: InputDecoration(
-                hintText: tr('Tìm địa điểm, hoặc dán liên kết / tọa độ Google Maps',
+                hintText: tr(
+                    'Tìm địa điểm, hoặc dán liên kết / tọa độ Google Maps',
                     'Search a place, or paste a Google Maps link / coordinates'),
-                border: const OutlineInputBorder(),
                 isDense: true,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searching
@@ -282,7 +283,7 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                           height: 44,
                           alignment: Alignment.topCenter,
                           child: const Icon(Icons.location_on,
-                              size: 44, color: Colors.red),
+                              size: 44, color: AppColors.danger),
                         ),
                       ]),
                   ],
@@ -335,20 +336,19 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                     onChanged: (_) => setState(() => _nameEdited = true),
                     decoration: InputDecoration(
                       labelText: tr('Tên địa điểm', 'Place name'),
-                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                   ),
                   if (_resolving)
                     Text(tr('Đang tra địa chỉ…', 'Looking up address…'),
-                        style:
-                        const TextStyle(color: AppColors.textSecondary, fontSize: 12))
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12))
                   else if ((_address ?? '').isNotEmpty)
                     Text(_address!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                        const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -361,12 +361,12 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                                   lat: _pin!.latitude,
                                   lng: _pin!.longitude)),
                           icon: const Icon(Icons.map_outlined),
-                          label: Text(tr('Xem trên Google Maps', 'View in Google Maps')),
+                          label: Text(tr(
+                              'Xem trên Google Maps', 'View in Google Maps')),
                         ),
                       const Spacer(),
+                      // Nút chính duy nhất của màn hình: màu theo theme
                       FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.brand),
                         onPressed: canSave ? _save : null,
                         icon: const Icon(Icons.check),
                         label: Text(tr('Lưu địa điểm', 'Save place')),
@@ -395,7 +395,7 @@ class WeaveMapPreview extends StatelessWidget {
     if (lat == null || lng == null) return const SizedBox.shrink();
     final point = LatLng(lat, lng);
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(WeaveRadius.control),
       child: SizedBox(
         height: height,
         child: Stack(
@@ -407,7 +407,7 @@ class WeaveMapPreview extends StatelessWidget {
                 initialZoom: 15,
                 interactionOptions:
                 const InteractionOptions(flags: InteractiveFlag.none),
-                onTap: (_, __) => openInGoogleMaps(context, place),
+                onTap: (_, _) => openInGoogleMaps(context, place),
               ),
               children: [
                 TileLayer(
@@ -421,7 +421,7 @@ class WeaveMapPreview extends StatelessWidget {
                     height: 40,
                     alignment: Alignment.topCenter,
                     child: const Icon(Icons.location_on,
-                        size: 40, color: Colors.red),
+                        size: 40, color: AppColors.danger),
                   ),
                 ]),
               ],
@@ -430,7 +430,8 @@ class WeaveMapPreview extends StatelessWidget {
               left: 6,
               bottom: 4,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 color: Colors.white70,
                 child: const Text('© OpenStreetMap contributors',
                     style: TextStyle(fontSize: 10)),

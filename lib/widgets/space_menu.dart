@@ -10,7 +10,7 @@ class SpaceMenu extends StatelessWidget {
   /// Chủ đề nhỏ đang chọn.
   final String? selectedSpaceId;
 
-  /// Chủ đề lớn đang chọn (khi bấm "Tất cả <nhóm>").
+  /// Chủ đề lớn đang chọn (khi bấm `Tất cả <nhóm>`).
   final String? selectedGroupId;
 
   /// Các chủ đề yêu thích: hiện ngôi sao và xếp lên đầu trong nhóm.
@@ -21,7 +21,7 @@ class SpaceMenu extends StatelessWidget {
 
   final void Function(Space space) onSpaceSelected;
 
-  /// Nếu để null thì không hiện dòng "Tất cả <nhóm>".
+  /// Nếu để null thì không hiện dòng `Tất cả <nhóm>`.
   final void Function(SpaceGroup group)? onGroupSelected;
 
   const SpaceMenu({

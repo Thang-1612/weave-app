@@ -25,7 +25,9 @@ class UserProfilePage extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(WeaveRadius.card),
+        ),
         title: Text(tr('Chặn $name?', 'Block $name?')),
         content: Text(
           tr(
@@ -77,7 +79,6 @@ class UserProfilePage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        flexibleSpace: const GradientAppBarBackground(),
         title: Text(title, overflow: TextOverflow.ellipsis),
         actions: [
           // Bản đồ kết nối và Ngày này năm xưa chỉ có ý nghĩa với chính mình

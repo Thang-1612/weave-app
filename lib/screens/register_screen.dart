@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/account_service.dart';
 import '../services/l10n.dart';
 import '../services/user_prefs.dart';
+import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -98,6 +99,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           elevation: 0,
           scrolledUnderElevation: 0,
           foregroundColor: Colors.white,
+          // Theme có viền dưới cho AppBar; ở đây AppBar nằm trên nền gradient nên bỏ viền
+          shape: const Border(),
         ),
         body: AuthBackground(
           padding: const EdgeInsets.fromLTRB(24, 56, 24, 24),
@@ -124,6 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -138,8 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 tr('Họ', 'Family name'),
                                 Icons.badge_outlined,
                               ),
-                              validator: (v) =>
-                              (v == null || v.trim().isEmpty)
+                              validator: (v) => (v == null || v.trim().isEmpty)
                                   ? tr('Nhập họ', 'Required')
                                   : null,
                             ),
@@ -153,8 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 tr('Tên', 'Given name'),
                                 Icons.person_outline,
                               ),
-                              validator: (v) =>
-                              (v == null || v.trim().isEmpty)
+                              validator: (v) => (v == null || v.trim().isEmpty)
                                   ? tr('Nhập tên', 'Required')
                                   : null,
                             ),
@@ -241,19 +243,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       if (_loading)
                         const Center(child: CircularProgressIndicator())
                       else
+                      // Nút chính duy nhất của màn hình: kiểu nút theo theme
                         FilledButton(
                           onPressed: _register,
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(50),
-                            backgroundColor: const Color(0xFF4F46E5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: Text(
-                            tr('Tạo tài khoản', 'Create account'),
-                            style: const TextStyle(fontSize: 16),
-                          ),
+                          child: Text(tr('Tạo tài khoản', 'Create account')),
                         ),
                       const SizedBox(height: 8),
                       TextButton(

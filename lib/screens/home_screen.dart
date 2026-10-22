@@ -58,10 +58,10 @@ class _HomeScreenState extends State<HomeScreen> {
     UserPrefs.instance.addListener(_onPrefs);
     // Đo thời gian dùng ứng dụng (thống kê, giới hạn, nhắc nghỉ)
     UsageService.instance.start(() => mounted ? context : null);
-    // Mở bài viết khi vào từ liên kết dạng /post/<mã> (bản web)
     // Giữ danh sách người xem của bài chỉ-bạn-bè khớp với danh sách bạn bè
     FriendPostSync.start();
     TrashService.purgeExpired(); // dọn bài trong thùng rác quá 30 ngày
+    // Mở bài viết khi vào từ liên kết dạng /post/<mã> (bản web)
     WidgetsBinding.instance.addPostFrameCallback((_) => _openDeepLink());
   }
 
@@ -81,7 +81,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (s != null && UserPrefs.instance.isRestricted(s.id)) _space = null;
     });
   }
-  /// Mở bài viết khi vào từ liên kết dạng /post/<mã> (bản web).
+
+  /// Mở bài viết khi vào từ liên kết dạng `/post/<mã>` (bản web).
   Future<void> _openDeepLink() async {
     final id = DeepLink.takePostId();
     if (id == null || !mounted) return;
@@ -212,7 +213,18 @@ class _HomeScreenState extends State<HomeScreen> {
       return AppBar(
         title: Text(_homeTitle()),
         actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+          IconButton(
+            tooltip: tr('Tìm kiếm', 'Search'),
+            icon: const Icon(Icons.search),
+            // Tìm kiếm chưa được làm: báo rõ cho người dùng thay vì im lặng.
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  tr('Tìm kiếm sắp có', 'Search is coming soon'),
+                ),
+              ),
+            ),
+          ),
           IconButton(
             tooltip: tr('Tin nhắn', 'Messages'),
             icon: ChatUnreadBadge(child: const Icon(Icons.chat_bubble_outline)),
@@ -447,6 +459,35 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(children: _menuItems(inDrawer: false));
   }
 
+  // Cột phải (desktop rộng từ 1200 px). "Sắp diễn ra" chưa có dữ liệu thật
+  // nên hiện trạng thái trống, không dùng dữ liệu giả.
+  Widget _buildSidePanel() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _PanelCard(
+          title: tr('Sắp diễn ra', 'Upcoming'),
+          child: Text(
+            tr('Chưa có sự kiện nào.', 'Nothing scheduled yet.'),
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+        const SizedBox(height: WeaveSpacing.lg),
+        _PanelCard(
+          title: tr('Ký ức', 'Memories'),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => _openFromMenu(const CapsulesScreen(), false),
+              icon: const Icon(Icons.hourglass_bottom),
+              label: Text(tr('Mở hộp thời gian', 'Open time capsules')),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   List<WeaveDestination> _destinations(String? uid) {
     return [
       WeaveDestination(
@@ -490,6 +531,8 @@ class _HomeScreenState extends State<HomeScreen> {
       // Mobile, tablet: menu trượt (chỉ ở trang chủ). Desktop: menu nằm trong sidebar.
       drawer: _page == 0 ? _buildDrawer() : null,
       sidebarExtra: _buildSidebarMenu(),
+      secondaryPanel: _page == 0 ? _buildSidePanel() : null,
+      secondaryPanelWidth: 280,
       onCreate: _openCreate,
       createLabel: tr('Tạo bài', 'Create post'),
       sidebarCreateLabel: tr('Tạo bài', 'Create post'),
@@ -507,6 +550,41 @@ class _HomeScreenState extends State<HomeScreen> {
           FriendsScreen(key: ValueKey(uid)),
           NotificationsScreen(key: ValueKey(uid)),
           ProfileScreen(key: ValueKey(uid)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Thẻ có tiêu đề dùng trong cột phải của trang chủ desktop.
+class _PanelCard extends StatelessWidget {
+  const _PanelCard({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(WeaveSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(WeaveRadius.control),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: WeaveSpacing.md),
+          child,
         ],
       ),
     );
