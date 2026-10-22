@@ -5,8 +5,8 @@ import 'app_theme.dart';
 class Breakpoints {
   Breakpoints._();
   static const double tablet = 600; // từ đây: NavigationRail
-  static const double desktop = 1024; // từ đây: sidebar đầy đủ
-  static const double widePanel = 1360; // từ đây: mở panel phụ (thử rồi chỉnh)
+  static const double desktop = 1000; // từ đây: sidebar đầy đủ
+  static const double widePanel = 1200; // từ đây: mở panel phụ. Đang giữ 1200 = hành vi cũ; thử 1360 sau khi đo
 }
 
 enum ScreenSize { mobile, tablet, desktop }

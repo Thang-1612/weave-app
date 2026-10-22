@@ -1,3 +1,4 @@
+import '../theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -6,11 +7,11 @@ enum WeaveLayoutMode { mobile, tablet, desktop }
 
 // Breakpoint ban đầu: cần thử với kích thước cửa sổ thật và chỉnh nếu
 // một màn hình cần nhiều không gian hơn.
-const double kWeaveTabletBreakpoint = 600;
-const double kWeaveDesktopBreakpoint = 1000;
+const double kWeaveTabletBreakpoint = Breakpoints.tablet;
+const double kWeaveDesktopBreakpoint = Breakpoints.desktop;
 
 /// Từ chiều rộng này trở lên (chỉ ở desktop) panel phụ bên phải mới hiện.
-const double kWeaveSecondaryPanelMinWidth = 1200;
+const double kWeaveSecondaryPanelMinWidth = Breakpoints.widePanel;
 const double kWeaveSidebarWidth = 240;
 
 WeaveLayoutMode layoutForWidth(double width) {
