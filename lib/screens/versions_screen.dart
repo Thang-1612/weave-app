@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/l10n.dart';
 import '../services/social_extras_service.dart';
@@ -15,8 +16,9 @@ class VersionsScreen extends StatefulWidget {
 }
 
 class _VersionsScreenState extends State<VersionsScreen> {
-  late final Future<List<PostVersion>> _future =
-  VersionService.load(widget.post);
+  late final Future<List<PostVersion>> _future = VersionService.load(
+    widget.post,
+  );
   bool _busy = false;
 
   String _preview(PostVersion v) {
@@ -39,10 +41,12 @@ class _VersionsScreenState extends State<VersionsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(tr('Khôi phục phiên bản này?', 'Restore this version?')),
-        content: Text(tr(
-          'Nội dung hiện tại sẽ được lưu lại thành một phiên bản, nên bạn vẫn quay lại được.',
-          'The current content is saved as a version first, so you can switch back.',
-        )),
+        content: Text(
+          tr(
+            'Nội dung hiện tại sẽ được lưu lại thành một phiên bản, nên bạn vẫn quay lại được.',
+            'The current content is saved as a version first, so you can switch back.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -73,9 +77,7 @@ class _VersionsScreenState extends State<VersionsScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Lịch sử phiên bản', 'Version history')),
-      ),
+      appBar: AppBar(title: Text(tr('Lịch sử phiên bản', 'Version history'))),
       body: FutureBuilder<List<PostVersion>>(
         future: _future,
         builder: (context, snap) {
@@ -102,7 +104,9 @@ class _VersionsScreenState extends State<VersionsScreen> {
                   ),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      color: AppColors.textSecondary, height: 1.4),
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ),
             );
@@ -118,18 +122,24 @@ class _VersionsScreenState extends State<VersionsScreen> {
                     return Padding(
                       padding: const EdgeInsets.all(12),
                       child: Text(
-                        tr('Chỉ giữ ${VersionService.keep} phiên bản gần nhất.',
-                            'Only the latest ${VersionService.keep} versions are kept.'),
+                        tr(
+                          'Chỉ giữ ${VersionService.keep} phiên bản gần nhất.',
+                          'Only the latest ${VersionService.keep} versions are kept.',
+                        ),
                         style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 12),
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     );
                   }
                   final v = items[i];
-                  final images =
-                      v.blocks.where((b) => b['type'] == 'image').length;
-                  final links =
-                      v.blocks.where((b) => b['type'] == 'link').length;
+                  final images = v.blocks
+                      .where((b) => b['type'] == 'image')
+                      .length;
+                  final links = v.blocks
+                      .where((b) => b['type'] == 'link')
+                      .length;
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
@@ -150,10 +160,13 @@ class _VersionsScreenState extends State<VersionsScreen> {
                         ),
                         if (v.reason.isNotEmpty) ...[
                           const SizedBox(height: 2),
-                          Text(v.reason,
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                          Text(
+                            v.reason,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ],
                         const SizedBox(height: 8),
                         Text(_preview(v), style: const TextStyle(height: 1.35)),
@@ -162,7 +175,9 @@ class _VersionsScreenState extends State<VersionsScreen> {
                           Text(
                             '${tr('Ảnh', 'Images')}: $images · ${tr('Liên kết', 'Links')}: $links',
                             style: const TextStyle(
-                                fontSize: 12, color: AppColors.textSecondary),
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                         Align(

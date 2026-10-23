@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../models/user_profile.dart';
 import '../services/l10n.dart';
 import '../services/user_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
+import '../widgets/weave_ui.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserProfile? profile;
@@ -59,7 +61,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       if (mounted) setState(() => _saving = false);
       messenger.showSnackBar(
-        SnackBar(content: Text('${tr('Không lưu được', 'Could not save')}: $e')),
+        SnackBar(
+          content: Text('${tr('Không lưu được', 'Could not save')}: $e'),
+        ),
       );
     }
   }
@@ -75,21 +79,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Chỉnh sửa hồ sơ', 'Edit profile')),
-      ),
+      appBar: AppBar(title: Text(tr('Chỉnh sửa hồ sơ', 'Edit profile'))),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
-            child: Container(
+            child: WeaveCard(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.border),
-              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -145,11 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       FilledButton(
                         onPressed: _save,
                         style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                          backgroundColor: AppColors.brand,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+                          minimumSize: const Size.fromHeight(WeaveSizes.buttonHeight),
                         ),
                         child: Text(
                           tr('Lưu thay đổi', 'Save changes'),

@@ -79,12 +79,12 @@ class FriendService {
           .collection('notifications')
           .doc('${type}_${me.uid}')
           .set({
-        'type': type,
-        'fromUserId': me.uid,
-        'fromName': n.isNotEmpty ? n : (me.email ?? 'msgUser'),
-        'read': false,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+            'type': type,
+            'fromUserId': me.uid,
+            'fromName': n.isNotEmpty ? n : (me.email ?? 'msgUser'),
+            'read': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
     } catch (_) {}
   }
 
@@ -99,10 +99,10 @@ class FriendService {
   }
 
   static FriendStatus statusWith(
-      List<Friendship> all,
-      String me,
-      String other,
-      ) {
+    List<Friendship> all,
+    String me,
+    String other,
+  ) {
     for (final f in all) {
       if (f.users.contains(me) && f.users.contains(other)) {
         if (f.accepted) return FriendStatus.friends;

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../screens/block_notes_screen.dart';
 import '../screens/versions_screen.dart';
@@ -75,8 +76,9 @@ class PostExtras extends StatelessWidget {
     if (original == null) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(tr('Bài gốc không còn tồn tại',
-              'The original post is gone')),
+          content: Text(
+            tr('Bài gốc không còn tồn tại', 'The original post is gone'),
+          ),
         ),
       );
       return;
@@ -89,20 +91,19 @@ class PostExtras extends StatelessWidget {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text(tr('Gộp vào bài gốc?', 'Merge into the original?')),
-          content: Text(tr(
-            'Bài gốc là của bạn nên không cần đề xuất. Nội dung bài gốc sẽ được thay bằng bản này. Bản cũ được lưu trong Lịch sử phiên bản, bạn vẫn khôi phục được.',
-            'The original is your own post, so no proposal is needed. Its content will be replaced with this version. The old one is kept in Version history, so you can restore it.',
-          )),
+          content: Text(
+            tr(
+              'Bài gốc là của bạn nên không cần đề xuất. Nội dung bài gốc sẽ được thay bằng bản này. Bản cũ được lưu trong Lịch sử phiên bản, bạn vẫn khôi phục được.',
+              'The original is your own post, so no proposal is needed. Its content will be replaced with this version. The old one is kept in Version history, so you can restore it.',
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
               child: Text(tr('Hủy', 'Cancel')),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: Text(tr('Gộp', 'Merge')),
             ),
@@ -126,8 +127,10 @@ class PostExtras extends StatelessWidget {
     final note = await showTextPrompt(
       context,
       title: tr('Gửi đề xuất cho bài gốc', 'Send a proposal to the original'),
-      hint: tr('Bạn đã thay đổi điều gì và vì sao?',
-          'What did you change and why?'),
+      hint: tr(
+        'Bạn đã thay đổi điều gì và vì sao?',
+        'What did you change and why?',
+      ),
       action: tr('Gửi đề xuất', 'Send proposal'),
       maxLen: 300,
       allowEmpty: true,
@@ -137,10 +140,12 @@ class PostExtras extends StatelessWidget {
       await ProposalService.send(post, note);
       messenger.showSnackBar(
         SnackBar(
-          content: Text(tr(
-            'Đã gửi đề xuất cho ${post.forkedFromAuthor ?? 'tác giả bài gốc'}',
-            'Proposal sent to ${post.forkedFromAuthor ?? 'the original author'}',
-          )),
+          content: Text(
+            tr(
+              'Đã gửi đề xuất cho ${post.forkedFromAuthor ?? 'tác giả bài gốc'}',
+              'Proposal sent to ${post.forkedFromAuthor ?? 'the original author'}',
+            ),
+          ),
         ),
       );
     } catch (e) {
@@ -182,8 +187,10 @@ class PostExtras extends StatelessWidget {
   String _expiryText() {
     final e = post.expiresAt!;
     if (post.isExpired) {
-      return tr('Đã hết hạn, chỉ mình bạn còn thấy bài này',
-          'Expired, only you can still see this post');
+      return tr(
+        'Đã hết hạn, chỉ mình bạn còn thấy bài này',
+        'Expired, only you can still see this post',
+      );
     }
     final left = e.difference(DateTime.now());
     final when = left.inHours < 24
@@ -199,45 +206,52 @@ class PostExtras extends StatelessWidget {
     final isMine = post.authorId == me;
 
     // Nhánh của chính tác giả bài gốc (đoán theo tên, lúc bấm sẽ kiểm tra lại)
-    final likelySelfFork = post.forkedFromAuthor != null &&
+    final likelySelfFork =
+        post.forkedFromAuthor != null &&
         post.forkedFromAuthor == post.authorName;
 
     final buttons = <Widget>[
       if (isMine)
-        _chip(Icons.update, tr('Thêm cập nhật', 'Add update'),
-                () => _addUpdate(context)),
+        _chip(
+          Icons.update,
+          tr('Thêm cập nhật', 'Add update'),
+          () => _addUpdate(context),
+        ),
       if (isMine && post.forkedFrom != null)
         _chip(
           Icons.call_merge,
           likelySelfFork
               ? tr('Gộp vào bài gốc', 'Merge into original')
               : tr('Gửi đề xuất cho bài gốc', 'Propose to original'),
-              () => _proposeOrMerge(context),
+          () => _proposeOrMerge(context),
         ),
       if (isMine && (post.contributors.isNotEmpty || post.updateCount > 0))
         _chip(
           Icons.history,
           tr('Lịch sử phiên bản', 'Version history'),
-              () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => VersionsScreen(post: post)),
-          ),
+          () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => VersionsScreen(post: post))),
         ),
       if (me != null)
         _chip(
           Icons.rate_review_outlined,
           tr('Góp ý', 'Feedback'),
-              () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => FeedbackScreen(post: post)),
-          ),
+          () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => FeedbackScreen(post: post))),
         ),
       if (!isMine && me != null)
-        _chip(Icons.favorite_border, tr('Cảm ơn', 'Thank'),
-                () => _thank(context)),
+        _chip(
+          Icons.favorite_border,
+          tr('Cảm ơn', 'Thank'),
+          () => _thank(context),
+        ),
       if (post.blocks.isNotEmpty)
         _chip(
           Icons.forum_outlined,
           tr('Ghi chú theo khối', 'Block notes'),
-              () => Navigator.of(context).push(
+          () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => BlockNotesScreen(post: post)),
           ),
         ),
@@ -339,7 +353,8 @@ class _LiveTimelineState extends State<LiveTimeline> {
     // Tác giả: số tổng (cả mục tự sinh). Người khác: chỉ cập nhật tự viết.
     final count = isMine ? p.updateCount : p.publicUpdateCount;
     final last = isMine ? p.lastUpdateAt : p.lastPublicUpdateAt;
-    final summary = '$count ${tr('cập nhật', 'updates')}'
+    final summary =
+        '$count ${tr('cập nhật', 'updates')}'
         '${last != null ? ' · ${tr('mới nhất', 'latest')} ${extrasAgo(last)}' : ''}';
 
     return Column(
@@ -358,8 +373,11 @@ class _LiveTimelineState extends State<LiveTimeline> {
                       Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          const Icon(Icons.update,
-                              size: 18, color: AppColors.brand),
+                          const Icon(
+                            Icons.update,
+                            size: 18,
+                            color: AppColors.brand,
+                          ),
                           if (unseen)
                             Positioned(
                               right: -2,
@@ -368,7 +386,7 @@ class _LiveTimelineState extends State<LiveTimeline> {
                                 width: 8,
                                 height: 8,
                                 decoration: const BoxDecoration(
-                                  color: Colors.red,
+                                  color: AppColors.danger,
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -438,8 +456,9 @@ class _LiveTimelineState extends State<LiveTimeline> {
                 if (_loading) const LinearProgressIndicator(minHeight: 2),
                 // Mục do hệ thống tự sinh (gộp nhánh, nhận đề xuất, khôi phục)
                 // chỉ tác giả thấy
-                for (final u in (_items ?? const <LiveUpdate>[])
-                    .where((u) => isMine || u.kind == 'manual'))
+                for (final u in (_items ?? const <LiveUpdate>[]).where(
+                  (u) => isMine || u.kind == 'manual',
+                ))
                   _entry(extrasAgo(u.createdAt), u.text),
                 _entry(
                   extrasAgo(p.createdAt),
@@ -467,7 +486,8 @@ class _LiveTimelineState extends State<LiveTimeline> {
         // Chấm đỏ chỉ sáng khi tác giả đăng cập nhật tự viết
         final last = widget.post.lastPublicUpdateAt;
         final seen = data?['lastSeenAt'];
-        final unseen = following &&
+        final unseen =
+            following &&
             last != null &&
             seen is Timestamp &&
             last.isAfter(seen.toDate());

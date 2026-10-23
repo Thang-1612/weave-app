@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
 import '../../services/l10n.dart';
 import '../../services/usage_service.dart';
 import '../../theme/app_theme.dart';
@@ -69,8 +70,9 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
         children: [
           for (final m in options)
             ChoiceChip(
-              label:
-              Text(m == 0 ? tr('Tắt', 'Off') : '$m ${tr('phút', 'min')}'),
+              label: Text(
+                m == 0 ? tr('Tắt', 'Off') : '$m ${tr('phút', 'min')}',
+              ),
               selected: value == m,
               onSelected: (_) => onSelected(m),
             ),
@@ -97,14 +99,15 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
                   Text(
                     _week[i] >= 60 ? '${_week[i] ~/ 60}' : '',
                     style: const TextStyle(
-                        fontSize: 11, color: AppColors.textSecondary),
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Container(
                     height: maxSec == 0
                         ? 4
-                        : (maxHeight * _week[i] / maxSec)
-                        .clamp(4.0, maxHeight),
+                        : (maxHeight * _week[i] / maxSec).clamp(4.0, maxHeight),
                     margin: const EdgeInsets.symmetric(horizontal: 6),
                     decoration: BoxDecoration(
                       color: i == 6 ? AppColors.brand : AppColors.soft,
@@ -131,50 +134,47 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
   /// tiến độ chuyển sang Danger.
   Widget _todayCard(double? progress) {
     final overLimit = progress != null && progress >= 1;
-    return Container(
-      padding: const EdgeInsets.all(WeaveSpacing.xl),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(WeaveRadius.card),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            tr('Hôm nay bạn đã dùng', 'Today you used'),
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            formatDuration(_today),
-            style: const TextStyle(
-              color: AppColors.brand,
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          if (progress != null) ...[
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 8,
-                backgroundColor: AppColors.soft,
-                color: overLimit ? AppColors.danger : AppColors.brand,
-              ),
-            ),
-            const SizedBox(height: 6),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(WeaveSpacing.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text(
-              '${tr('Giới hạn', 'Limit')}: $_limit ${tr('phút', 'min')}',
+              tr('Hôm nay bạn đã dùng', 'Today you used'),
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              formatDuration(_today),
               style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
+                color: AppColors.brand,
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
               ),
             ),
+            if (progress != null) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: AppColors.soft,
+                  color: overLimit ? AppColors.danger : AppColors.brand,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${tr('Giới hạn', 'Limit')}: $_limit ${tr('phút', 'min')}',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -191,54 +191,56 @@ class _TimeManagementScreenState extends State<TimeManagementScreen> {
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
           : settingsList([
-        _todayCard(progress),
-        SectionLabel(tr('7 ngày gần nhất', 'Last 7 days')),
-        SettingsCard(children: [_chart()]),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-          child: Text(
-            '${tr('Trung bình mỗi ngày', 'Daily average')}: ${formatDuration(avg)}',
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
-        ),
-        SectionLabel(tr('Giới hạn mỗi ngày', 'Daily limit')),
-        SettingsCard(
-          children: [
-            _chips(
-              options: const [0, 30, 60, 90, 120, 180],
-              value: _limit,
-              onSelected: (m) async {
-                await _usage.setDailyLimit(m);
-                _load();
-              },
-            ),
-          ],
-        ),
-        SectionLabel(tr('Nhắc nghỉ giải lao', 'Break reminders')),
-        SettingsCard(
-          children: [
-            _chips(
-              options: const [0, 15, 30, 45, 60],
-              value: _break,
-              onSelected: (m) async {
-                await _usage.setBreakEvery(m);
-                _load();
-              },
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
-          child: Text(
-            tr(
-              'Thời gian chỉ tính khi ứng dụng đang mở trên thiết bị này. Khi đạt giới hạn hoặc đến lúc nghỉ, ứng dụng sẽ hiện một lời nhắc.',
-              'Time is counted only while the app is open on this device. When you reach your limit or a break is due, the app shows a reminder.',
-            ),
-            style: const TextStyle(
-                color: AppColors.textSecondary, height: 1.4),
-          ),
-        ),
-      ]),
+              _todayCard(progress),
+              SectionLabel(tr('7 ngày gần nhất', 'Last 7 days')),
+              SettingsCard(children: [_chart()]),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                child: Text(
+                  '${tr('Trung bình mỗi ngày', 'Daily average')}: ${formatDuration(avg)}',
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+              SectionLabel(tr('Giới hạn mỗi ngày', 'Daily limit')),
+              SettingsCard(
+                children: [
+                  _chips(
+                    options: const [0, 30, 60, 90, 120, 180],
+                    value: _limit,
+                    onSelected: (m) async {
+                      await _usage.setDailyLimit(m);
+                      _load();
+                    },
+                  ),
+                ],
+              ),
+              SectionLabel(tr('Nhắc nghỉ giải lao', 'Break reminders')),
+              SettingsCard(
+                children: [
+                  _chips(
+                    options: const [0, 15, 30, 45, 60],
+                    value: _break,
+                    onSelected: (m) async {
+                      await _usage.setBreakEvery(m);
+                      _load();
+                    },
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
+                child: Text(
+                  tr(
+                    'Thời gian chỉ tính khi ứng dụng đang mở trên thiết bị này. Khi đạt giới hạn hoặc đến lúc nghỉ, ứng dụng sẽ hiện một lời nhắc.',
+                    'Time is counted only while the app is open on this device. When you reach your limit or a break is due, the app shows a reminder.',
+                  ),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ]),
     );
   }
 }

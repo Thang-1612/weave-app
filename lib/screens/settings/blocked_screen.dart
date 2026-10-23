@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../services/account_service.dart';
 import '../../services/l10n.dart';
 import '../../services/user_prefs.dart';
@@ -8,8 +9,9 @@ import '../../widgets/settings_widgets.dart';
 class BlockedScreen extends StatelessWidget {
   const BlockedScreen({super.key});
 
-  static final _smallButton =
-  OutlinedButton.styleFrom(minimumSize: const Size(64, 36));
+  static final _smallButton = OutlinedButton.styleFrom(
+    minimumSize: const Size(64, 36),
+  );
 
   Widget _note(String text) {
     return Container(
@@ -71,12 +73,10 @@ class BlockedScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(24),
                       child: Center(
                         child: Text(
-                          tr(
-                            'Bạn chưa chặn ai',
-                            'You have not blocked anyone',
+                          tr('Bạn chưa chặn ai', 'You have not blocked anyone'),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
                           ),
-                          style:
-                          const TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                     ),
@@ -120,8 +120,9 @@ class BlockedScreen extends StatelessWidget {
                             'Bạn chưa tắt tiếng ai',
                             'You have not muted anyone',
                           ),
-                          style:
-                          const TextStyle(color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),

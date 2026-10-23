@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../../models/interactions.dart';
 import '../../models/post.dart';
 import '../../services/activity_service.dart';
@@ -170,9 +171,8 @@ class ActivityScreen extends StatelessWidget {
   }
 
   void _openPost(BuildContext context, Post post) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => CommentsScreen(post: post)),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => CommentsScreen(post: post)));
   }
 
   void _snack(BuildContext context, String text) {
@@ -180,7 +180,10 @@ class ActivityScreen extends StatelessWidget {
   }
 
   Widget _reactionTile(
-      BuildContext context, _ReactionItem it, VoidCallback reload) {
+    BuildContext context,
+    _ReactionItem it,
+    VoidCallback reload,
+  ) {
     return FutureBuilder<Post?>(
       future: _PostCache.post(it.postId),
       builder: (context, snap) {
@@ -193,8 +196,8 @@ class ActivityScreen extends StatelessWidget {
         final title = loading
             ? '…'
             : (post == null
-            ? tr('Bài viết không còn tồn tại', 'Post no longer exists')
-            : '${tr('Bạn đã thả', 'You reacted')} ${it.emoji} ${tr('vào', 'to')} $what ${tr('của', 'by')} ${post.authorName}');
+                  ? tr('Bài viết không còn tồn tại', 'Post no longer exists')
+                  : '${tr('Bạn đã thả', 'You reacted')} ${it.emoji} ${tr('vào', 'to')} $what ${tr('của', 'by')} ${post.authorName}');
 
         return ListTile(
           leading: CircleAvatar(
@@ -209,18 +212,18 @@ class ActivityScreen extends StatelessWidget {
           onTap: post == null ? null : () => _openPost(context, post),
           trailing: (post != null && it.commentId == null)
               ? IconButton(
-            tooltip: tr('Bỏ cảm xúc', 'Remove reaction'),
-            icon: const Icon(Icons.close),
-            onPressed: () async {
-              try {
-                // Chọn lại đúng cảm xúc đang có thì sẽ bỏ cảm xúc đó
-                await ReactionService.setReaction(post, it.emoji);
-              } catch (e) {
-                if (context.mounted) _snack(context, '$e');
-              }
-              reload();
-            },
-          )
+                  tooltip: tr('Bỏ cảm xúc', 'Remove reaction'),
+                  icon: const Icon(Icons.close),
+                  onPressed: () async {
+                    try {
+                      // Chọn lại đúng cảm xúc đang có thì sẽ bỏ cảm xúc đó
+                      await ReactionService.setReaction(post, it.emoji);
+                    } catch (e) {
+                      if (context.mounted) _snack(context, '$e');
+                    }
+                    reload();
+                  },
+                )
               : null,
         );
       },
@@ -228,7 +231,10 @@ class ActivityScreen extends StatelessWidget {
   }
 
   Widget _commentTile(
-      BuildContext context, _CommentItem it, VoidCallback reload) {
+    BuildContext context,
+    _CommentItem it,
+    VoidCallback reload,
+  ) {
     return FutureBuilder<Post?>(
       future: _PostCache.post(it.postId),
       builder: (context, snap) {
@@ -237,14 +243,17 @@ class ActivityScreen extends StatelessWidget {
         final where = !done
             ? '…'
             : (post == null
-            ? tr('Bài viết không còn tồn tại', 'Post no longer exists')
-            : '${tr('Trong bài của', 'On a post by')} ${post.authorName}: ${_snippet(post)}');
+                  ? tr('Bài viết không còn tồn tại', 'Post no longer exists')
+                  : '${tr('Trong bài của', 'On a post by')} ${post.authorName}: ${_snippet(post)}');
 
         return ListTile(
           leading: const CircleAvatar(
             backgroundColor: AppColors.soft,
-            child: Icon(Icons.chat_bubble_outline,
-                color: AppColors.brand, size: 20),
+            child: Icon(
+              Icons.chat_bubble_outline,
+              color: AppColors.brand,
+              size: 20,
+            ),
           ),
           title: Text(
             '${tr('Bạn đã bình luận', 'You commented')}: "${it.comment.text}"',
@@ -257,39 +266,40 @@ class ActivityScreen extends StatelessWidget {
           trailing: post == null
               ? null
               : IconButton(
-            tooltip: tr('Xóa bình luận', 'Delete comment'),
-            icon: const Icon(Icons.delete_outline,
-                color: AppColors.danger),
-            onPressed: () async {
-              final ok = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title:
-                  Text(tr('Xóa bình luận?', 'Delete comment?')),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(tr('Hủy', 'Cancel')),
-                    ),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.danger,
+                  tooltip: tr('Xóa bình luận', 'Delete comment'),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.danger,
+                  ),
+                  onPressed: () async {
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(tr('Xóa bình luận?', 'Delete comment?')),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(false),
+                            child: Text(tr('Hủy', 'Cancel')),
+                          ),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.danger,
+                            ),
+                            onPressed: () => Navigator.of(ctx).pop(true),
+                            child: Text(tr('Xóa', 'Delete')),
+                          ),
+                        ],
                       ),
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      child: Text(tr('Xóa', 'Delete')),
-                    ),
-                  ],
+                    );
+                    if (ok != true) return;
+                    try {
+                      await CommentService.deleteComment(post, it.comment);
+                    } catch (e) {
+                      if (context.mounted) _snack(context, '$e');
+                    }
+                    reload();
+                  },
                 ),
-              );
-              if (ok != true) return;
-              try {
-                await CommentService.deleteComment(post, it.comment);
-              } catch (e) {
-                if (context.mounted) _snack(context, '$e');
-              }
-              reload();
-            },
-          ),
         );
       },
     );
@@ -304,14 +314,13 @@ class ActivityScreen extends StatelessWidget {
         final title = !done
             ? '…'
             : (post == null
-            ? tr('Bài viết không còn tồn tại', 'Post no longer exists')
-            : '${tr('Bạn đã chia sẻ bài viết của', 'You shared a post by')} ${post.authorName}');
+                  ? tr('Bài viết không còn tồn tại', 'Post no longer exists')
+                  : '${tr('Bạn đã chia sẻ bài viết của', 'You shared a post by')} ${post.authorName}');
 
         return ListTile(
           leading: const CircleAvatar(
             backgroundColor: AppColors.soft,
-            child:
-            Icon(Icons.share_outlined, color: AppColors.brand, size: 20),
+            child: Icon(Icons.share_outlined, color: AppColors.brand, size: 20),
           ),
           title: Text(title),
           subtitle: Text(
@@ -384,9 +393,9 @@ class _ActivityTabState<T> extends State<_ActivityTab<T>>
           Text(
             needsIndex
                 ? tr(
-              'Cần bật chỉ mục trong Firestore (làm một lần)',
-              'A Firestore index is required (one-time setup)',
-            )
+                    'Cần bật chỉ mục trong Firestore (làm một lần)',
+                    'A Firestore index is required (one-time setup)',
+                  )
                 : tr('Không tải được', 'Could not load'),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
@@ -402,8 +411,10 @@ class _ActivityTabState<T> extends State<_ActivityTab<T>>
           const SizedBox(height: 8),
           SelectableText(
             text,
-            style:
-            const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -434,8 +445,11 @@ class _ActivityTabState<T> extends State<_ActivityTab<T>>
             return ListView(
               children: [
                 const SizedBox(height: 100),
-                Icon(widget.emptyIcon,
-                    size: 64, color: AppColors.textSecondary),
+                Icon(
+                  widget.emptyIcon,
+                  size: 64,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   widget.emptyText,

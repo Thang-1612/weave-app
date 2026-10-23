@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import 'friend_service.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NotifGroup {
@@ -15,13 +17,13 @@ class NotifGroup {
   final IconData icon;
 
   const NotifGroup(
-      this.key,
-      this.vi,
-      this.en,
-      this.descVi,
-      this.descEn,
-      this.icon,
-      );
+    this.key,
+    this.vi,
+    this.en,
+    this.descVi,
+    this.descEn,
+    this.icon,
+  );
 }
 
 const notifGroups = [
@@ -128,6 +130,7 @@ class UserPrefs extends ChangeNotifier {
     final p = await SharedPreferences.getInstance();
     _localLang = p.getString('app_language') ?? 'vi';
   }
+
   Map<String, String> _blocked = {};
   List<String> _saved = [];
   Set<String> _restricted = {};
@@ -182,9 +185,9 @@ class UserPrefs extends ChangeNotifier {
         .orderBy('savedAt', descending: true)
         .snapshots()
         .listen((s) {
-      _saved = s.docs.map((d) => d.id).toList();
-      notifyListeners();
-    }, onError: (_) {});
+          _saved = s.docs.map((d) => d.id).toList();
+          notifyListeners();
+        }, onError: (_) {});
   }
 
   void _applySettings(Map<String, dynamic> data) {
@@ -267,9 +270,11 @@ class UserPrefs extends ChangeNotifier {
     await p.setString('app_language', code);
     await _merge({'language': code});
   }
+
   Future<void> setPersonalize(bool on) => _merge({'personalizeFeed': on});
-  Future<void> setNotif(String group, bool on) =>
-      _merge({'notif': {group: on}});
+  Future<void> setNotif(String group, bool on) => _merge({
+    'notif': {group: on},
+  });
 
   Future<void> setRestricted(String spaceId, bool on) =>
       _array('restrictedSpaces', spaceId, on);

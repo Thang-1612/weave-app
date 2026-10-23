@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 import 'l10n.dart';
 
@@ -24,9 +25,8 @@ class PollService {
   static CollectionReference<Map<String, dynamic>> _votes(Post post) =>
       post.ref.collection('poll_votes');
 
-  static Exception _closed() => Exception(
-    tr('Bình chọn đã khóa', 'This poll is closed'),
-  );
+  static Exception _closed() =>
+      Exception(tr('Bình chọn đã khóa', 'This poll is closed'));
 
   /// Phiếu của mình: danh sách id lựa chọn, hoặc null nếu chưa bình chọn.
   static Stream<List<String>?> watchMyVote(Post post) {
@@ -55,14 +55,15 @@ class PollService {
     }
     if (picked.length > 1 && !post.pollMultiple) {
       throw Exception(
-        tr('Bình chọn này chỉ cho chọn một đáp án',
-            'This poll allows only one answer'),
+        tr(
+          'Bình chọn này chỉ cho chọn một đáp án',
+          'This poll allows only one answer',
+        ),
       );
     }
-    await _votes(post).doc(me.uid).set({
-      'choices': picked,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+    await _votes(post)
+        .doc(me.uid)
+        .set({'choices': picked, 'createdAt': FieldValue.serverTimestamp()});
   }
 
   /// Rút phiếu của mình.
@@ -80,8 +81,10 @@ class PollService {
     final votes = _votes(post);
     final entries = await Future.wait(
       post.pollOptions.map((o) async {
-        final agg =
-        await votes.where('choices', arrayContains: o.id).count().get();
+        final agg = await votes
+            .where('choices', arrayContains: o.id)
+            .count()
+            .get();
         return MapEntry(o.id, agg.count ?? 0);
       }),
     );

@@ -1,5 +1,7 @@
 import '../theme/breakpoints.dart';
+
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 /// Ba chế độ bố cục theo chiều rộng khả dụng của khung.
@@ -57,7 +59,7 @@ class WeaveLayout extends InheritedWidget {
   @override
   bool updateShouldNotify(WeaveLayout oldWidget) =>
       info.mode != oldWidget.info.mode ||
-          info.secondaryPanelVisible != oldWidget.info.secondaryPanelVisible;
+      info.secondaryPanelVisible != oldWidget.info.secondaryPanelVisible;
 }
 
 class WeaveDestination {
@@ -77,7 +79,11 @@ class WeaveDestination {
   final Widget Function(Widget icon, bool selected)? iconWrapper;
 
   Widget buildIcon(bool selected, {double? size, Color? color}) {
-    final Widget w = Icon(selected ? selectedIcon : icon, size: size, color: color);
+    final Widget w = Icon(
+      selected ? selectedIcon : icon,
+      size: size,
+      color: color,
+    );
     final wrap = iconWrapper;
     return wrap == null ? w : wrap(w, selected);
   }
@@ -124,7 +130,10 @@ class WeaveResponsiveShell extends StatelessWidget {
 
   /// Như [appBar] nhưng biết bố cục hiện tại (ví dụ chỉ thêm nút "+" ở mobile).
   /// Được ưu tiên hơn [appBar].
-  final PreferredSizeWidget Function(BuildContext context, WeaveLayoutInfo info)?
+  final PreferredSizeWidget Function(
+    BuildContext context,
+    WeaveLayoutInfo info,
+  )?
   appBarBuilder;
 
   /// Menu trượt, chỉ dùng ở mobile và tablet. Desktop dùng [sidebarExtra].
@@ -159,7 +168,8 @@ class WeaveResponsiveShell extends StatelessWidget {
         final isMobile = mode == WeaveLayoutMode.mobile;
         final isTablet = mode == WeaveLayoutMode.tablet;
         final isDesktop = mode == WeaveLayoutMode.desktop;
-        final showPanel = isDesktop &&
+        final showPanel =
+            isDesktop &&
             secondaryPanel != null &&
             width >= kWeaveSecondaryPanelMinWidth;
         final pad = isMobile
@@ -176,7 +186,7 @@ class WeaveResponsiveShell extends StatelessWidget {
         final PreferredSizeWidget resolvedAppBar = builder != null
             ? builder(context, info)
             : (appBar ??
-            _buildAppBar(isMobile: isMobile, isDesktop: isDesktop));
+                  _buildAppBar(isMobile: isMobile, isDesktop: isDesktop));
 
         return WeaveLayout(
           info: info,
@@ -216,27 +226,28 @@ class WeaveResponsiveShell extends StatelessWidget {
             ),
             bottomNavigationBar: isMobile
                 ? NavigationBar(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
-              destinations: [
-                for (final d in destinations.take(5))
-                  NavigationDestination(
-                    icon: d.buildIcon(false),
-                    selectedIcon: d.buildIcon(true),
-                    label: d.label,
-                  ),
-              ],
-            )
+                    selectedIndex: selectedIndex,
+                    onDestinationSelected: onDestinationSelected,
+                    destinations: [
+                      for (final d in destinations.take(5))
+                        NavigationDestination(
+                          icon: d.buildIcon(false),
+                          selectedIcon: d.buildIcon(true),
+                          label: d.label,
+                        ),
+                    ],
+                  )
                 : null,
             // Mỗi chế độ chỉ có một hành động chính nổi bật:
             // mobile = nút + trên AppBar, tablet = FAB, desktop = nút ở sidebar.
-            floatingActionButton: floatingActionButton ??
+            floatingActionButton:
+                floatingActionButton ??
                 (isTablet && onCreate != null
                     ? FloatingActionButton.extended(
-                  onPressed: onCreate,
-                  icon: const Icon(Icons.add),
-                  label: Text(createLabel),
-                )
+                        onPressed: onCreate,
+                        icon: const Icon(Icons.add),
+                        label: Text(createLabel),
+                      )
                     : null),
           ),
         );
@@ -332,7 +343,9 @@ class WeaveResponsiveShell extends StatelessWidget {
                         height: 36,
                         decoration: BoxDecoration(
                           color: AppColors.soft,
-                          borderRadius: BorderRadius.circular(WeaveRadius.control),
+                          borderRadius: BorderRadius.circular(
+                            WeaveRadius.control,
+                          ),
                         ),
                         child: const Icon(
                           Icons.all_inclusive_rounded,
@@ -380,7 +393,9 @@ class WeaveResponsiveShell extends StatelessWidget {
                       icon: const Icon(Icons.add),
                       label: Text(sidebarCreateLabel),
                       style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(WeaveSizes.buttonHeight),
+                        minimumSize: const Size.fromHeight(
+                          WeaveSizes.buttonHeight,
+                        ),
                       ),
                     ),
                   ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 
 class FeedExtras {
@@ -48,35 +49,35 @@ class FeedExtras {
             .where('authorId', isEqualTo: me)
             .snapshots()
             .listen((s) {
-          mine = s.docs.map(Post.fromDoc).toList();
-          emit();
-        }, onError: (_) {});
+              mine = s.docs.map(Post.fromDoc).toList();
+              emit();
+            }, onError: (_) {});
 
         subShared = db
             .collection('friend_posts')
             .where('audience', arrayContains: me)
             .snapshots()
             .listen((s) {
-          shared = s.docs.map(Post.fromDoc).toList();
-          emit();
-        }, onError: (_) {});
+              shared = s.docs.map(Post.fromDoc).toList();
+              emit();
+            }, onError: (_) {});
 
         subFriends = db
             .collection('friendships')
             .where('users', arrayContains: me)
             .snapshots()
             .listen((s) {
-          final set = <String>{};
-          for (final d in s.docs) {
-            final data = d.data();
-            if (data['status'] != 'accepted') continue;
-            for (final u in (data['users'] as List? ?? const [])) {
-              if (u is String && u != me) set.add(u);
-            }
-          }
-          friends = set;
-          emit();
-        }, onError: (_) {});
+              final set = <String>{};
+              for (final d in s.docs) {
+                final data = d.data();
+                if (data['status'] != 'accepted') continue;
+                for (final u in (data['users'] as List? ?? const [])) {
+                  if (u is String && u != me) set.add(u);
+                }
+              }
+              friends = set;
+              emit();
+            }, onError: (_) {});
       },
       onCancel: () async {
         await subMine?.cancel();

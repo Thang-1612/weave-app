@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/l10n.dart';
 import '../services/post_service.dart';
@@ -57,9 +58,7 @@ class _ForksScreenState extends State<ForksScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => Scaffold(
-          appBar: AppBar(
-            title: Text(p.authorName),
-          ),
+          appBar: AppBar(title: Text(p.authorName)),
           body: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 600),
@@ -80,8 +79,11 @@ class _ForksScreenState extends State<ForksScreen> {
           if (!root)
             const Padding(
               padding: EdgeInsets.only(top: 12, right: 4),
-              child: Icon(Icons.subdirectory_arrow_right,
-                  size: 18, color: AppColors.brand),
+              child: Icon(
+                Icons.subdirectory_arrow_right,
+                size: 18,
+                color: AppColors.brand,
+              ),
             ),
           Expanded(
             child: InkWell(
@@ -104,13 +106,16 @@ class _ForksScreenState extends State<ForksScreen> {
                         if (root)
                           const Padding(
                             padding: EdgeInsets.only(right: 6),
-                            child: Icon(Icons.account_tree,
-                                size: 16, color: AppColors.brand),
+                            child: Icon(
+                              Icons.account_tree,
+                              size: 16,
+                              color: AppColors.brand,
+                            ),
                           ),
                         Expanded(
                           child: Text(
                             '${p.authorName} · ${extrasAgo(p.createdAt)}'
-                                '${root ? ' · ${tr('đang xem', 'viewing')}' : ''}',
+                            '${root ? ' · ${tr('đang xem', 'viewing')}' : ''}',
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -144,9 +149,7 @@ class _ForksScreenState extends State<ForksScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Cây nhánh', 'Fork tree')),
-      ),
+      appBar: AppBar(title: Text(tr('Cây nhánh', 'Fork tree'))),
       body: FutureBuilder<List<_Node>>(
         future: _future,
         builder: (context, snap) {
@@ -174,8 +177,7 @@ class _ForksScreenState extends State<ForksScreen> {
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         tr('Chưa có nhánh nào.', 'No forks yet.'),
-                        style:
-                        const TextStyle(color: AppColors.textSecondary),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                   for (final n in nodes) _tile(n.post, n.depth),
@@ -183,10 +185,14 @@ class _ForksScreenState extends State<ForksScreen> {
                     Padding(
                       padding: const EdgeInsets.all(8),
                       child: Text(
-                        tr('Chỉ hiện 40 bài đầu tiên.',
-                            'Showing the first 40 posts only.'),
+                        tr(
+                          'Chỉ hiện 40 bài đầu tiên.',
+                          'Showing the first 40 posts only.',
+                        ),
                         style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 12),
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                 ],

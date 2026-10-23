@@ -25,11 +25,11 @@ class WeaveListScreen extends StatelessWidget {
 
   /// [contentWidth]: bề ngang vùng danh sách, để chia cột khi màn rộng.
   Widget _section(
-      BuildContext context,
-      String title,
-      List<WeaveActivity> items,
-      double contentWidth,
-      ) {
+    BuildContext context,
+    String title,
+    List<WeaveActivity> items,
+    double contentWidth,
+  ) {
     if (items.isEmpty) return const SizedBox.shrink();
     final twoColumns = contentWidth >= _kWeaveListTwoColumnBreakpoint;
     const gap = WeaveSpacing.md;
@@ -79,7 +79,8 @@ class WeaveListScreen extends StatelessWidget {
         label: Text(tr('Tạo hoạt động', 'New activity')),
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(
-              builder: (_) => WeaveCreateScreen(groupId: groupId)),
+            builder: (_) => WeaveCreateScreen(groupId: groupId),
+          ),
         ),
       ),
       body: StreamBuilder<List<WeaveActivity>>(
@@ -109,7 +110,10 @@ class WeaveListScreen extends StatelessWidget {
                     'No activities yet.\nCreate one to plan with friends, pick a place and keep the memories.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ),
             );
@@ -119,13 +123,14 @@ class WeaveListScreen extends StatelessWidget {
           return LayoutBuilder(
             builder: (context, constraints) {
               // Hẹp: một cột tối đa 600. Rộng: tối đa 1040, thẻ chia 2 cột.
-              final maxW = constraints.maxWidth >= _kWeaveListTwoColumnBreakpoint + 24
+              final maxW =
+                  constraints.maxWidth >= _kWeaveListTwoColumnBreakpoint + 24
                   ? 1040.0
                   : 600.0;
               const padH = 12.0;
               final contentWidth =
                   (constraints.maxWidth < maxW ? constraints.maxWidth : maxW) -
-                      padH * 2;
+                  padH * 2;
               // ListView chiếm toàn bộ chiều rộng (lăn chuột và thanh cuộn
               // hoạt động ở hai bên lề); cột nội dung được giới hạn bằng đệm.
               final side = ((constraints.maxWidth - maxW) / 2)
@@ -134,12 +139,24 @@ class WeaveListScreen extends StatelessWidget {
               return ListView(
                 padding: EdgeInsets.fromLTRB(padH + side, 4, padH + side, 90),
                 children: [
-                  _section(context, tr('Đang diễn ra', 'Happening now'),
-                      by(WeaveStatus.active), contentWidth),
-                  _section(context, tr('Đang lên kế hoạch', 'Planning'),
-                      by(WeaveStatus.planning), contentWidth),
-                  _section(context, tr('Đã kết thúc', 'Ended'),
-                      by(WeaveStatus.ended), contentWidth),
+                  _section(
+                    context,
+                    tr('Đang diễn ra', 'Happening now'),
+                    by(WeaveStatus.active),
+                    contentWidth,
+                  ),
+                  _section(
+                    context,
+                    tr('Đang lên kế hoạch', 'Planning'),
+                    by(WeaveStatus.planning),
+                    contentWidth,
+                  ),
+                  _section(
+                    context,
+                    tr('Đã kết thúc', 'Ended'),
+                    by(WeaveStatus.ended),
+                    contentWidth,
+                  ),
                 ],
               );
             },

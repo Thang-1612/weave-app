@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/l10n.dart';
 import '../services/post_service.dart';
@@ -49,8 +50,10 @@ class _ContributionScreenState extends State<ContributionScreen> {
     final db = FirebaseFirestore.instance;
     final col = db.collection('posts');
 
-    final mine =
-    await col.where('authorId', isEqualTo: widget.userId).limit(_cap).get();
+    final mine = await col
+        .where('authorId', isEqualTo: widget.userId)
+        .limit(_cap)
+        .get();
     final posts = mine.docs.map(Post.fromDoc).toList();
 
     var living = 0;
@@ -129,8 +132,10 @@ class _ContributionScreenState extends State<ContributionScreen> {
             label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style:
-            const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -140,9 +145,7 @@ class _ContributionScreenState extends State<ContributionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Dấu vết đóng góp', 'Contribution trail')),
-      ),
+      appBar: AppBar(title: Text(tr('Dấu vết đóng góp', 'Contribution trail'))),
       body: FutureBuilder<_Stats>(
         future: _future,
         builder: (context, snap) {
@@ -159,20 +162,38 @@ class _ContributionScreenState extends State<ContributionScreen> {
           }
           final s = snap.data!;
           final cards = <Widget>[
-            _card('📝', '${s.posts}${s.postsCapped ? '+' : ''}',
-                tr('Bài đã đăng', 'Posts published')),
-            _card('✅', '${s.answers}',
-                tr('Câu trả lời được chọn', 'Answers accepted')),
+            _card(
+              '📝',
+              '${s.posts}${s.postsCapped ? '+' : ''}',
+              tr('Bài đã đăng', 'Posts published'),
+            ),
+            _card(
+              '✅',
+              '${s.answers}',
+              tr('Câu trả lời được chọn', 'Answers accepted'),
+            ),
             _card('🔄', '${s.living}', tr('Bài sống', 'Living posts')),
-            _card('⏳', '${s.longestLivingDays}',
-                tr('Ngày: bài sống lâu nhất', 'Days: longest living post')),
-            _card('📌', '${s.updates}',
-                tr('Cập nhật đã đăng', 'Updates posted')),
-            _card('🤝', '${s.accepted}',
-                tr('Đề xuất được nhận', 'Proposals accepted')),
+            _card(
+              '⏳',
+              '${s.longestLivingDays}',
+              tr('Ngày: bài sống lâu nhất', 'Days: longest living post'),
+            ),
+            _card(
+              '📌',
+              '${s.updates}',
+              tr('Cập nhật đã đăng', 'Updates posted'),
+            ),
+            _card(
+              '🤝',
+              '${s.accepted}',
+              tr('Đề xuất được nhận', 'Proposals accepted'),
+            ),
             if (s.thanks != null)
-              _card('💌', '${s.thanks}',
-                  tr('Lời cảm ơn nhận được', 'Thank-yous received')),
+              _card(
+                '💌',
+                '${s.thanks}',
+                tr('Lời cảm ơn nhận được', 'Thank-yous received'),
+              ),
           ];
           return Center(
             child: ConstrainedBox(
@@ -204,9 +225,10 @@ class _ContributionScreenState extends State<ContributionScreen> {
                       'Post stats are counted over the account\'s latest $_cap public posts at most. Accepted answers only count on public questions. Thank-yous are private, so only the account owner sees that number.',
                     ),
                     style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        height: 1.4),
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),

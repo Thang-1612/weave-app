@@ -35,18 +35,26 @@ class WeaveMomentService {
 
   /// [imageBytes] phải là ảnh đã nén (compressImage).
   static Future<void> add(
-      String activityId, {
-        String caption = '',
-        Uint8List? imageBytes,
-      }) async {
+    String activityId, {
+    String caption = '',
+    Uint8List? imageBytes,
+  }) async {
     final text = caption.trim();
     if (text.isEmpty && imageBytes == null) {
-      throw Exception(tr('Hãy thêm ảnh hoặc vài dòng ghi chú.',
-          'Add a photo or a short note.'));
+      throw Exception(
+        tr(
+          'Hãy thêm ảnh hoặc vài dòng ghi chú.',
+          'Add a photo or a short note.',
+        ),
+      );
     }
     if (text.length > maxCaption) {
-      throw Exception(tr('Ghi chú tối đa $maxCaption ký tự.',
-          'Notes are limited to $maxCaption characters.'));
+      throw Exception(
+        tr(
+          'Ghi chú tối đa $maxCaption ký tự.',
+          'Notes are limited to $maxCaption characters.',
+        ),
+      );
     }
     await _col(activityId).add({
       'authorId': _me,

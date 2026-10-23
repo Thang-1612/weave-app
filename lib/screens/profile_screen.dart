@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../models/user_profile.dart';
 import '../services/account_service.dart';
@@ -41,10 +42,7 @@ class _Stat extends StatelessWidget {
         const SizedBox(height: WeaveSpacing.xs),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 13,
-            color: AppColors.textSecondary,
-          ),
+          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -64,11 +62,12 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late final String _uid =
       widget.userId ?? FirebaseAuth.instance.currentUser?.uid ?? '';
-  late final Stream<UserProfile?> _profileStream =
-  UserService.watchProfile(_uid);
+  late final Stream<UserProfile?> _profileStream = UserService.watchProfile(
+    _uid,
+  );
   late final Stream<List<Post>> _postsStream = PostService.watchUserPosts(_uid);
   late final Stream<List<Friendship>> _friendsStream =
-  FriendService.watchMine();
+      FriendService.watchMine();
 
   StreamSubscription<User?>? _sub;
   String? _synced;
@@ -109,15 +108,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Dùng chung cho cả hai bố cục.
   // ---------------------------------------------------------------------
   Widget _buildIntro(
-      BuildContext context, {
-        required UserProfile? profile,
-        required String title,
-        required String name,
-        required String email,
-        required String bio,
-        required int postCount,
-        required int interactions,
-      }) {
+    BuildContext context, {
+    required UserProfile? profile,
+    required String title,
+    required String name,
+    required String email,
+    required String bio,
+    required int postCount,
+    required int interactions,
+  }) {
     return Column(
       children: [
         // Avatar gradient là điểm nhấn của trang hồ sơ.
@@ -142,9 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall
+          style: Theme.of(context).textTheme.headlineSmall
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         if (name.isNotEmpty && email.isNotEmpty)
@@ -190,10 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _isMe ? '$friendCount' : '—',
                       tr('Bạn bè', 'Friends'),
                     ),
-                    _Stat(
-                      '$interactions',
-                      tr('Tương tác', 'Interactions'),
-                    ),
+                    _Stat('$interactions', tr('Tương tác', 'Interactions')),
                   ],
                 ),
                 Padding(
@@ -205,27 +199,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: _isMe
                       ? SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => EditProfileScreen(
-                              profile: profile,
-                              fallbackName: name,
-                            ),
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => EditProfileScreen(
+                                    profile: profile,
+                                    fallbackName: name,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(tr('Chỉnh sửa hồ sơ', 'Edit profile')),
                           ),
-                        );
-                      },
-                      child: Text(
-                        tr('Chỉnh sửa hồ sơ', 'Edit profile'),
-                      ),
-                    ),
-                  )
-                      : FriendActionButton(
-                    uid: _uid,
-                    friendships: friendships,
-                  ),
+                        )
+                      : FriendActionButton(uid: _uid, friendships: friendships),
                 ),
               ],
             );
@@ -237,9 +226,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Nội dung phần bài viết (trạng thái tải / lỗi / rỗng / danh sách).
   List<Widget> _buildPostWidgets(
-      AsyncSnapshot<List<Post>> postsSnap,
-      List<Post> posts,
-      ) {
+    AsyncSnapshot<List<Post>> postsSnap,
+    List<Post> posts,
+  ) {
     if (postsSnap.hasError) {
       return [
         Padding(
@@ -274,11 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     return [
       for (final p in _ordered(posts))
-        PostCard(
-          post: p,
-          openProfileOnTap: false,
-          showPinnedTag: true,
-        ),
+        PostCard(post: p, openProfileOnTap: false, showPinnedTag: true),
     ];
   }
 
@@ -288,11 +273,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.grid_view_rounded,
-            size: 20,
-            color: AppColors.brand,
-          ),
+          const Icon(Icons.grid_view_rounded, size: 20, color: AppColors.brand),
           const SizedBox(width: WeaveSpacing.sm),
           Text(
             tr('Bài viết', 'Posts'),
@@ -319,15 +300,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             final authUser = _isMe ? FirebaseAuth.instance.currentUser : null;
 
             final profileName = profile?.name ?? '';
-            final name =
-            profileName.isNotEmpty ? profileName : (nameOf(authUser) ?? '');
+            final name = profileName.isNotEmpty
+                ? profileName
+                : (nameOf(authUser) ?? '');
             final email = authUser?.email ?? '';
             final title = name.isNotEmpty
                 ? name
                 : (email.isNotEmpty ? email : tr('Người dùng', 'User'));
             final bio = profile?.bio ?? '';
-            final interactions =
-            posts.fold<int>(0, (sum, p) => sum + p.reactions + p.comments);
+            final interactions = posts.fold<int>(
+              0,
+              (sum, p) => sum + p.reactions + p.comments,
+            );
 
             Widget intro() => _buildIntro(
               context,

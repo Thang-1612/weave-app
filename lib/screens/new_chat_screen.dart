@@ -1,6 +1,9 @@
 import '../theme/app_theme.dart';
+
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../services/chat_service.dart';
 import '../widgets/chat_widgets.dart';
 
@@ -46,7 +49,8 @@ class _NewChatScreenState extends State<NewChatScreen> {
   }
 
   void _err(String m) {
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+    if (mounted)
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
   }
 
   void _onQuery(String v) {
@@ -82,7 +86,8 @@ class _NewChatScreenState extends State<NewChatScreen> {
     }
   }
 
-  bool get _canCreate => !_busy && _name.text.trim().isNotEmpty && _picked.length >= 2;
+  bool get _canCreate =>
+      !_busy && _name.text.trim().isNotEmpty && _picked.length >= 2;
 
   Future<void> _create() async {
     if (!_canCreate) return;
@@ -134,9 +139,16 @@ class _NewChatScreenState extends State<NewChatScreen> {
       initialData: svc.cached(uid),
       builder: (c, s) => ListTile(
         leading: UserAvatar(uid),
-        title: Text(s.data?.name ?? '…', maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(
+          s.data?.name ?? '…',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         trailing: multi
-            ? Checkbox(value: _picked.contains(uid), onChanged: (_) => _toggle(uid))
+            ? Checkbox(
+                value: _picked.contains(uid),
+                onChanged: (_) => _toggle(uid),
+              )
             : null,
         onTap: multi ? () => _toggle(uid) : () => _startDirect(uid),
       ),
@@ -148,102 +160,90 @@ class _NewChatScreenState extends State<NewChatScreen> {
     if (res != null) {
       if (res.isEmpty) {
         return const Center(
-            child: Text('Không tìm thấy ai', style: TextStyle(color: AppColors.textSecondary)));
+          child: Text(
+            'Không tìm thấy ai',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        );
       }
       return ListView(children: [for (final u in res) _row(u.uid, multi)]);
     }
     return StreamBuilder<List<String>>(
       stream: _friends,
       builder: (c, s) {
-        final ids = (s.data ?? const <String>[]).where((u) => !_ex.contains(u)).toList();
+        final ids = (s.data ?? const <String>[])
+            .where((u) => !_ex.contains(u))
+            .toList();
         if (ids.isEmpty) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Text('Chưa có bạn bè.\nHãy gõ tên ở ô trên để tìm người.',
-                  textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
+              child: Text(
+                'Chưa có bạn bè.\nHãy gõ tên ở ô trên để tìm người.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             ),
           );
         }
-        return ListView(children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text('Bạn bè',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-          ),
-          for (final id in ids) _row(id, multi),
-        ]);
+        return ListView(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Text(
+                'Bạn bè',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            for (final id in ids) _row(id, multi),
+          ],
+        );
       },
     );
   }
 
   Widget _groupTab() {
-    return Column(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-        child: TextField(
-          controller: _name,
-          maxLength: 50,
-          onChanged: (_) => setState(() {}),
-          // Viền, bo góc và màu focus lấy từ theme
-          decoration: const InputDecoration(
-            labelText: 'Tên nhóm',
-            prefixIcon: Icon(Icons.groups_outlined),
-            counterText: '',
-            isDense: true,
-          ),
-        ),
-      ),
-      if (_picked.isNotEmpty)
-        SizedBox(
-          height: 44,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            children: [
-              for (final u in _picked)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: InputChip(
-                    backgroundColor: AppColors.surface,
-                    side: const BorderSide(color: AppColors.border),
-                    label: Text(svc.cached(u)?.name ?? '…'),
-                    onDeleted: () => _toggle(u),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      Expanded(child: _people(true)),
-      SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _canCreate ? _create : null,
-              child: _busy
-                  ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : Text(_picked.length < 2
-                  ? 'Chọn ít nhất 2 người'
-                  : 'Tạo nhóm (${_picked.length})'),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+          child: TextField(
+            controller: _name,
+            maxLength: 50,
+            onChanged: (_) => setState(() {}),
+            // Viền, bo góc và màu focus lấy từ theme
+            decoration: const InputDecoration(
+              labelText: 'Tên nhóm',
+              prefixIcon: Icon(Icons.groups_outlined),
+              counterText: '',
+              isDense: true,
             ),
           ),
         ),
-      ),
-    ]);
-  }
-
-  // Chế độ chọn người để thêm vào nhóm
-  Widget _pickScaffold() {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Thêm thành viên')),
-      body: Column(children: [
-        _searchField(),
+        if (_picked.isNotEmpty)
+          SizedBox(
+            height: 44,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                for (final u in _picked)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: InputChip(
+                      backgroundColor: AppColors.surface,
+                      side: const BorderSide(color: AppColors.border),
+                      label: Text(svc.cached(u)?.name ?? '…'),
+                      onDeleted: () => _toggle(u),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         Expanded(child: _people(true)),
         SafeArea(
           top: false,
@@ -252,15 +252,58 @@ class _NewChatScreenState extends State<NewChatScreen> {
             child: SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: _picked.isEmpty
-                    ? null
-                    : () => Navigator.of(context).pop(_picked.toList()),
-                child: Text(_picked.isEmpty ? 'Chọn người để thêm' : 'Thêm (${_picked.length})'),
+                onPressed: _canCreate ? _create : null,
+                child: _busy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        _picked.length < 2
+                            ? 'Chọn ít nhất 2 người'
+                            : 'Tạo nhóm (${_picked.length})',
+                      ),
               ),
             ),
           ),
         ),
-      ]),
+      ],
+    );
+  }
+
+  // Chế độ chọn người để thêm vào nhóm
+  Widget _pickScaffold() {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Thêm thành viên')),
+      body: Column(
+        children: [
+          _searchField(),
+          Expanded(child: _people(true)),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _picked.isEmpty
+                      ? null
+                      : () => Navigator.of(context).pop(_picked.toList()),
+                  child: Text(
+                    _picked.isEmpty
+                        ? 'Chọn người để thêm'
+                        : 'Thêm (${_picked.length})',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -278,18 +321,20 @@ class _NewChatScreenState extends State<NewChatScreen> {
             labelColor: AppColors.brand,
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.brand,
-            tabs: [Tab(text: 'Nhắn tin'), Tab(text: 'Tạo nhóm')],
+            tabs: [
+              Tab(text: 'Nhắn tin'),
+              Tab(text: 'Tạo nhóm'),
+            ],
           ),
         ),
-        body: Column(children: [
-          _searchField(),
-          Expanded(
-            child: TabBarView(children: [
-              _people(false),
-              _groupTab(),
-            ]),
-          ),
-        ]),
+        body: Column(
+          children: [
+            _searchField(),
+            Expanded(
+              child: TabBarView(children: [_people(false), _groupTab()]),
+            ),
+          ],
+        ),
       ),
     );
   }

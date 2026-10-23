@@ -19,8 +19,13 @@ class SpaceGroup {
   final String? nameEn;
   final List<Space> children;
 
-  const SpaceGroup(this.id, this.name, this.emoji, this.children,
-      {this.nameEn});
+  const SpaceGroup(
+    this.id,
+    this.name,
+    this.emoji,
+    this.children, {
+    this.nameEn,
+  });
 
   String label(bool isEnglish) =>
       (isEnglish && nameEn != null) ? nameEn! : name;
@@ -46,7 +51,12 @@ const spaceGroups = <SpaceGroup>[
     Space('career', 'Việc làm & Sự nghiệp', '💼', nameEn: 'Career'),
     Space('business', 'Kinh doanh & Khởi nghiệp', '📈', nameEn: 'Business'),
     Space('finance', 'Tài chính & Đầu tư', '💰', nameEn: 'Finance & Investing'),
-    Space('marketing', 'Marketing & Bán hàng', '📣', nameEn: 'Marketing & Sales'),
+    Space(
+      'marketing',
+      'Marketing & Bán hàng',
+      '📣',
+      nameEn: 'Marketing & Sales',
+    ),
   ]),
   SpaceGroup('g_entertain', 'Giải trí', '🎬', nameEn: 'Entertainment', [
     Space('music', 'Âm nhạc', '🎵', nameEn: 'Music'),
@@ -74,12 +84,22 @@ const spaceGroups = <SpaceGroup>[
     Space('drinks', 'Cà phê & Đồ uống', '☕', nameEn: 'Coffee & Drinks'),
     Space('streetfood', 'Ẩm thực đường phố', '🍢', nameEn: 'Street food'),
     Space('restaurant', 'Review quán ăn', '🍽️', nameEn: 'Restaurant reviews'),
-    Space('healthyfood', 'Ăn healthy & Eat clean', '🥗', nameEn: 'Healthy eating'),
+    Space(
+      'healthyfood',
+      'Ăn healthy & Eat clean',
+      '🥗',
+      nameEn: 'Healthy eating',
+    ),
   ]),
   SpaceGroup('g_travel', 'Du lịch', '✈️', nameEn: 'Travel', [
     Space('travel', 'Du lịch chung', '✈️', nameEn: 'Travel'),
     Space('travel_vn', 'Du lịch trong nước', '🗺️', nameEn: 'Domestic travel'),
-    Space('travel_world', 'Du lịch nước ngoài', '🌍', nameEn: 'International travel'),
+    Space(
+      'travel_world',
+      'Du lịch nước ngoài',
+      '🌍',
+      nameEn: 'International travel',
+    ),
     Space('camping', 'Phượt & Cắm trại', '⛺', nameEn: 'Backpacking & Camping'),
     Space('hotels', 'Khách sạn & Homestay', '🏨', nameEn: 'Hotels & Stays'),
   ]),
@@ -89,15 +109,26 @@ const spaceGroups = <SpaceGroup>[
     Space('art', 'Vẽ & Nghệ thuật', '🎨', nameEn: 'Art & Drawing'),
     Space('design', 'Thiết kế', '✏️', nameEn: 'Design'),
     Space('writing', 'Viết lách', '✍️', nameEn: 'Writing'),
-    Space('musicmaking', 'Sáng tác & Chơi nhạc cụ', '🎸', nameEn: 'Making music'),
+    Space(
+      'musicmaking',
+      'Sáng tác & Chơi nhạc cụ',
+      '🎸',
+      nameEn: 'Making music',
+    ),
   ]),
-  SpaceGroup('g_maker', 'Chế tạo & Thủ công', '🛠️', nameEn: 'Making & Crafts', [
-    Space('maker', 'Chế tạo', '🛠', nameEn: 'Making'),
-    Space('diy', 'Đồ thủ công & DIY', '🧵', nameEn: 'Crafts & DIY'),
-    Space('electronics', 'Điện tử & Arduino', '🔌', nameEn: 'Electronics'),
-    Space('print3d', 'In 3D', '🧊', nameEn: '3D printing'),
-    Space('woodwork', 'Mộc & Cơ khí', '🪚', nameEn: 'Woodwork & Mechanics'),
-  ]),
+  SpaceGroup(
+    'g_maker',
+    'Chế tạo & Thủ công',
+    '🛠️',
+    nameEn: 'Making & Crafts',
+    [
+      Space('maker', 'Chế tạo', '🛠', nameEn: 'Making'),
+      Space('diy', 'Đồ thủ công & DIY', '🧵', nameEn: 'Crafts & DIY'),
+      Space('electronics', 'Điện tử & Arduino', '🔌', nameEn: 'Electronics'),
+      Space('print3d', 'In 3D', '🧊', nameEn: '3D printing'),
+      Space('woodwork', 'Mộc & Cơ khí', '🪚', nameEn: 'Woodwork & Mechanics'),
+    ],
+  ),
   SpaceGroup('g_life', 'Đời sống', '🏡', nameEn: 'Lifestyle', [
     Space('health', 'Sức khỏe', '🩺', nameEn: 'Health'),
     Space('mental', 'Tâm lý & Tinh thần', '🧘', nameEn: 'Mind & Wellbeing'),
@@ -111,22 +142,31 @@ const spaceGroups = <SpaceGroup>[
   ]),
   SpaceGroup('g_vehicles', 'Xe cộ', '🚗', nameEn: 'Vehicles', [
     Space('cars', 'Ô tô', '🚗', nameEn: 'Cars'),
-    Space('motorbikes', 'Xe máy & Xe phân khối lớn', '🏍️', nameEn: 'Motorbikes'),
+    Space(
+      'motorbikes',
+      'Xe máy & Xe phân khối lớn',
+      '🏍️',
+      nameEn: 'Motorbikes',
+    ),
     Space('ev', 'Xe điện', '🔋', nameEn: 'Electric vehicles'),
   ]),
-  SpaceGroup('g_society', 'Xã hội & Văn hóa', '🌍', nameEn: 'Society & Culture', [
-    Space('news', 'Tin tức', '📰', nameEn: 'News'),
-    Space('history', 'Lịch sử & Văn hóa', '🏛️', nameEn: 'History & Culture'),
-    Space('nature', 'Thiên nhiên & Môi trường', '🌿', nameEn: 'Nature'),
-    Space('spirit', 'Tâm linh & Phong thủy', '🔮', nameEn: 'Spirituality'),
-    Space('community', 'Cộng đồng & Thiện nguyện', '🤝', nameEn: 'Community'),
-  ]),
+  SpaceGroup(
+    'g_society',
+    'Xã hội & Văn hóa',
+    '🌍',
+    nameEn: 'Society & Culture',
+    [
+      Space('news', 'Tin tức', '📰', nameEn: 'News'),
+      Space('history', 'Lịch sử & Văn hóa', '🏛️', nameEn: 'History & Culture'),
+      Space('nature', 'Thiên nhiên & Môi trường', '🌿', nameEn: 'Nature'),
+      Space('spirit', 'Tâm linh & Phong thủy', '🔮', nameEn: 'Spirituality'),
+      Space('community', 'Cộng đồng & Thiện nguyện', '🤝', nameEn: 'Community'),
+    ],
+  ),
 ];
 
 /// Danh sách phẳng mọi chủ đề nhỏ. Code cũ đang dùng defaultSpaces vẫn chạy.
-final List<Space> defaultSpaces = [
-  for (final g in spaceGroups) ...g.children,
-];
+final List<Space> defaultSpaces = [for (final g in spaceGroups) ...g.children];
 
 Space? findSpace(String id) {
   for (final s in defaultSpaces) {

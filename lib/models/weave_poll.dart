@@ -108,8 +108,9 @@ class WeaveVote {
   factory WeaveVote.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) =>
       WeaveVote(
         userId: doc.id,
-        optionIds:
-        List<String>.from(doc.data()?['optionIds'] as List? ?? const []),
+        optionIds: List<String>.from(
+          doc.data()?['optionIds'] as List? ?? const [],
+        ),
       );
 }
 

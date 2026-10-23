@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../models/user_profile.dart';
 import '../../services/activity_service.dart';
 import '../../services/l10n.dart';
@@ -68,8 +69,9 @@ class PrivacyScreen extends StatefulWidget {
 
 class _PrivacyScreenState extends State<PrivacyScreen> {
   late final String? _uid = FirebaseAuth.instance.currentUser?.uid;
-  late final Stream<UserProfile?> _profile =
-  _uid == null ? Stream.value(null) : UserService.watchProfile(_uid);
+  late final Stream<UserProfile?> _profile = _uid == null
+      ? Stream.value(null)
+      : UserService.watchProfile(_uid);
   bool _exporting = false;
 
   Future<void> _setPublic(String field, bool value) async {
@@ -77,10 +79,9 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     if (uid == null) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .set({field: value}, SetOptions(merge: true));
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        field: value,
+      }, SetOptions(merge: true));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('$e')));
     }
@@ -172,10 +173,11 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                       icon: Icons.block,
                       title: tr('Đã chặn và tắt tiếng', 'Blocked and muted'),
                       subtitle:
-                      '${prefs.blocked.length} ${tr('đã chặn', 'blocked')} · ${prefs.mutedUsers.length} ${tr('tắt tiếng', 'muted')}',
+                          '${prefs.blocked.length} ${tr('đã chặn', 'blocked')} · ${prefs.mutedUsers.length} ${tr('tắt tiếng', 'muted')}',
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                            builder: (_) => const BlockedScreen()),
+                          builder: (_) => const BlockedScreen(),
+                        ),
                       ),
                     ),
                     SettingsTile(
@@ -207,11 +209,10 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                       ),
                       trailing: _exporting
                           ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child:
-                        CircularProgressIndicator(strokeWidth: 2),
-                      )
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
                           : null,
                       onTap: _exporting ? null : _export,
                     ),
@@ -234,7 +235,9 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                       'Note: posts are public by default. Choose "Friends only" when posting to limit who can see it.',
                     ),
                     style: const TextStyle(
-                        color: AppColors.textSecondary, height: 1.4),
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ]);

@@ -1,7 +1,9 @@
 import '../theme/app_theme.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/l10n.dart';
 
@@ -30,7 +32,9 @@ class ProposalStatus extends StatelessWidget {
         if (data == null) return const SizedBox.shrink();
         final accepted = data['status'] == 'accepted';
         final by = data['byName'] as String? ?? '';
-        final color = accepted ? Colors.green.shade700 : AppColors.textSecondary;
+        final color = accepted
+            ? Colors.green.shade700
+            : AppColors.textSecondary;
         return Container(
           margin: const EdgeInsets.only(top: 6),
           padding: const EdgeInsets.fromLTRB(10, 4, 2, 4),
@@ -49,10 +53,14 @@ class ProposalStatus extends StatelessWidget {
               Expanded(
                 child: Text(
                   accepted
-                      ? tr('Đề xuất của bạn đã được $by nhận',
-                      'Your proposal was accepted by $by')
-                      : tr('Đề xuất của bạn chưa được nhận',
-                      'Your proposal was not accepted'),
+                      ? tr(
+                          'Đề xuất của bạn đã được $by nhận',
+                          'Your proposal was accepted by $by',
+                        )
+                      : tr(
+                          'Đề xuất của bạn chưa được nhận',
+                          'Your proposal was not accepted',
+                        ),
                   style: TextStyle(fontSize: 12.5, color: color),
                 ),
               ),

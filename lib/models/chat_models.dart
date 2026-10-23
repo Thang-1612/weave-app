@@ -58,7 +58,8 @@ class Chat {
     final unread = <String, int>{};
     if (m['unread'] is Map) {
       (m['unread'] as Map).forEach(
-              (k, v) => unread[k.toString()] = (v as num?)?.toInt() ?? 0);
+        (k, v) => unread[k.toString()] = (v as num?)?.toInt() ?? 0,
+      );
     }
     return Chat(
       id: d.id,

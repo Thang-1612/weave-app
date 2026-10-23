@@ -1,5 +1,7 @@
 import '../../theme/app_theme.dart';
+
 import 'package:flutter/material.dart';
+
 import '../../models/post.dart';
 import '../../services/l10n.dart';
 import '../../services/post_service.dart';
@@ -22,9 +24,7 @@ class _SavedScreenState extends State<SavedScreen> {
   Future<List<Post>> _load(List<String> ids) async {
     final results = await Future.wait(ids.map(PostService.getPost));
     // Giữ đúng thứ tự: lưu gần nhất lên đầu; bỏ qua bài đã bị xóa
-    return [
-      for (final p in results) ?p,
-    ];
+    return [for (final p in results) ?p];
   }
 
   Widget _empty() {
@@ -34,7 +34,11 @@ class _SavedScreenState extends State<SavedScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.bookmark_border, size: 64, color: AppColors.textSecondary),
+            const Icon(
+              Icons.bookmark_border,
+              size: 64,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(height: 12),
             Text(
               tr(
@@ -42,7 +46,10 @@ class _SavedScreenState extends State<SavedScreen> {
                 'No saved posts yet.\nTap the bookmark icon under a post to save it.',
               ),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
             ),
           ],
         ),

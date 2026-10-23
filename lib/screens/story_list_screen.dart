@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/story_models.dart';
 import '../services/l10n.dart';
 import '../services/story_service.dart';
@@ -20,9 +21,7 @@ class StoryListScreen extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(WeaveRadius.card),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => StoryDetailScreen(storyId: s.id),
-          ),
+          MaterialPageRoute(builder: (_) => StoryDetailScreen(storyId: s.id)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(WeaveSpacing.lg),
@@ -51,7 +50,7 @@ class StoryListScreen extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${storyKindLabel(s.kind)} · ${fmtDate(s.updatedAt)}'
-                          '${s.ownerId == me ? '' : ' · ${tr('Bạn bè mời', 'Shared with you')}'}',
+                      '${s.ownerId == me ? '' : ' · ${tr('Bạn bè mời', 'Shared with you')}'}',
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -76,9 +75,8 @@ class StoryListScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Weave Storymaker')),
       // Màu nút lấy từ theme: một hành động chính nổi bật mỗi màn hình
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const StoryCreateScreen()),
-        ),
+        onPressed: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const StoryCreateScreen())),
         icon: const Icon(Icons.auto_awesome),
         label: Text(tr('Tạo câu chuyện', 'New story')),
       ),
@@ -95,8 +93,10 @@ class StoryListScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  tr('Chưa có câu chuyện nào. Chọn ảnh và ghi chú để AI kể lại trải nghiệm của bạn.',
-                      'No stories yet. Pick photos and notes and let the AI retell your experience.'),
+                  tr(
+                    'Chưa có câu chuyện nào. Chọn ảnh và ghi chú để AI kể lại trải nghiệm của bạn.',
+                    'No stories yet. Pick photos and notes and let the AI retell your experience.',
+                  ),
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
@@ -111,7 +111,7 @@ class StoryListScreen extends StatelessWidget {
               const padH = 16.0;
               final contentWidth =
                   (constraints.maxWidth < maxW ? constraints.maxWidth : maxW) -
-                      padH * 2;
+                  padH * 2;
               const gap = WeaveSpacing.md;
               final cardWidth = wide ? (contentWidth - gap) / 2 : contentWidth;
 

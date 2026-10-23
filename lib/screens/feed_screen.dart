@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../models/space.dart';
 import '../services/capsule_service.dart';
@@ -90,7 +91,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
   // ---- Công thức bảng tin ----
 
-  String _spaceKey(FeedRecipe? r) => (r?.spaceIds ?? const <String>[]).join(',');
+  String _spaceKey(FeedRecipe? r) =>
+      (r?.spaceIds ?? const <String>[]).join(',');
 
   /// Công thức đang dùng có giới hạn chủ đề không (khi đó tải riêng các chủ đề đó).
   bool get _recipeHasSpaces =>
@@ -235,12 +237,12 @@ class _FeedScreenState extends State<FeedScreen> {
               avatar: m == 0
                   ? null
                   : Icon(
-                Icons.timer_outlined,
-                size: 16,
-                color: _budgetMin == m
-                    ? AppColors.brand
-                    : AppColors.textSecondary,
-              ),
+                      Icons.timer_outlined,
+                      size: 16,
+                      color: _budgetMin == m
+                          ? AppColors.brand
+                          : AppColors.textSecondary,
+                    ),
               label: Text(
                 m == 0 ? tr('Thoải mái', 'Relaxed') : tr('$m phút', '$m min'),
               ),
@@ -296,7 +298,10 @@ class _FeedScreenState extends State<FeedScreen> {
     final group = widget.group;
 
     if (widget.favorites) {
-      _assign(FeedExtras.watchLatest(150).map((p) => FeedResult(p)), sync: sync);
+      _assign(
+        FeedExtras.watchLatest(150).map((p) => FeedResult(p)),
+        sync: sync,
+      );
       return;
     }
     if (space != null) {
@@ -392,7 +397,10 @@ class _FeedScreenState extends State<FeedScreen> {
           Text(
             sub,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -488,29 +496,27 @@ class _FeedScreenState extends State<FeedScreen> {
                 // Bài công khai
                 var posts = widget.favorites
                     ? prefs
-                    .filterPosts(result.posts, applyRestrictions: false)
-                    .where((p) => prefs.isFavoriteUser(p.authorId))
-                    .toList()
+                          .filterPosts(result.posts, applyRestrictions: false)
+                          .where((p) => prefs.isFavoriteUser(p.authorId))
+                          .toList()
                     : prefs.filterPosts(
-                  result.posts,
-                  applyRestrictions: space == null,
-                );
+                        result.posts,
+                        applyRestrictions: space == null,
+                      );
 
                 // Bài chỉ-bạn-bè + hộp thời gian đã mở (bỏ qua lỗi)
-                var friendPosts = prefs.filterPosts(
-                  [
-                    ...(friendSnap.data ?? const <Post>[]),
-                    ...(capsuleSnap.data ?? const <Post>[]),
-                  ],
-                  applyRestrictions: space == null && !widget.favorites,
-                );
+                var friendPosts = prefs.filterPosts([
+                  ...(friendSnap.data ?? const <Post>[]),
+                  ...(capsuleSnap.data ?? const <Post>[]),
+                ], applyRestrictions: space == null && !widget.favorites);
                 if (widget.favorites) {
                   friendPosts = friendPosts
                       .where((p) => prefs.isFavoriteUser(p.authorId))
                       .toList();
                 } else if (space != null) {
-                  friendPosts =
-                      friendPosts.where((p) => p.spaceId == space.id).toList();
+                  friendPosts = friendPosts
+                      .where((p) => p.spaceId == space.id)
+                      .toList();
                 } else if (group != null) {
                   final ids = group.childIds.toSet();
                   friendPosts = friendPosts
@@ -600,7 +606,9 @@ class _FeedScreenState extends State<FeedScreen> {
                                   message,
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
-                                      color: AppColors.textSecondary, height: 1.4),
+                                    color: AppColors.textSecondary,
+                                    height: 1.4,
+                                  ),
                                 ),
                                 if (showSeed)
                                   TextButton(
@@ -654,8 +662,10 @@ class _FeedScreenState extends State<FeedScreen> {
                           .toDouble();
                       return ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding:
-                        EdgeInsets.symmetric(vertical: 8, horizontal: side),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: side,
+                        ),
                         itemCount: items.length,
                         itemBuilder: (context, i) {
                           final it = items[i];
@@ -669,25 +679,38 @@ class _FeedScreenState extends State<FeedScreen> {
                           if (it == '__header__') return _banner(result);
                           if (it == '__today__') {
                             return _stopMarker(
-                              tr('Bạn đã xem hết bài hôm nay',
-                                  "You're all caught up for today"),
-                              tr('Phía dưới là các bài cũ hơn',
-                                  'Older posts are below'),
+                              tr(
+                                'Bạn đã xem hết bài hôm nay',
+                                "You're all caught up for today",
+                              ),
+                              tr(
+                                'Phía dưới là các bài cũ hơn',
+                                'Older posts are below',
+                              ),
                             );
                           }
                           if (it == '__budget__') {
                             return _stopMarker(
-                              tr('Đã đủ $_budgetMin phút',
-                                  "That's $_budgetMin minutes"),
-                              tr('Bạn có thể nghỉ rồi, hoặc chọn thời gian dài hơn ở phía trên',
-                                  'Time to take a break, or pick a longer session above'),
+                              tr(
+                                'Đã đủ $_budgetMin phút',
+                                "That's $_budgetMin minutes",
+                              ),
+                              tr(
+                                'Bạn có thể nghỉ rồi, hoặc chọn thời gian dài hơn ở phía trên',
+                                'Time to take a break, or pick a longer session above',
+                              ),
                             );
                           }
                           if (it == '__end__') {
                             return _stopMarker(
-                              tr('Bạn đã xem hết rồi', "You've seen everything"),
-                              tr('Kéo xuống để làm mới, hoặc nghỉ một chút nhé',
-                                  'Pull down to refresh, or take a break'),
+                              tr(
+                                'Bạn đã xem hết rồi',
+                                "You've seen everything",
+                              ),
+                              tr(
+                                'Kéo xuống để làm mới, hoặc nghỉ một chút nhé',
+                                'Pull down to refresh, or take a break',
+                              ),
                             );
                           }
                           return Padding(

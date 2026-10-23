@@ -45,12 +45,19 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
     final nav = Navigator.of(context);
     setState(() => _busy = true);
     try {
-      final g =
-      await GroupService.createWithMembers(_name.text, _picked.toList());
+      final g = await GroupService.createWithMembers(
+        _name.text,
+        _picked.toList(),
+      );
       nav.pop(g);
     } catch (e) {
-      messenger.showSnackBar(SnackBar(
-          content: Text(tr('Không tạo được nhóm: $e', 'Could not create group: $e'))));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            tr('Không tạo được nhóm: $e', 'Could not create group: $e'),
+          ),
+        ),
+      );
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -60,17 +67,23 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
     final canCreate = !_busy && _name.text.trim().isNotEmpty;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+        16,
+        0,
+        16,
+        MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.75),
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(tr('Tạo nhóm riêng', 'Create a private group'),
-                style:
-                const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            Text(
+              tr('Tạo nhóm riêng', 'Create a private group'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: _name,
@@ -82,8 +95,10 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
                 border: const OutlineInputBorder(),
               ),
             ),
-            Text(tr('Chọn bạn bè để thêm vào nhóm', 'Choose friends to add'),
-                style: const TextStyle(color: AppColors.textSecondary)),
+            Text(
+              tr('Chọn bạn bè để thêm vào nhóm', 'Choose friends to add'),
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 4),
             Flexible(
               child: FutureBuilder<List<ChatUser>>(
@@ -91,22 +106,27 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
                 builder: (context, snap) {
                   if (snap.hasError) {
                     return Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text('${snap.error}'));
+                      padding: const EdgeInsets.all(12),
+                      child: Text('${snap.error}'),
+                    );
                   }
                   if (!snap.hasData) {
                     return const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: CircularProgressIndicator()));
+                      padding: EdgeInsets.all(24),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
                   }
                   final list = snap.data!;
                   if (list.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.all(12),
                       child: Text(
-                          tr('Bạn chưa có bạn bè nào. Hãy kết bạn trước.',
-                              'You have no friends yet. Add friends first.'),
-                          style: const TextStyle(color: AppColors.textSecondary)),
+                        tr(
+                          'Bạn chưa có bạn bè nào. Hãy kết bạn trước.',
+                          'You have no friends yet. Add friends first.',
+                        ),
+                        style: const TextStyle(color: AppColors.textSecondary),
+                      ),
                     );
                   }
                   return ListView(
@@ -118,20 +138,21 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
                           onChanged: _busy
                               ? null
                               : (v) => setState(() {
-                            if (v == true) {
-                              _picked.add(u.uid);
-                            } else {
-                              _picked.remove(u.uid);
-                            }
-                          }),
+                                  if (v == true) {
+                                    _picked.add(u.uid);
+                                  } else {
+                                    _picked.remove(u.uid);
+                                  }
+                                }),
                           title: Text(u.name.isEmpty ? '…' : u.name),
                           secondary: CircleAvatar(
                             backgroundColor: AppColors.soft,
                             child: Text(
-                                u.name.isEmpty
-                                    ? '?'
-                                    : u.name.characters.first.toUpperCase(),
-                                style: const TextStyle(color: AppColors.brand)),
+                              u.name.isEmpty
+                                  ? '?'
+                                  : u.name.characters.first.toUpperCase(),
+                              style: const TextStyle(color: AppColors.brand),
+                            ),
                           ),
                         ),
                     ],
@@ -145,9 +166,10 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
               onPressed: canCreate ? _create : null,
               child: _busy
                   ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2))
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : Text(tr('Tạo nhóm', 'Create group')),
             ),
           ],

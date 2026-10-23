@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/user_profile.dart';
 import '../screens/user_profile_page.dart';
 import '../services/account_service.dart';
@@ -24,8 +25,10 @@ class _SuggestedPeopleState extends State<SuggestedPeople> {
   late final Future<List<UserProfile>> _future = _load();
 
   Future<List<UserProfile>> _load() async {
-    final snap =
-    await FirebaseFirestore.instance.collection('users').limit(30).get();
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .limit(30)
+        .get();
     return snap.docs
         .map((d) => UserProfile.fromMap(d.id, d.data()))
         .where((p) => p.name.isNotEmpty)
@@ -43,12 +46,12 @@ class _SuggestedPeopleState extends State<SuggestedPeople> {
             .where((p) => p.uid != me)
             .where(
               (p) => p.discoverable && !UserPrefs.instance.isBlocked(p.uid),
-        )
+            )
             .where(
               (p) =>
-          FriendService.statusWith(widget.friendships, me, p.uid) ==
-              FriendStatus.none,
-        )
+                  FriendService.statusWith(widget.friendships, me, p.uid) ==
+                  FriendStatus.none,
+            )
             .take(8)
             .toList();
         if (people.isEmpty) return const SizedBox.shrink();
@@ -79,8 +82,10 @@ class _SuggestedPeopleState extends State<SuggestedPeople> {
                   );
                 },
                 child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       CircleAvatar(
@@ -103,8 +108,9 @@ class _SuggestedPeopleState extends State<SuggestedPeople> {
                               p.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style:
-                              const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             if (p.bio.isNotEmpty)
                               Text(

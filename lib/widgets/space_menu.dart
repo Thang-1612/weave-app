@@ -37,13 +37,15 @@ class SpaceMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final activeGroupId = selectedGroupId ??
+    final activeGroupId =
+        selectedGroupId ??
         (selectedSpaceId == null ? null : groupOfSpace(selectedSpaceId!)?.id);
 
     final tiles = <Widget>[];
     for (final g in spaceGroups) {
-      final visible =
-      g.children.where((s) => !(isHidden?.call(s.id) ?? false)).toList();
+      final visible = g.children
+          .where((s) => !(isHidden?.call(s.id) ?? false))
+          .toList();
       if (visible.isEmpty) continue;
       final children = [
         ...visible.where((s) => favoriteIds.contains(s.id)),

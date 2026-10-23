@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../models/post.dart';
 import '../theme/app_theme.dart';
 import '../services/l10n.dart';
@@ -22,11 +23,10 @@ class PostBlocks extends StatelessWidget {
   final String fallbackText;
 
   PostBlocks({super.key, required Post post})
-      : blocks = post.blocks,
-        fallbackText = post.text;
+    : blocks = post.blocks,
+      fallbackText = post.text;
 
-  const PostBlocks.layer({super.key, required this.blocks})
-      : fallbackText = '';
+  const PostBlocks.layer({super.key, required this.blocks}) : fallbackText = '';
 
   static const _textStyle = TextStyle(fontSize: 15, height: 1.4);
 
@@ -134,9 +134,9 @@ class _Base64ImageState extends State<_Base64Image> {
     final ratio = (widget.width / widget.height).clamp(0.7, 1.8).toDouble();
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => _ImageViewer(bytes: _bytes)),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => _ImageViewer(bytes: _bytes)));
       },
       // Co theo chiều rộng khung, chiều cao theo tỷ lệ nhưng không vượt
       // _kMaxImageHeight (ảnh dọc ở cột rộng không bị kéo quá dài).
@@ -254,13 +254,20 @@ class LinkCard extends StatelessWidget {
                     title.isNotEmpty ? '$host · $url' : url,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.open_in_new, size: 18, color: AppColors.textSecondary),
+            const Icon(
+              Icons.open_in_new,
+              size: 18,
+              color: AppColors.textSecondary,
+            ),
           ],
         ),
       ),

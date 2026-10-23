@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/user_profile.dart';
 import '../services/constellation_service.dart';
 import '../services/friend_service.dart';
@@ -73,17 +74,18 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = tr('Không tải được bản đồ. Thử lại nhé.',
-            'Could not load the map. Please try again.');
+        _error = tr(
+          'Không tải được bản đồ. Thử lại nhé.',
+          'Could not load the map. Please try again.',
+        );
         _loading = false;
       });
     }
   }
 
   Future<void> _openInterests() async {
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const InterestsScreen()),
-    );
+    final saved = await Navigator.of(context)
+        .push<bool>(MaterialPageRoute(builder: (_) => const InterestsScreen()));
     if (saved == true) {
       ConstellationService.invalidate();
       _load(force: true);
@@ -91,9 +93,11 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
   }
 
   void _openProfile(UserProfile p) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => UserProfilePage(userId: p.uid, title: p.name),
-    ));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UserProfilePage(userId: p.uid, title: p.name),
+      ),
+    );
   }
 
   Future<void> _showSuggestions() async {
@@ -101,10 +105,16 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
     if (me == null) return;
     final tags = [...me.interests, ...me.goalTags];
     if (tags.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr('Hãy thêm sở thích trước để tìm bạn cùng sở thích.',
-            'Add some interests first to find like-minded people.')),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            tr(
+              'Hãy thêm sở thích trước để tìm bạn cùng sở thích.',
+              'Add some interests first to find like-minded people.',
+            ),
+          ),
+        ),
+      );
       return;
     }
     final exclude = _nodes.map((n) => n.profile.uid).toSet();
@@ -127,8 +137,10 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    tr('Chưa có ai trùng sở thích với bạn.',
-                        'No one shares your interests yet.'),
+                    tr(
+                      'Chưa có ai trùng sở thích với bạn.',
+                      'No one shares your interests yet.',
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -138,9 +150,10 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
               itemCount: list.length,
               itemBuilder: (ctx, i) {
                 final p = list[i];
-                final shared = {...p.interests, ...p.goalTags}
-                    .where(tags.contains)
-                    .toList();
+                final shared = {
+                  ...p.interests,
+                  ...p.goalTags,
+                }.where(tags.contains).toList();
                 return ListTile(
                   leading: CircleAvatar(child: Text(_initial(p))),
                   title: Text(p.name),
@@ -188,12 +201,16 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(n.profile.name,
-                            style: Theme.of(ctx).textTheme.titleMedium),
+                        Text(
+                          n.profile.name,
+                          style: Theme.of(ctx).textTheme.titleMedium,
+                        ),
                         if (n.depth == 2 && n.viaName != null)
                           Text(
-                            tr('Quen qua ${n.viaName}',
-                                'Connected through ${n.viaName}'),
+                            tr(
+                              'Quen qua ${n.viaName}',
+                              'Connected through ${n.viaName}',
+                            ),
                             style: Theme.of(ctx).textTheme.bodySmall,
                           ),
                       ],
@@ -206,48 +223,56 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                 Text(n.profile.bio),
               ],
               const SizedBox(height: 12),
-              Text(tr('Điểm chung', 'In common'),
-                  style: Theme.of(ctx).textTheme.labelLarge),
+              Text(
+                tr('Điểm chung', 'In common'),
+                style: Theme.of(ctx).textTheme.labelLarge,
+              ),
               const SizedBox(height: 4),
               n.sharedTags.isEmpty
                   ? Text(tr('Chưa có thẻ nào trùng.', 'No shared tags yet.'))
                   : Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  for (final t in n.sharedTags) Chip(label: Text(t)),
-                ],
-              ),
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        for (final t in n.sharedTags) Chip(label: Text(t)),
+                      ],
+                    ),
               if (n.depth == 1) ...[
                 const Divider(height: 28),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(tr('Hiện mối quan hệ này trên bản đồ của bạn bè',
-                      'Show this connection on friends\' maps')),
+                  title: Text(
+                    tr(
+                      'Hiện mối quan hệ này trên bản đồ của bạn bè',
+                      'Show this connection on friends\' maps',
+                    ),
+                  ),
                   subtitle: Text(
                     mePublic && !otherPublic
-                        ? tr('Bạn đã bật. Chỉ hiện khi người kia cũng bật.',
-                        'You turned it on. It shows only once they do too.')
-                        : tr('Chỉ hiện khi cả hai cùng bật.',
-                        'Shown only when both of you turn it on.'),
+                        ? tr(
+                            'Bạn đã bật. Chỉ hiện khi người kia cũng bật.',
+                            'You turned it on. It shows only once they do too.',
+                          )
+                        : tr(
+                            'Chỉ hiện khi cả hai cùng bật.',
+                            'Shown only when both of you turn it on.',
+                          ),
                   ),
                   value: mePublic,
                   onChanged: f == null
                       ? null
                       : (v) async {
-                    setSheet(() => mePublic = v);
-                    try {
-                      await FriendService.setVisibility(
-                        other,
-                        v
-                            ? EdgeVisibility.public
-                            : EdgeVisibility.hidden,
-                      );
-                      changed = true;
-                    } catch (_) {
-                      setSheet(() => mePublic = !v);
-                    }
-                  },
+                          setSheet(() => mePublic = v);
+                          try {
+                            await FriendService.setVisibility(
+                              other,
+                              v ? EdgeVisibility.public : EdgeVisibility.hidden,
+                            );
+                            changed = true;
+                          } catch (_) {
+                            setSheet(() => mePublic = !v);
+                          }
+                        },
                 ),
               ],
               const SizedBox(height: 8),
@@ -283,8 +308,10 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.person_search_outlined),
-            tooltip:
-            tr('Gợi ý bạn cùng sở thích', 'People with shared interests'),
+            tooltip: tr(
+              'Gợi ý bạn cùng sở thích',
+              'People with shared interests',
+            ),
             onPressed: _me == null ? null : _showSuggestions,
           ),
           IconButton(
@@ -332,8 +359,10 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                tr('Bản đồ của bạn còn trống. Hãy kết bạn và thêm sở thích để các điểm xuất hiện.',
-                    'Your map is empty. Add friends and interests to see it fill up.'),
+                tr(
+                  'Bản đồ của bạn còn trống. Hãy kết bạn và thêm sở thích để các điểm xuất hiện.',
+                  'Your map is empty. Add friends and interests to see it fill up.',
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -441,8 +470,9 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
         radius: first ? 26 : 20,
         label: n.profile.shortName,
         letter: _initial(n.profile),
-        color:
-        first ? scheme.secondaryContainer : scheme.surfaceContainerHighest,
+        color: first
+            ? scheme.secondaryContainer
+            : scheme.surfaceContainerHighest,
         onColor: first ? scheme.onSecondaryContainer : scheme.onSurface,
         locked: first && n.hiddenByMe,
         badge: n.sharedTags.length,
@@ -480,11 +510,14 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                 CircleAvatar(
                   radius: radius,
                   backgroundColor: color,
-                  child: Text(letter,
-                      style: TextStyle(
-                          color: onColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: radius * 0.8)),
+                  child: Text(
+                    letter,
+                    style: TextStyle(
+                      color: onColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: radius * 0.8,
+                    ),
+                  ),
                 ),
                 if (badge > 0)
                   Positioned(
@@ -493,9 +526,13 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                     child: CircleAvatar(
                       radius: 9,
                       backgroundColor: scheme.tertiary,
-                      child: Text('$badge',
-                          style: TextStyle(
-                              fontSize: 10, color: scheme.onTertiary)),
+                      child: Text(
+                        '$badge',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: scheme.onTertiary,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -510,10 +547,12 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                     child: Icon(Icons.lock_outline, size: 12),
                   ),
                 Flexible(
-                  child: Text(label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12)),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -527,17 +566,21 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
     if (_centered) return;
     _centered = true;
     final s = math
-        .min(1.0,
-        math.min(view.width / l.size.width, view.height / l.size.height) * 1.6)
+        .min(
+          1.0,
+          math.min(view.width / l.size.width, view.height / l.size.height) *
+              1.6,
+        )
         .clamp(0.45, 1.0)
         .toDouble();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _tc.value = Matrix4.translationValues(
-        view.width / 2 - s * l.center.dx,
-        view.height / 2 - s * l.center.dy,
-        0,
-      ) *
+      _tc.value =
+          Matrix4.translationValues(
+            view.width / 2 - s * l.center.dx,
+            view.height / 2 - s * l.center.dy,
+            0,
+          ) *
           Matrix4.diagonal3Values(s, s, 1);
     });
   }
@@ -628,10 +671,12 @@ class _EdgePainter extends CustomPainter {
       final paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth =
-        n.depth == 1 ? 1.5 + math.min(n.sharedTags.length, 4) * 0.6 : 1
-        ..color = (n.depth == 1 ? strong : soft)
-            .withValues(alpha: match ? (n.depth == 1 ? 0.55 : 0.4) : 0.1);
+        ..strokeWidth = n.depth == 1
+            ? 1.5 + math.min(n.sharedTags.length, 4) * 0.6
+            : 1
+        ..color = (n.depth == 1 ? strong : soft).withValues(
+          alpha: match ? (n.depth == 1 ? 0.55 : 0.4) : 0.1,
+        );
       canvas.drawLine(from, to, paint);
     }
   }
@@ -639,8 +684,8 @@ class _EdgePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _EdgePainter old) =>
       old.filter != filter ||
-          old.nodes != nodes ||
-          old.pos != pos ||
-          old.strong != strong ||
-          old.soft != soft;
+      old.nodes != nodes ||
+      old.pos != pos ||
+      old.strong != strong ||
+      old.soft != soft;
 }

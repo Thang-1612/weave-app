@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../models/post.dart';
 import '../models/space.dart';
 import '../services/auto_category.dart';
@@ -34,29 +35,29 @@ class _Draft {
   final String title;
 
   _Draft.text()
-      : type = 'text',
-        controller = TextEditingController(),
-        focusNode = FocusNode(),
-        bytes = null,
-        width = 0,
-        height = 0,
-        url = '',
-        title = '';
+    : type = 'text',
+      controller = TextEditingController(),
+      focusNode = FocusNode(),
+      bytes = null,
+      width = 0,
+      height = 0,
+      url = '',
+      title = '';
 
   _Draft.image(this.bytes, this.width, this.height)
-      : type = 'image',
-        controller = null,
-        focusNode = null,
-        url = '',
-        title = '';
+    : type = 'image',
+      controller = null,
+      focusNode = null,
+      url = '',
+      title = '';
 
   _Draft.link(this.url, this.title)
-      : type = 'link',
-        controller = null,
-        focusNode = null,
-        bytes = null,
-        width = 0,
-        height = 0;
+    : type = 'link',
+      controller = null,
+      focusNode = null,
+      bytes = null,
+      width = 0,
+      height = 0;
 }
 
 class CreatePostScreen extends StatefulWidget {
@@ -112,17 +113,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           _drafts.add(_newText(b['text'] as String? ?? ''));
         } else if (type == 'image') {
           try {
-            _drafts.add(_Draft.image(
-              base64Decode(b['data'] as String? ?? ''),
-              (b['w'] as num?)?.toInt() ?? 0,
-              (b['h'] as num?)?.toInt() ?? 0,
-            ));
+            _drafts.add(
+              _Draft.image(
+                base64Decode(b['data'] as String? ?? ''),
+                (b['w'] as num?)?.toInt() ?? 0,
+                (b['h'] as num?)?.toInt() ?? 0,
+              ),
+            );
           } catch (_) {}
         } else if (type == 'link') {
-          _drafts.add(_Draft.link(
-            b['url'] as String? ?? '',
-            b['title'] as String? ?? '',
-          ));
+          _drafts.add(
+            _Draft.link(b['url'] as String? ?? '', b['title'] as String? ?? ''),
+          );
         }
       }
       _drafts.add(_newText()); // ô trống để viết thêm phần của bạn
@@ -132,7 +134,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   bool get _hasContent => _drafts.any(
-        (d) => d.type == 'text' ? d.controller!.text.trim().isNotEmpty : true,
+    (d) => d.type == 'text' ? d.controller!.text.trim().isNotEmpty : true,
   );
 
   // Có bình chọn thì phải điền ít nhất 2 lựa chọn
@@ -156,8 +158,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     final picked = await showAudiencePicker(context, current: _visibility);
     if (picked == null || !mounted) return;
     if (picked == 'public' && _openAt != null) {
-      _snack(tr('Hộp thời gian không thể đăng công khai',
-          'A time capsule cannot be public'));
+      _snack(
+        tr(
+          'Hộp thời gian không thể đăng công khai',
+          'A time capsule cannot be public',
+        ),
+      );
       return;
     }
     setState(() {
@@ -287,8 +293,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content:
-          Text('${tr('Không thêm được ảnh', 'Could not add image')}: $e'),
+          content: Text(
+            '${tr('Không thêm được ảnh', 'Could not add image')}: $e',
+          ),
         ),
       );
     } finally {
@@ -425,11 +432,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         );
         if (!mounted) return;
         Navigator.of(context).pop();
-        messenger.showSnackBar(SnackBar(
-          content: Text(
-            '${tr('Đã niêm phong, hộp sẽ mở vào', 'Sealed, opens on')} ${CapsuleService.fmtDate(_openAt!)}',
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              '${tr('Đã niêm phong, hộp sẽ mở vào', 'Sealed, opens on')} ${CapsuleService.fmtDate(_openAt!)}',
+            ),
           ),
-        ));
+        );
         return;
       }
 
@@ -460,9 +469,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             (source == 'user' || _isQuestion)
                 ? tr('Đã đăng bài viết', 'Post published')
                 : tr(
-              'Đã đăng và tự xếp vào $spaceLabel',
-              'Published and automatically filed under $spaceLabel',
-            ),
+                    'Đã đăng và tự xếp vào $spaceLabel',
+                    'Published and automatically filed under $spaceLabel',
+                  ),
           ),
         ),
       );
@@ -505,8 +514,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           decoration: InputDecoration(
             hintText: i == 0
                 ? (_isQuestion
-                ? tr('Bạn muốn hỏi điều gì?', 'What would you like to ask?')
-                : tr('Bạn đang nghĩ gì?', "What's on your mind?"))
+                      ? tr(
+                          'Bạn muốn hỏi điều gì?',
+                          'What would you like to ask?',
+                        )
+                      : tr('Bạn đang nghĩ gì?', "What's on your mind?"))
                 : tr('Viết tiếp...', 'Keep writing...'),
             // Ô soạn không viền, nền trong suốt (theme mặc định có viền)
             filled: false,
@@ -516,7 +528,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
         );
       case 'image':
-      // Tỷ lệ theo ảnh thật, co theo chiều rộng khung; giới hạn chiều cao
+        // Tỷ lệ theo ảnh thật, co theo chiều rộng khung; giới hạn chiều cao
         final ratio = (d.width > 0 && d.height > 0)
             ? (d.width / d.height).clamp(0.8, 1.8).toDouble()
             : 4 / 3;
@@ -603,8 +615,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     final n = poll.options.length;
     return poll.valid
         ? tr('Bình chọn: $n lựa chọn', 'Poll: $n options')
-        : tr('Bình chọn (cần ít nhất 2 lựa chọn)',
-        'Poll (needs at least 2 options)');
+        : tr(
+            'Bình chọn (cần ít nhất 2 lựa chọn)',
+            'Poll (needs at least 2 options)',
+          );
   }
 
   /// Chip kiểu Weave cho cả khối tùy chọn: nền trắng, viền mảnh, chọn = Soft Indigo.
@@ -615,7 +629,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         backgroundColor: AppColors.surface,
         selectedColor: AppColors.soft,
         side: const BorderSide(color: AppColors.border),
-        shape: const StadiumBorder(),
         labelStyle: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w500,
@@ -683,9 +696,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               if (!_isQuestion)
                 InputChip(
                   avatar: const Icon(Icons.hourglass_bottom, size: 16),
-                  label: Text(_openAt == null
-                      ? tr('Hẹn giờ mở', 'Time capsule')
-                      : '${tr('Mở vào', 'Opens on')} ${CapsuleService.fmtDate(_openAt!)}'),
+                  label: Text(
+                    _openAt == null
+                        ? tr('Hẹn giờ mở', 'Time capsule')
+                        : '${tr('Mở vào', 'Opens on')} ${CapsuleService.fmtDate(_openAt!)}',
+                  ),
                   onPressed: _posting ? null : _pickOpenAt,
                   onDeleted: _openAt == null
                       ? null
@@ -694,9 +709,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               if (_openAt == null && !_isQuestion)
                 InputChip(
                   avatar: const Icon(Icons.timer_off_outlined, size: 16),
-                  label: Text(_expiresAt == null
-                      ? tr('Tự ẩn sau...', 'Auto-hide after...')
-                      : '${tr('Tự ẩn vào', 'Hides on')} ${CapsuleService.fmtDate(_expiresAt!)}'),
+                  label: Text(
+                    _expiresAt == null
+                        ? tr('Tự ẩn sau...', 'Auto-hide after...')
+                        : '${tr('Tự ẩn vào', 'Hides on')} ${CapsuleService.fmtDate(_expiresAt!)}',
+                  ),
                   onPressed: _posting ? null : _pickExpiry,
                   onDeleted: _expiresAt == null
                       ? null
@@ -712,9 +729,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   onSelected: _posting
                       ? null
                       : (v) => setState(() {
-                    _isQuestion = v;
-                    if (v) _expiresAt = null;
-                  }),
+                          _isQuestion = v;
+                          if (v) _expiresAt = null;
+                        }),
                 ),
               // Bình chọn: người xem chọn đáp án, kết quả hiện sau khi bỏ phiếu
               if (_openAt == null)
@@ -742,8 +759,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.call_split,
-                      size: 16, color: AppColors.brand),
+                  const Icon(
+                    Icons.call_split,
+                    size: 16,
+                    color: AppColors.brand,
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
@@ -833,17 +853,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           child: Row(
             children: [
               _toolButton(Icons.text_fields, tr('Chữ', 'Text'), _addText),
-              _toolButton(
-                Icons.image_outlined,
-                tr('Ảnh', 'Photo'),
-                _addImage,
-              ),
+              _toolButton(Icons.image_outlined, tr('Ảnh', 'Photo'), _addImage),
               _toolButton(Icons.link, 'Link', _addLink),
-              _toolButton(
-                Icons.emoji_emotions_outlined,
-                'Icon',
-                _addEmoji,
-              ),
+              _toolButton(Icons.emoji_emotions_outlined, 'Icon', _addEmoji),
             ],
           ),
         ),
@@ -864,13 +876,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
           child: _posting
               ? const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
-            ),
-          )
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
               : Text(tr('Đăng', 'Post')),
         ),
       ),
@@ -1000,10 +1012,12 @@ class _LinkDialogState extends State<_LinkDialog> {
   void _submit() {
     final url = _normalizeUrl(_url.text);
     if (url == null) {
-      setState(() => _error = tr(
-        'Địa chỉ liên kết không hợp lệ',
-        'The link address is not valid',
-      ));
+      setState(
+        () => _error = tr(
+          'Địa chỉ liên kết không hợp lệ',
+          'The link address is not valid',
+        ),
+      );
       return;
     }
     Navigator.of(context).pop(_LinkResult(url, _title.text.trim()));
@@ -1019,9 +1033,6 @@ class _LinkDialogState extends State<_LinkDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(WeaveRadius.card),
-      ),
       title: Text(tr('Thêm liên kết', 'Add a link')),
       content: SizedBox(
         width: 360,
@@ -1058,10 +1069,7 @@ class _LinkDialogState extends State<_LinkDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(tr('Hủy', 'Cancel')),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(tr('Thêm', 'Add')),
-        ),
+        FilledButton(onPressed: _submit, child: Text(tr('Thêm', 'Add'))),
       ],
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
 import '../models/interactions.dart';
 import '../models/post.dart';
 import '../services/interaction_service.dart';
@@ -21,11 +22,6 @@ Future<String?> showEmojiEntrySheet(BuildContext context) {
   return showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(WeaveRadius.card),
-      ),
-    ),
     builder: (_) => const _EmojiEntrySheet(),
   );
 }
@@ -232,10 +228,12 @@ class _EmojiEntrySheetState extends State<_EmojiEntrySheet> {
     if (isValidEmoji(t)) {
       Navigator.of(context).pop(t);
     } else {
-      setState(() => _error = tr(
-        'Chỉ nhập biểu tượng cảm xúc (emoji)',
-        'Enter emoji only',
-      ));
+      setState(
+        () => _error = tr(
+          'Chỉ nhập biểu tượng cảm xúc (emoji)',
+          'Enter emoji only',
+        ),
+      );
     }
   }
 
@@ -250,7 +248,7 @@ class _EmojiEntrySheetState extends State<_EmojiEntrySheet> {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         24,
-        20,
+        8,
         24,
         MediaQuery.of(context).viewInsets.bottom + 24,
       ),
@@ -287,11 +285,11 @@ class _EmojiEntrySheetState extends State<_EmojiEntrySheet> {
               filled: true,
               fillColor: AppColors.background,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(WeaveRadius.card),
+                borderRadius: BorderRadius.circular(WeaveRadius.control),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(WeaveRadius.card),
+                borderRadius: BorderRadius.circular(WeaveRadius.control),
                 borderSide: BorderSide.none,
               ),
             ),

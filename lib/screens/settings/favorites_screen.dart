@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../models/space.dart';
 import '../../models/user_profile.dart';
 import '../../services/l10n.dart';
@@ -52,7 +53,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   'Bài của người yêu thích hiện trong mục ⭐ Yêu thích ở menu. Chủ đề yêu thích được ghim lên đầu danh sách chủ đề.',
                   'Posts from favorite people appear under ⭐ Favorites in the menu. Favorite topics are pinned to the top of the topic list.',
                 ),
-                style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
               ),
             ),
             SectionLabel(tr('Chủ đề yêu thích', 'Favorite topics')),

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/interactions.dart';
 import '../models/post.dart';
 import '../models/user_profile.dart';
@@ -42,10 +43,10 @@ class CommentsScreen extends StatefulWidget {
 class _CommentsScreenState extends State<CommentsScreen> {
   late final Stream<Post?> _postStream = PostService.watchPost(widget.post);
   late final Stream<List<Comment>> _commentsStream =
-  CommentService.watchComments(
-    widget.post.id,
-    collection: widget.post.collection,
-  );
+      CommentService.watchComments(
+        widget.post.id,
+        collection: widget.post.collection,
+      );
 
   final _text = TextEditingController();
   final _focus = FocusNode();
@@ -247,7 +248,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
       if (callsAi) _askAi(post, raw, id, replyTo);
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('${tr('Không gửi được', 'Could not send')}: $e')),
+        SnackBar(
+          content: Text('${tr('Không gửi được', 'Could not send')}: $e'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -255,11 +258,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
   }
 
   Future<void> _askAi(
-      Post post,
-      String rawText,
-      String commentId,
-      Comment? replyTo,
-      ) async {
+    Post post,
+    String rawText,
+    String commentId,
+    Comment? replyTo,
+  ) async {
     final messenger = ScaffoldMessenger.of(context);
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -343,7 +346,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
       await CommentService.deleteComment(_post, c);
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('${tr('Không xóa được', 'Could not delete')}: $e')),
+        SnackBar(
+          content: Text('${tr('Không xóa được', 'Could not delete')}: $e'),
+        ),
       );
     }
   }
@@ -367,19 +372,21 @@ class _CommentsScreenState extends State<CommentsScreen> {
           content: Text(
             ok
                 ? tr(
-              'Đã gửi báo cáo. Cảm ơn bạn đã giúp cộng đồng an toàn hơn',
-              'Report sent. Thank you for helping keep the community safe',
-            )
+                    'Đã gửi báo cáo. Cảm ơn bạn đã giúp cộng đồng an toàn hơn',
+                    'Report sent. Thank you for helping keep the community safe',
+                  )
                 : tr(
-              'Không gửi được báo cáo (có thể bạn đã báo cáo bình luận này rồi)',
-              'Could not send the report (you may have already reported this comment)',
-            ),
+                    'Không gửi được báo cáo (có thể bạn đã báo cáo bình luận này rồi)',
+                    'Could not send the report (you may have already reported this comment)',
+                  ),
           ),
         ),
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('${tr('Không gửi được', 'Could not send')}: $e')),
+        SnackBar(
+          content: Text('${tr('Không gửi được', 'Could not send')}: $e'),
+        ),
       );
     }
   }
@@ -491,40 +498,40 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 dense: true,
                 leading: s.isAi
                     ? Container(
-                  width: 36,
-                  height: 36,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: AppColors.gradient,
-                  ),
-                  child: const Icon(
-                    Icons.smart_toy_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                )
+                        width: 36,
+                        height: 36,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: AppColors.gradient,
+                        ),
+                        child: const Icon(
+                          Icons.smart_toy_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      )
                     : CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.soft,
-                  child: Text(
-                    initialOf(s.name),
-                    style: const TextStyle(
-                      color: AppColors.brand,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                        radius: 18,
+                        backgroundColor: AppColors.soft,
+                        child: Text(
+                          initialOf(s.name),
+                          style: const TextStyle(
+                            color: AppColors.brand,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                 title: Text(
                   s.isAi ? 'AI' : s.name,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: s.isAi
                     ? Text(
-                  tr(
-                    'Gọi trợ lý AI trả lời bình luận này',
-                    'Ask the AI assistant to reply to this comment',
-                  ),
-                )
+                        tr(
+                          'Gọi trợ lý AI trả lời bình luận này',
+                          'Ask the AI assistant to reply to this comment',
+                        ),
+                      )
                     : null,
                 onTap: () => _pick(s),
               ),
@@ -595,13 +602,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           decoration: InputDecoration(
                             hintText: _post.isQuestion
                                 ? tr(
-                              'Viết câu trả lời... (gõ @ để tag bạn bè hoặc gọi AI)',
-                              'Write an answer... (type @ to tag a friend or call the AI)',
-                            )
+                                    'Viết câu trả lời... (gõ @ để tag bạn bè hoặc gọi AI)',
+                                    'Write an answer... (type @ to tag a friend or call the AI)',
+                                  )
                                 : tr(
-                              'Viết bình luận... (gõ @ để tag bạn bè hoặc gọi AI)',
-                              'Write a comment... (type @ to tag a friend or call the AI)',
-                            ),
+                                    'Viết bình luận... (gõ @ để tag bạn bè hoặc gọi AI)',
+                                    'Write a comment... (type @ to tag a friend or call the AI)',
+                                  ),
                             counterText: '',
                             filled: true,
                             fillColor: AppColors.background,
@@ -621,8 +628,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
-                              borderSide:
-                              const BorderSide(color: AppColors.brand),
+                              borderSide: const BorderSide(
+                                color: AppColors.brand,
+                              ),
                             ),
                           ),
                         ),
@@ -630,21 +638,22 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       const SizedBox(width: 4),
                       _sending
                           ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child:
-                          CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
+                              padding: EdgeInsets.all(12),
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
                           : IconButton(
-                        icon: const Icon(
-                          Icons.send_rounded,
-                          color: AppColors.brand,
-                        ),
-                        onPressed: _send,
-                      ),
+                              icon: const Icon(
+                                Icons.send_rounded,
+                                color: AppColors.brand,
+                              ),
+                              onPressed: _send,
+                            ),
                     ],
                   ),
                 ),
@@ -659,9 +668,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Bình luận', 'Comments')),
-      ),
+      appBar: AppBar(title: Text(tr('Bình luận', 'Comments'))),
       body: Column(
         children: [
           Expanded(
@@ -679,12 +686,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         if (postSnap.data != null) _post = postSnap.data!;
                         // Ẩn bình luận của người bị chặn hoặc tắt tiếng
                         final comments =
-                        (commentsSnap.data ?? const <Comment>[])
-                            .where(
-                              (c) => !UserPrefs.instance
-                              .isHiddenAuthor(c.authorId),
-                        )
-                            .toList();
+                            (commentsSnap.data ?? const <Comment>[])
+                                .where(
+                                  (c) => !UserPrefs.instance.isHiddenAuthor(
+                                    c.authorId,
+                                  ),
+                                )
+                                .toList();
 
                         if (deleted) {
                           return Center(
@@ -694,7 +702,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 'This post has been deleted',
                               ),
                               style: const TextStyle(
-                                  color: AppColors.textSecondary),
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           );
                         }
@@ -719,29 +728,34 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 ),
                               )
                             else if (comments.isEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Text(
-                                    _post.isQuestion
-                                        ? tr(
-                                      'Chưa có câu trả lời nào.\nHãy là người đầu tiên!',
-                                      'No answers yet.\nBe the first!',
-                                    )
-                                        : tr(
-                                      'Chưa có bình luận nào.\nHãy là người đầu tiên!',
-                                      'No comments yet.\nBe the first!',
-                                    ),
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        color: AppColors.textSecondary),
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Text(
+                                  _post.isQuestion
+                                      ? tr(
+                                          'Chưa có câu trả lời nào.\nHãy là người đầu tiên!',
+                                          'No answers yet.\nBe the first!',
+                                        )
+                                      : tr(
+                                          'Chưa có bình luận nào.\nHãy là người đầu tiên!',
+                                          'No comments yet.\nBe the first!',
+                                        ),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
                                   ),
-                                )
-                              else
-                                ..._buildThreads(comments),
+                                ),
+                              )
+                            else
+                              ..._buildThreads(comments),
                             if (_aiThinking)
                               Padding(
-                                padding:
-                                const EdgeInsets.fromLTRB(52, 12, 14, 0),
+                                padding: const EdgeInsets.fromLTRB(
+                                  52,
+                                  12,
+                                  14,
+                                  0,
+                                ),
                                 child: Row(
                                   children: [
                                     const SizedBox(
@@ -975,10 +989,7 @@ class _CommentTile extends StatelessWidget {
                                 color: AppColors.textSecondary,
                               ),
                             ),
-                            CommentReactionButton(
-                              post: post,
-                              comment: comment,
-                            ),
+                            CommentReactionButton(post: post, comment: comment),
                             InkWell(
                               borderRadius: BorderRadius.circular(8),
                               onTap: onReply,
@@ -1001,10 +1012,11 @@ class _CommentTile extends StatelessWidget {
                                   ),
                                   child: Text(
                                     isAccepted
-                                        ? tr('Bỏ chọn đáp án',
-                                        'Unmark answer')
-                                        : tr('Chọn làm đáp án',
-                                        'Mark as answer'),
+                                        ? tr('Bỏ chọn đáp án', 'Unmark answer')
+                                        : tr(
+                                            'Chọn làm đáp án',
+                                            'Mark as answer',
+                                          ),
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
@@ -1043,7 +1055,8 @@ class _CommentTile extends StatelessWidget {
                                   child: Text(
                                     tr('Xóa bình luận', 'Delete comment'),
                                     style: const TextStyle(
-                                        color: AppColors.danger),
+                                      color: AppColors.danger,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -1105,11 +1118,8 @@ class _CommentReactionButtonState extends State<CommentReactionButton> {
     return ReactionTrigger(
       mine: _mine,
       borderRadius: BorderRadius.circular(8),
-      onApply: (emoji) => ThreadService.setCommentReaction(
-        widget.post,
-        widget.comment,
-        emoji,
-      ),
+      onApply: (emoji) =>
+          ThreadService.setCommentReaction(widget.post, widget.comment, emoji),
       builder: (context, mine) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -1212,8 +1222,9 @@ class _ReportDialogState extends State<_ReportDialog> {
                     _reason == r
                         ? Icons.radio_button_checked
                         : Icons.radio_button_unchecked,
-                    color:
-                    _reason == r ? AppColors.brand : AppColors.textSecondary,
+                    color: _reason == r
+                        ? AppColors.brand
+                        : AppColors.textSecondary,
                   ),
                   title: Text(reportReasonLabel(r)),
                   onTap: () => setState(() => _reason = r),
@@ -1257,8 +1268,9 @@ class _ReportDialogState extends State<_ReportDialog> {
           style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
           onPressed: _reason == null
               ? null
-              : () => Navigator.of(context)
-              .pop(_ReportResult(_reason!, _note.text.trim())),
+              : () =>
+                    Navigator.of(context)
+                        .pop(_ReportResult(_reason!, _note.text.trim())),
           child: Text(tr('Gửi báo cáo', 'Send report')),
         ),
       ],

@@ -14,6 +14,7 @@ import 'story_detail_screen.dart';
 
 const kMaxStoryPhotos = 10;
 const kMaxStoryNotes = 20;
+
 /// Số lần dựng truyện bằng AI mỗi ngày trên thiết bị này.
 const kStoryDailyLimit = 5;
 
@@ -68,12 +69,14 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
         } catch (_) {
           date = DateTime.now();
         }
-        _sources.add(StorySource(
-          id: 's${++_seq}',
-          type: SourceType.photo,
-          imageB64: base64Encode(c.bytes),
-          date: date,
-        ));
+        _sources.add(
+          StorySource(
+            id: 's${++_seq}',
+            type: SourceType.photo,
+            imageB64: base64Encode(c.bytes),
+            date: date,
+          ),
+        );
       } catch (_) {
         skipped++;
       }
@@ -81,12 +84,16 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
     if (!mounted) return;
     setState(() => _picking = false);
     if (skipped > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr(
-          '$skipped ảnh bị bỏ qua (quá nhiều hoặc không đọc được)',
-          '$skipped photos skipped (too many or unreadable)',
-        )),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            tr(
+              '$skipped ảnh bị bỏ qua (quá nhiều hoặc không đọc được)',
+              '$skipped photos skipped (too many or unreadable)',
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -95,16 +102,22 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
     final text = await showStoryTextDialog(
       context,
       title: tr('Thêm ghi chú', 'Add a note'),
-      hint: tr('Hôm nay mình đã làm gì, ở đâu, với ai...',
-          'What I did today, where, with whom...'),
+      hint: tr(
+        'Hôm nay mình đã làm gì, ở đâu, với ai...',
+        'What I did today, where, with whom...',
+      ),
     );
     if (text == null || text.trim().isEmpty || !mounted) return;
-    setState(() => _sources.add(StorySource(
-      id: 's${++_seq}',
-      type: SourceType.note,
-      text: text.trim(),
-      date: DateTime.now(),
-    )));
+    setState(
+      () => _sources.add(
+        StorySource(
+          id: 's${++_seq}',
+          type: SourceType.note,
+          text: text.trim(),
+          date: DateTime.now(),
+        ),
+      ),
+    );
   }
 
   Future<void> _changeDate(int i) async {
@@ -122,10 +135,12 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
     final used = await UsageService.instance.countToday('story');
     if (used >= kStoryDailyLimit) {
       if (mounted) {
-        setState(() => _error = tr(
-          'Hôm nay bạn đã dựng $kStoryDailyLimit câu chuyện. Hãy quay lại vào ngày mai nhé.',
-          'You have built $kStoryDailyLimit stories today. Come back tomorrow.',
-        ));
+        setState(
+          () => _error = tr(
+            'Hôm nay bạn đã dựng $kStoryDailyLimit câu chuyện. Hãy quay lại vào ngày mai nhé.',
+            'You have built $kStoryDailyLimit stories today. Come back tomorrow.',
+          ),
+        );
       }
       return;
     }
@@ -139,7 +154,9 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
         userTitle: _titleCtrl.text,
         sources: _sources,
       );
-      await UsageService.instance.bumpCount('story'); // chỉ tính khi AI thành công
+      await UsageService.instance.bumpCount(
+        'story',
+      ); // chỉ tính khi AI thành công
       final id = await StoryService.createFromDraft(
         kind: _kind,
         draft: draft,
@@ -163,10 +180,12 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(tr('Bỏ câu chuyện đang soạn?', 'Discard this draft?')),
-        content: Text(tr(
-          'Ảnh và ghi chú đã thêm sẽ bị xóa.',
-          'The photos and notes you added will be removed.',
-        )),
+        content: Text(
+          tr(
+            'Ảnh và ghi chú đã thêm sẽ bị xóa.',
+            'The photos and notes you added will be removed.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -208,10 +227,8 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
         // backgroundColor, selectedColor, side đã có trong chipTheme chung;
         // chỉ giữ hai điểm riêng của nhóm chọn loại: dạng viên thuốc, không dấu tick.
         ChipTheme(
-          data: ChipTheme.of(context).copyWith(
-            shape: const StadiumBorder(),
-            showCheckmark: false,
-          ),
+          data: ChipTheme.of(context)
+              .copyWith(shape: const StadiumBorder(), showCheckmark: false),
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -247,9 +264,12 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
           child: OutlinedButton.icon(
             onPressed: locked ? null : _addPhotos,
             icon: const Icon(Icons.add_photo_alternate_outlined),
-            label: Text(tr(
+            label: Text(
+              tr(
                 'Ảnh (${_count(SourceType.photo)}/$kMaxStoryPhotos)',
-                'Photos (${_count(SourceType.photo)}/$kMaxStoryPhotos)')),
+                'Photos (${_count(SourceType.photo)}/$kMaxStoryPhotos)',
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 8),
@@ -257,9 +277,12 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
           child: OutlinedButton.icon(
             onPressed: locked ? null : _addNote,
             icon: const Icon(Icons.notes),
-            label: Text(tr(
+            label: Text(
+              tr(
                 'Ghi chú (${_count(SourceType.note)}/$kMaxStoryNotes)',
-                'Notes (${_count(SourceType.note)}/$kMaxStoryNotes)')),
+                'Notes (${_count(SourceType.note)}/$kMaxStoryNotes)',
+              ),
+            ),
           ),
         ),
       ],
@@ -273,8 +296,10 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
           child: Text(
-            tr('Chọn ảnh hoặc viết vài ghi chú. AI chỉ kể lại những gì có trong đó.',
-                'Pick photos or write a few notes. The AI only retells what is in them.'),
+            tr(
+              'Chọn ảnh hoặc viết vài ghi chú. AI chỉ kể lại những gì có trong đó.',
+              'Pick photos or write a few notes. The AI only retells what is in them.',
+            ),
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.textSecondary),
           ),
@@ -287,14 +312,18 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
           contentPadding: EdgeInsets.zero,
           leading: _sources[i].imageBytes != null
               ? ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.memory(_sources[i].imageBytes!,
-                width: 48, height: 48, fit: BoxFit.cover),
-          )
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(
+                    _sources[i].imageBytes!,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                  ),
+                )
               : const CircleAvatar(
-            backgroundColor: AppColors.soft,
-            child: Icon(Icons.notes, color: AppColors.brand),
-          ),
+                  backgroundColor: AppColors.soft,
+                  child: Icon(Icons.notes, color: AppColors.brand),
+                ),
           title: Text(
             _sources[i].type == SourceType.photo
                 ? tr('Ảnh', 'Photo')
@@ -302,14 +331,19 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          subtitle: Text(tr('Ngày ${fmtDate(_sources[i].date)} (chạm để đổi)',
-              'Date ${fmtDate(_sources[i].date)} (tap to change)')),
+          subtitle: Text(
+            tr(
+              'Ngày ${fmtDate(_sources[i].date)} (chạm để đổi)',
+              'Date ${fmtDate(_sources[i].date)} (tap to change)',
+            ),
+          ),
           onTap: locked ? null : () => _changeDate(i),
           trailing: IconButton(
             tooltip: tr('Gỡ', 'Remove'),
             icon: const Icon(Icons.close),
-            onPressed:
-            locked ? null : () => setState(() => _sources.removeAt(i)),
+            onPressed: locked
+                ? null
+                : () => setState(() => _sources.removeAt(i)),
           ),
         ),
     ];
@@ -332,12 +366,26 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         row(storyKindIcon(_kind), storyKindLabel(_kind)),
-        row(Icons.title,
-            title.isEmpty ? tr('Tiêu đề: AI tự đặt', 'Title: chosen by the AI') : title),
-        row(Icons.photo_outlined,
-            tr('${_count(SourceType.photo)} ảnh', '${_count(SourceType.photo)} photos')),
-        row(Icons.notes,
-            tr('${_count(SourceType.note)} ghi chú', '${_count(SourceType.note)} notes')),
+        row(
+          Icons.title,
+          title.isEmpty
+              ? tr('Tiêu đề: AI tự đặt', 'Title: chosen by the AI')
+              : title,
+        ),
+        row(
+          Icons.photo_outlined,
+          tr(
+            '${_count(SourceType.photo)} ảnh',
+            '${_count(SourceType.photo)} photos',
+          ),
+        ),
+        row(
+          Icons.notes,
+          tr(
+            '${_count(SourceType.note)} ghi chú',
+            '${_count(SourceType.note)} notes',
+          ),
+        ),
       ],
     );
   }
@@ -350,21 +398,28 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
         if (_error != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(_error!, style: const TextStyle(color: AppColors.danger)),
+            child: Text(
+              _error!,
+              style: const TextStyle(color: AppColors.danger),
+            ),
           ),
         FilledButton.icon(
           onPressed: (_sources.isNotEmpty && !locked) ? _generate : null,
           icon: _busy
               ? const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: Colors.white),
-          )
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
               : const Icon(Icons.auto_awesome),
-          label: Text(_busy
-              ? tr('Đang dựng câu chuyện...', 'Building your story...')
-              : tr('Dựng câu chuyện', 'Build my story')),
+          label: Text(
+            _busy
+                ? tr('Đang dựng câu chuyện...', 'Building your story...')
+                : tr('Dựng câu chuyện', 'Build my story'),
+          ),
         ),
       ],
     );
@@ -395,9 +450,7 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
                         child: LinearProgressIndicator(),
                       ),
                     const SizedBox(height: 8),
-                    Expanded(
-                      child: ListView(children: _sourceTiles(locked)),
-                    ),
+                    Expanded(child: ListView(children: _sourceTiles(locked))),
                   ],
                 ),
               ),
@@ -480,8 +533,10 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                tr('Bước ${_step + 1}/$_kStorySteps · ${titles[_step]}',
-                    'Step ${_step + 1}/$_kStorySteps · ${titles[_step]}'),
+                tr(
+                  'Bước ${_step + 1}/$_kStorySteps · ${titles[_step]}',
+                  'Step ${_step + 1}/$_kStorySteps · ${titles[_step]}',
+                ),
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -517,19 +572,26 @@ class _StoryCreateScreenState extends State<StoryCreateScreen> {
             child: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     if (_step > 0)
                       TextButton(
-                        onPressed: locked ? null : () => setState(() => _step--),
+                        onPressed: locked
+                            ? null
+                            : () => setState(() => _step--),
                         child: Text(tr('Quay lại', 'Back')),
                       ),
                     const Spacer(),
                     // Bước cuối đã có nút Dựng trong nội dung, nên không có nút Tiếp tục
                     if (_step < _kStorySteps - 1)
                       FilledButton(
-                        onPressed: canNext ? () => setState(() => _step++) : null,
+                        onPressed: canNext
+                            ? () => setState(() => _step++)
+                            : null,
                         child: Text(tr('Tiếp tục', 'Continue')),
                       ),
                   ],

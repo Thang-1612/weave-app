@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/weave_layer.dart';
 import 'layer_access.dart';
 
@@ -13,18 +14,19 @@ class LayerService {
 
   static final _db = FirebaseFirestore.instance;
 
-  static List<Map<String, dynamic>> _metaMaps(List<LayerMeta> metas) =>
-      [for (final m in metas) m.toMap()];
+  static List<Map<String, dynamic>> _metaMaps(List<LayerMeta> metas) => [
+    for (final m in metas) m.toMap(),
+  ];
 
   /// Thêm một lớp mới. Trả về id lớp.
   static Future<String> addLayer(
-      PostRef postRef, {
-        required String authorId,
-        required String name,
-        required LayerAudience audience,
-        List<Map<String, dynamic>> blocks = const [],
-        bool commentsEnabled = true,
-      }) async {
+    PostRef postRef, {
+    required String authorId,
+    required String name,
+    required LayerAudience audience,
+    List<Map<String, dynamic>> blocks = const [],
+    bool commentsEnabled = true,
+  }) async {
     final layerRef = postRef.collection('layers').doc();
     await _db.runTransaction((tx) async {
       final snap = await tx.get(postRef);
@@ -58,42 +60,34 @@ class LayerService {
 
   /// Đổi quyền xem của một lớp, KHÔNG đăng lại nội dung.
   static Future<void> setAudience(
-      PostRef postRef,
-      String layerId,
-      LayerAudience audience,
-      ) =>
-      _edit(
-        postRef,
-        layerId,
-        {
-          'audienceType': audience.type,
-          'audienceGroupId': audience.groupId ?? '',
-        },
-            (m) => m.copyWith(audience: audience),
-      );
+    PostRef postRef,
+    String layerId,
+    LayerAudience audience,
+  ) => _edit(postRef, layerId, {
+    'audienceType': audience.type,
+    'audienceGroupId': audience.groupId ?? '',
+  }, (m) => m.copyWith(audience: audience));
 
   static Future<void> rename(PostRef postRef, String layerId, String name) =>
       _edit(postRef, layerId, {'name': name}, (m) => m.copyWith(name: name));
 
   static Future<void> setBlocks(
-      PostRef postRef,
-      String layerId,
-      List<Map<String, dynamic>> blocks,
-      ) =>
-      postRef.collection('layers').doc(layerId).update({
-        'blocks': blocks,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    PostRef postRef,
+    String layerId,
+    List<Map<String, dynamic>> blocks,
+  ) => postRef.collection('layers').doc(layerId).update({
+    'blocks': blocks,
+    'updatedAt': FieldValue.serverTimestamp(),
+  });
 
   static Future<void> setCommentsEnabled(
-      PostRef postRef,
-      String layerId,
-      bool enabled,
-      ) =>
-      postRef.collection('layers').doc(layerId).update({
-        'commentsEnabled': enabled,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    PostRef postRef,
+    String layerId,
+    bool enabled,
+  ) => postRef.collection('layers').doc(layerId).update({
+    'commentsEnabled': enabled,
+    'updatedAt': FieldValue.serverTimestamp(),
+  });
 
   /// Xóa lớp. Lưu ý: bình luận con của lớp (nếu có) không tự xóa theo,
   /// cần dọn bằng Cloud Function hoặc xóa tay trước khi gọi.
@@ -137,20 +131,22 @@ class LayerService {
   /// [metas] lấy từ `LayerMeta.listFrom(...)` hoặc `post.layerMetas`.
   /// Mỗi lớp được `get` riêng; lớp bị rules từ chối sẽ bị bỏ qua.
   static Future<List<WeaveLayer>> fetchVisible(
-      PostRef postRef,
-      List<LayerMeta> metas,
-      LayerAccess access,
-      ) async {
+    PostRef postRef,
+    List<LayerMeta> metas,
+    LayerAccess access,
+  ) async {
     final allowed = metas.where(access.canViewMeta);
-    final results = await Future.wait(allowed.map((m) async {
-      try {
-        final d = await postRef.collection('layers').doc(m.id).get();
-        return d.exists ? WeaveLayer.fromDoc(d) : null;
-      } on FirebaseException catch (e) {
-        if (e.code == 'permission-denied') return null;
-        rethrow;
-      }
-    }));
+    final results = await Future.wait(
+      allowed.map((m) async {
+        try {
+          final d = await postRef.collection('layers').doc(m.id).get();
+          return d.exists ? WeaveLayer.fromDoc(d) : null;
+        } on FirebaseException catch (e) {
+          if (e.code == 'permission-denied') return null;
+          rethrow;
+        }
+      }),
+    );
     return results.whereType<WeaveLayer>().toList()
       ..sort((a, b) => a.order.compareTo(b.order));
   }
@@ -158,17 +154,16 @@ class LayerService {
   /// Các lớp có tồn tại nhưng người xem chưa đủ quyền (dùng cho gợi ý
   /// "còn nội dung dành cho bạn thân"). Bỏ qua nếu không muốn lộ sự tồn tại.
   static List<LayerMeta> lockedMetas(
-      List<LayerMeta> metas,
-      LayerAccess access,
-      ) =>
-      metas.where((m) => !access.canViewMeta(m)).toList();
+    List<LayerMeta> metas,
+    LayerAccess access,
+  ) => metas.where((m) => !access.canViewMeta(m)).toList();
 
   static Future<void> _edit(
-      PostRef postRef,
-      String layerId,
-      Map<String, dynamic> layerChanges,
-      LayerMeta Function(LayerMeta) change,
-      ) async {
+    PostRef postRef,
+    String layerId,
+    Map<String, dynamic> layerChanges,
+    LayerMeta Function(LayerMeta) change,
+  ) async {
     final layerRef = postRef.collection('layers').doc(layerId);
     await _db.runTransaction((tx) async {
       final snap = await tx.get(postRef);

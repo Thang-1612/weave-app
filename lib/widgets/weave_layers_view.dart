@@ -1,6 +1,8 @@
 import '../theme/app_theme.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../models/weave_layer.dart';
 import '../services/l10n.dart';
@@ -67,8 +69,11 @@ class _WeaveLayersViewState extends State<WeaveLayersView> {
         authorId: post.authorId,
         isFriend: widget.isFriend ?? FriendService.isFriend,
       );
-      final layers =
-      await LayerService.fetchVisible(post.ref, post.layerMetas, access);
+      final layers = await LayerService.fetchVisible(
+        post.ref,
+        post.layerMetas,
+        access,
+      );
       final locked = LayerService.lockedMetas(post.layerMetas, access).length;
       if (!mounted || token != _loadToken) return;
       setState(() {

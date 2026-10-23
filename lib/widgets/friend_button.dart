@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../services/friend_service.dart';
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
@@ -33,7 +34,9 @@ class _FriendActionButtonState extends State<FriendActionButton> {
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('${tr('Không thực hiện được', 'Could not complete')}: $e'),
+          content: Text(
+            '${tr('Không thực hiện được', 'Could not complete')}: $e',
+          ),
         ),
       );
     } finally {
@@ -87,8 +90,9 @@ class _FriendActionButtonState extends State<FriendActionButton> {
       );
     }
 
-    final density =
-    widget.compact ? VisualDensity.compact : VisualDensity.standard;
+    final density = widget.compact
+        ? VisualDensity.compact
+        : VisualDensity.standard;
     final status = FriendService.statusWith(widget.friendships, me, widget.uid);
 
     switch (status) {

@@ -1,8 +1,11 @@
 import '../theme/app_theme.dart';
+
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/chat_models.dart';
 import '../services/chat_service.dart';
 
@@ -40,7 +43,9 @@ Widget avatarFrom(String? av, String name, double r) {
       img = NetworkImage(av);
     } else {
       try {
-        img = MemoryImage(base64Decode(av.contains(',') ? av.split(',').last : av));
+        img = MemoryImage(
+          base64Decode(av.contains(',') ? av.split(',').last : av),
+        );
       } catch (_) {}
     }
   }
@@ -74,11 +79,11 @@ class ChatAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => chat.isGroup
       ? CircleAvatar(
-    radius: radius,
-    backgroundColor: AppColors.soft,
-    foregroundColor: AppColors.brand,
-    child: const Icon(Icons.groups),
-  )
+          radius: radius,
+          backgroundColor: AppColors.soft,
+          foregroundColor: AppColors.brand,
+          child: const Icon(Icons.groups),
+        )
       : UserAvatar(chat.otherId(ChatService.I.me), radius: radius);
 }
 
@@ -139,13 +144,20 @@ class MessageBubble extends StatelessWidget {
     // Vuốt ngang để trả lời chỉ dành cho cảm ứng. Trên desktop/web, kéo chuột
     // ngang là thao tác chọn chữ (tin nhắn dùng SelectableText) nên không bắt.
     final platform = Theme.of(context).platform;
-    final touch = platform == TargetPlatform.android ||
+    final touch =
+        platform == TargetPlatform.android ||
         platform == TargetPlatform.iOS ||
         platform == TargetPlatform.fuchsia;
     // Tin của mình: Brand Indigo, chữ trắng. Tin của người khác: nền Surface + viền mảnh.
-    final bg = mine ? AppColors.brand : (dark ? Colors.grey.shade800 : AppColors.surface);
-    final fg = mine ? Colors.white : (dark ? Colors.white : AppColors.textPrimary);
-    final sub = mine ? Colors.white.withValues(alpha: .75) : AppColors.textSecondary;
+    final bg = mine
+        ? AppColors.brand
+        : (dark ? Colors.grey.shade800 : AppColors.surface);
+    final fg = mine
+        ? Colors.white
+        : (dark ? Colors.white : AppColors.textPrimary);
+    final sub = mine
+        ? Colors.white.withValues(alpha: .75)
+        : AppColors.textSecondary;
     final grouped = <String, int>{};
     msg.reactions.forEach((_, e) => grouped[e] = (grouped[e] ?? 0) + 1);
 
@@ -161,17 +173,21 @@ class MessageBubble extends StatelessWidget {
               onLongPress: onLongPress,
               onHorizontalDragEnd: touch
                   ? (d) {
-                if ((d.primaryVelocity ?? 0).abs() > 500) onReply();
-              }
+                      if ((d.primaryVelocity ?? 0).abs() > 500) onReply();
+                    }
                   : null,
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxW),
                 child: Column(
-                  crossAxisAlignment:
-                  mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  crossAxisAlignment: mine
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
                       decoration: BoxDecoration(
                         color: bg,
                         borderRadius: BorderRadius.only(
@@ -181,35 +197,47 @@ class MessageBubble extends StatelessWidget {
                           bottomRight: Radius.circular(mine ? 4 : 18),
                         ),
                         // Viền mảnh thay cho bóng đổ (card/bong bóng phẳng theo design system)
-                        border: mine ? null : Border.all(color: AppColors.border),
+                        border: mine
+                            ? null
+                            : Border.all(color: AppColors.border),
                       ),
                       child: _content(context, fg, sub, maxW),
                     ),
                     if (grouped.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 3),
-                        child: Wrap(spacing: 4, children: [
-                          for (final e in grouped.entries)
-                            InkWell(
-                              onTap: () => onReact(e.key),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: msg.reactions[me] == e.key
-                                      ? AppColors.soft
-                                      : (dark ? AppColors.textSecondary : AppColors.surface),
-                                  border: Border.all(
-                                    color: msg.reactions[me] == e.key
-                                        ? AppColors.brand
-                                        : AppColors.border,
+                        child: Wrap(
+                          spacing: 4,
+                          children: [
+                            for (final e in grouped.entries)
+                              InkWell(
+                                onTap: () => onReact(e.key),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2,
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
+                                  decoration: BoxDecoration(
+                                    color: msg.reactions[me] == e.key
+                                        ? AppColors.soft
+                                        : (dark
+                                              ? AppColors.textSecondary
+                                              : AppColors.surface),
+                                    border: Border.all(
+                                      color: msg.reactions[me] == e.key
+                                          ? AppColors.brand
+                                          : AppColors.border,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    e.value > 1 ? '${e.key} ${e.value}' : e.key,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
                                 ),
-                                child: Text(e.value > 1 ? '${e.key} ${e.value}' : e.key,
-                                    style: const TextStyle(fontSize: 12)),
                               ),
-                            ),
-                        ]),
+                          ],
+                        ),
                       ),
                   ],
                 ),
@@ -223,96 +251,155 @@ class MessageBubble extends StatelessWidget {
 
   Widget _content(BuildContext context, Color fg, Color sub, double maxW) {
     if (msg.deleted) {
-      return Text('Tin nhắn đã thu hồi',
-          style: TextStyle(fontStyle: FontStyle.italic, color: sub));
+      return Text(
+        'Tin nhắn đã thu hồi',
+        style: TextStyle(fontStyle: FontStyle.italic, color: sub),
+      );
     }
     final kids = <Widget>[];
     if (showName) {
-      kids.add(FutureBuilder<ChatUser>(
-        future: ChatService.I.user(msg.senderId),
-        initialData: ChatService.I.cached(msg.senderId),
-        builder: (c, s) => Text(s.data?.name ?? '',
+      kids.add(
+        FutureBuilder<ChatUser>(
+          future: ChatService.I.user(msg.senderId),
+          initialData: ChatService.I.cached(msg.senderId),
+          builder: (c, s) => Text(
+            s.data?.name ?? '',
             style: const TextStyle(
-                fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.brand)),
-      ));
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.brand,
+            ),
+          ),
+        ),
+      );
     }
     if (msg.replyTo != null) {
-      kids.add(Container(
-        margin: const EdgeInsets.only(bottom: 4, top: 2),
-        padding: const EdgeInsets.only(left: 8),
-        decoration: BoxDecoration(
+      kids.add(
+        Container(
+          margin: const EdgeInsets.only(bottom: 4, top: 2),
+          padding: const EdgeInsets.only(left: 8),
+          decoration: BoxDecoration(
             border: Border(
-                left: BorderSide(color: mine ? Colors.white : AppColors.brand, width: 3))),
-        child: Text((msg.replyTo!['text'] ?? '').toString(),
+              left: BorderSide(
+                color: mine ? Colors.white : AppColors.brand,
+                width: 3,
+              ),
+            ),
+          ),
+          child: Text(
+            (msg.replyTo!['text'] ?? '').toString(),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, color: sub)),
-      ));
+            style: TextStyle(fontSize: 12, color: sub),
+          ),
+        ),
+      );
     }
     if (msg.type == 'image' && msg.imageB64 != null) {
       final bytes = _img.putIfAbsent(msg.id, () => base64Decode(msg.imageB64!));
       // Ảnh co theo bong bóng: không vượt chiều rộng tối đa trên màn hình hẹp,
       // và cao tối đa 320 để ảnh dọc không kéo dài cả màn hình.
       final imgW = (maxW - 28).clamp(120.0, 240.0).toDouble();
-      kids.add(GestureDetector(
-        onTap: () => showDialog(
-          context: context,
-          builder: (_) => Dialog(child: InteractiveViewer(child: Image.memory(bytes))),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 320),
-            child: Image.memory(bytes, width: imgW, fit: BoxFit.cover, gaplessPlayback: true),
+      kids.add(
+        GestureDetector(
+          onTap: () => showDialog(
+            context: context,
+            builder: (_) =>
+                Dialog(child: InteractiveViewer(child: Image.memory(bytes))),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 320),
+              child: Image.memory(
+                bytes,
+                width: imgW,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+              ),
+            ),
           ),
         ),
-      ));
+      );
     }
     if (msg.type == 'post') {
-      kids.add(InkWell(
-        onTap: onOpenPost,
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-              border: Border.all(color: sub), borderRadius: BorderRadius.circular(10)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Icon(Icons.article_outlined, size: 16, color: sub),
-              const SizedBox(width: 4),
-              Text('Bài viết', style: TextStyle(fontSize: 11, color: sub)),
-            ]),
-            const SizedBox(height: 4),
-            Text(msg.postTitle ?? 'Bài viết',
-                style: TextStyle(fontWeight: FontWeight.bold, color: fg)),
-            if (msg.text.isNotEmpty)
-              Text(msg.text,
-                  maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg)),
-          ]),
+      kids.add(
+        InkWell(
+          onTap: onOpenPost,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              border: Border.all(color: sub),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.article_outlined, size: 16, color: sub),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Bài viết',
+                      style: TextStyle(fontSize: 11, color: sub),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  msg.postTitle ?? 'Bài viết',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: fg),
+                ),
+                if (msg.text.isNotEmpty)
+                  Text(
+                    msg.text,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: fg),
+                  ),
+              ],
+            ),
+          ),
         ),
-      ));
+      );
     }
     if (msg.type == 'text' && msg.text.isNotEmpty) {
-      kids.add(SelectableText(msg.text, style: TextStyle(color: fg, fontSize: 15, height: 1.3)));
+      kids.add(
+        SelectableText(
+          msg.text,
+          style: TextStyle(color: fg, fontSize: 15, height: 1.3),
+        ),
+      );
     }
-    kids.add(Padding(
-      padding: const EdgeInsets.only(top: 3),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (msg.expireAt != null)
-          Padding(
-              padding: const EdgeInsets.only(right: 2),
-              child: Icon(Icons.timer_outlined, size: 11, color: sub)),
-        Text(hm(msg.createdAt) + (msg.editedAt != null ? ' · đã sửa' : ''),
-            style: TextStyle(fontSize: 10, color: sub)),
-        if (msg.pending)
-          Padding(
-              padding: const EdgeInsets.only(left: 3),
-              child: Icon(Icons.schedule, size: 11, color: sub)),
-      ]),
-    ));
+    kids.add(
+      Padding(
+        padding: const EdgeInsets.only(top: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (msg.expireAt != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 2),
+                child: Icon(Icons.timer_outlined, size: 11, color: sub),
+              ),
+            Text(
+              hm(msg.createdAt) + (msg.editedAt != null ? ' · đã sửa' : ''),
+              style: TextStyle(fontSize: 10, color: sub),
+            ),
+            if (msg.pending)
+              Padding(
+                padding: const EdgeInsets.only(left: 3),
+                child: Icon(Icons.schedule, size: 11, color: sub),
+              ),
+          ],
+        ),
+      ),
+    );
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: kids);
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: kids,
+    );
   }
 }
 
@@ -339,46 +426,73 @@ class ChatUnreadBadge extends StatelessWidget {
 
 // ───────────── Chia sẻ bài viết vào chat ─────────────
 // Bo góc của bottom sheet lấy từ bottomSheetTheme trong app_theme.dart.
-Future<void> showShareToChatSheet(BuildContext context,
-    {required String postId, required String title, String snippet = ''}) {
+Future<void> showShareToChatSheet(
+  BuildContext context, {
+  required String postId,
+  required String title,
+  String snippet = '',
+}) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     builder: (ctx) => SafeArea(
       child: SizedBox(
         height: MediaQuery.of(ctx).size.height * 0.6,
-        child: Column(children: [
-          const ListTile(
-              title: Text('Gửi bài viết tới…', style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(
-            child: StreamBuilder<List<Chat>>(
-              stream: ChatService.I.myChats(),
-              builder: (c, s) {
-                final list = (s.data ?? []).where((x) => x.hasMessages || x.isGroup).toList();
-                if (list.isEmpty) {
-                  return const Center(child: Text('Chưa có cuộc trò chuyện nào'));
-                }
-                return ListView(children: [
-                  for (final chat in list)
-                    ListTile(
-                      leading: ChatAvatar(chat),
-                      title: ChatTitle(chat),
-                      onTap: () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        Navigator.pop(ctx);
-                        try {
-                          await ChatService.I.sendPost(chat, postId, title, snippet);
-                          messenger.showSnackBar(const SnackBar(content: Text('Đã gửi bài viết')));
-                        } catch (e) {
-                          messenger.showSnackBar(SnackBar(content: Text('Không gửi được: $e')));
-                        }
-                      },
-                    ),
-                ]);
-              },
+        child: Column(
+          children: [
+            const ListTile(
+              title: Text(
+                'Gửi bài viết tới…',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-        ]),
+            Expanded(
+              child: StreamBuilder<List<Chat>>(
+                stream: ChatService.I.myChats(),
+                builder: (c, s) {
+                  final list = (s.data ?? [])
+                      .where((x) => x.hasMessages || x.isGroup)
+                      .toList();
+                  if (list.isEmpty) {
+                    return const Center(
+                      child: Text('Chưa có cuộc trò chuyện nào'),
+                    );
+                  }
+                  return ListView(
+                    children: [
+                      for (final chat in list)
+                        ListTile(
+                          leading: ChatAvatar(chat),
+                          title: ChatTitle(chat),
+                          onTap: () async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            Navigator.pop(ctx);
+                            try {
+                              await ChatService.I.sendPost(
+                                chat,
+                                postId,
+                                title,
+                                snippet,
+                              );
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Đã gửi bài viết'),
+                                ),
+                              );
+                            } catch (e) {
+                              messenger.showSnackBar(
+                                SnackBar(content: Text('Không gửi được: $e')),
+                              );
+                            }
+                          },
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );

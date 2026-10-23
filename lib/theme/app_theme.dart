@@ -8,7 +8,9 @@ class AppColors {
   AppColors._();
 
   // Bảng màu chính thức
-  static const brand = Color(0xFF4F46E5); // Brand Indigo: nút chính, mục chọn, liên kết
+  static const brand = Color(
+    0xFF4F46E5,
+  ); // Brand Indigo: nút chính, mục chọn, liên kết
   static const background = Color(0xFFF7F7FB); // Nền toàn ứng dụng
   static const surface = Color(0xFFFFFFFF); // Card, menu, thanh điều hướng
   static const textPrimary = Color(0xFF202235); // Tiêu đề, nội dung chính
@@ -84,36 +86,37 @@ class WeavePagePadding {
 ///
 /// Dùng: ListView(padding: weaveCenteredPadding(constraints.maxWidth), ...)
 EdgeInsets weaveCenteredPadding(
-    double width, {
-      double maxWidth = 600,
-      double h = WeavePagePadding.mobile,
-      double top = WeaveSpacing.lg,
-      double bottom = WeaveSpacing.lg,
-    }) {
+  double width, {
+  double maxWidth = 600,
+  double h = WeavePagePadding.mobile,
+  double top = WeaveSpacing.lg,
+  double bottom = WeaveSpacing.lg,
+}) {
   final extra = width > maxWidth ? (width - maxWidth) / 2 : 0.0;
   final side = extra + h;
   return EdgeInsets.fromLTRB(side, top, side, bottom);
 }
 
 ThemeData buildAppTheme() {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: AppColors.brand,
-    brightness: Brightness.light,
-  ).copyWith(
-    primary: AppColors.brand,
-    onPrimary: Colors.white,
-    primaryContainer: AppColors.soft,
-    onPrimaryContainer: AppColors.brand,
-    secondary: AppColors.teal,
-    onSecondary: Colors.white,
-    surface: AppColors.surface,
-    onSurface: AppColors.textPrimary,
-    onSurfaceVariant: AppColors.textSecondary,
-    error: AppColors.danger,
-    onError: Colors.white,
-    outline: AppColors.border,
-    outlineVariant: AppColors.border,
-  );
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: AppColors.brand,
+        brightness: Brightness.light,
+      ).copyWith(
+        primary: AppColors.brand,
+        onPrimary: Colors.white,
+        primaryContainer: AppColors.soft,
+        onPrimaryContainer: AppColors.brand,
+        secondary: AppColors.teal,
+        onSecondary: Colors.white,
+        surface: AppColors.surface,
+        onSurface: AppColors.textPrimary,
+        onSurfaceVariant: AppColors.textSecondary,
+        error: AppColors.danger,
+        onError: Colors.white,
+        outline: AppColors.border,
+        outlineVariant: AppColors.border,
+      );
 
   final controlShape = RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(WeaveRadius.control),
@@ -133,10 +136,7 @@ ThemeData buildAppTheme() {
     colorScheme: scheme,
     scaffoldBackgroundColor: AppColors.background,
     dividerColor: AppColors.border,
-    dividerTheme: const DividerThemeData(
-      color: AppColors.border,
-      thickness: 1,
-    ),
+    dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
     listTileTheme: const ListTileThemeData(
       selectedColor: AppColors.brand,
       selectedTileColor: AppColors.soft,
@@ -177,10 +177,7 @@ ThemeData buildAppTheme() {
         height: 1.5,
         color: AppColors.textPrimary,
       ),
-      bodyMedium: TextStyle(
-        fontSize: 14,
-        color: AppColors.textPrimary,
-      ),
+      bodyMedium: TextStyle(fontSize: 14, color: AppColors.textPrimary),
       bodySmall: TextStyle(
         fontSize: 13,
         height: 1.4,

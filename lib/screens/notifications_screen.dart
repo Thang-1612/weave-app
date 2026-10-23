@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/interactions.dart';
 import '../services/friend_service.dart';
 import '../services/interaction_service.dart';
@@ -25,7 +26,7 @@ class UnreadBadge extends StatefulWidget {
 class _UnreadBadgeState extends State<UnreadBadge> {
   // Chỉ đếm các loại thông báo đang được bật trong Cài đặt
   late final Stream<int> _stream = NotificationService.watchMine().map(
-        (list) => list
+    (list) => list
         .where((n) => !n.read && UserPrefs.instance.notifEnabled(n.type))
         .length,
   );
@@ -38,10 +39,7 @@ class _UnreadBadgeState extends State<UnreadBadge> {
       builder: (context, snap) {
         final n = snap.data ?? 0;
         if (n <= 0) return widget.child;
-        return Badge(
-          label: Text(n > 99 ? '99+' : '$n'),
-          child: widget.child,
-        );
+        return Badge(label: Text(n > 99 ? '99+' : '$n'), child: widget.child);
       },
     );
   }
@@ -60,9 +58,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   static final _milestoneAvatar = AppColors.teal.withValues(alpha: 0.20);
 
   late final Stream<List<AppNotification>> _stream =
-  NotificationService.watchMine();
+      NotificationService.watchMine();
   late final Stream<List<Friendship>> _friendsStream =
-  FriendService.watchMine();
+      FriendService.watchMine();
 
   Future<void> _open(AppNotification n) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -157,8 +155,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.mail_outline,
-                      size: 64, color: AppColors.textSecondary),
+                  const Icon(
+                    Icons.mail_outline,
+                    size: 64,
+                    color: AppColors.textSecondary,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     tr(
@@ -216,8 +217,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         title: Text(
                           n.message,
                           style: TextStyle(
-                            fontWeight:
-                            n.read ? FontWeight.w500 : FontWeight.w700,
+                            fontWeight: n.read
+                                ? FontWeight.w500
+                                : FontWeight.w700,
                           ),
                         ),
                         subtitle: Text(formatTimeAgo(n.createdAt)),

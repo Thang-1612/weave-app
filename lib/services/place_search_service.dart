@@ -16,8 +16,9 @@ class PlaceSearchService {
   static const _nominatim = 'nominatim.openstreetmap.org';
   static const _timeout = Duration(seconds: 10);
 
-  static Map<String, String> get _headers =>
-      {if (!kIsWeb) 'User-Agent': 'WeaveApp/1.0 (com.example.social_app)'};
+  static Map<String, String> get _headers => {
+    if (!kIsWeb) 'User-Agent': 'WeaveApp/1.0 (com.example.social_app)',
+  };
 
   static String _shortName(Map<String, dynamic> e) {
     final n = (e['name'] as String?)?.trim() ?? '';
@@ -39,7 +40,10 @@ class PlaceSearchService {
   }
 
   static Future<List<WeavePlace>> _searchNominatim(
-      String q, int limit, bool vietnamOnly) async {
+    String q,
+    int limit,
+    bool vietnamOnly,
+  ) async {
     final uri = Uri.https(_nominatim, '/search', {
       'q': q,
       'format': 'jsonv2',
@@ -61,8 +65,12 @@ class PlaceSearchService {
   }
 
   static Future<List<WeavePlace>> _searchPhoton(
-      String q, int limit, bool vietnamOnly,
-      {double? biasLat, double? biasLng}) async {
+    String q,
+    int limit,
+    bool vietnamOnly, {
+    double? biasLat,
+    double? biasLng,
+  }) async {
     final uri = Uri.https('photon.komoot.io', '/api/', {
       'q': q,
       // Lấy dư rồi lọc theo quốc gia, vì khung tìm kiếm cũng phủ nước láng giềng.
@@ -95,8 +103,10 @@ class PlaceSearchService {
       }
 
       String s(String k) => ((props[k] as String?) ?? '').trim();
-      final street =
-      [s('housenumber'), s('street')].where((x) => x.isNotEmpty).join(' ');
+      final street = [
+        s('housenumber'),
+        s('street'),
+      ].where((x) => x.isNotEmpty).join(' ');
       final parts = <String>[];
       for (final x in [
         s('name'),
@@ -110,19 +120,22 @@ class PlaceSearchService {
         if (x.isNotEmpty && !parts.contains(x)) parts.add(x);
       }
       if (parts.isEmpty) continue;
-      out.add(WeavePlace(
-        name: s('name').isNotEmpty ? s('name') : parts.first,
-        address: parts.join(', '),
-        lat: lat,
-        lng: lng,
-      ));
+      out.add(
+        WeavePlace(
+          name: s('name').isNotEmpty ? s('name') : parts.first,
+          address: parts.join(', '),
+          lat: lat,
+          lng: lng,
+        ),
+      );
       if (out.length >= limit) break;
     }
     return out;
   }
 
   static bool _samePlace(WeavePlace a, WeavePlace b) {
-    final close = a.lat != null &&
+    final close =
+        a.lat != null &&
         a.lng != null &&
         b.lat != null &&
         b.lng != null &&
@@ -134,12 +147,12 @@ class PlaceSearchService {
   /// [vietnamOnly] = true: chỉ trả về địa điểm ở Việt Nam (mặc định).
   /// [biasLat]/[biasLng]: ưu tiên kết quả gần điểm này (tâm bản đồ).
   static Future<List<WeavePlace>> search(
-      String query, {
-        int limit = 6,
-        bool vietnamOnly = true,
-        double? biasLat,
-        double? biasLng,
-      }) async {
+    String query, {
+    int limit = 6,
+    bool vietnamOnly = true,
+    double? biasLat,
+    double? biasLng,
+  }) async {
     final q = query.trim();
     if (q.length < 3) return const [];
 
@@ -154,8 +167,13 @@ class PlaceSearchService {
     if (results.length >= 3) return results;
 
     try {
-      final more = await _searchPhoton(q, limit, vietnamOnly,
-          biasLat: biasLat, biasLng: biasLng);
+      final more = await _searchPhoton(
+        q,
+        limit,
+        vietnamOnly,
+        biasLat: biasLat,
+        biasLng: biasLng,
+      );
       for (final p in more) {
         if (!results.any((r) => _samePlace(r, p))) results.add(p);
       }
@@ -195,7 +213,9 @@ class PlaceSearchService {
     final patterns = <RegExp>[
       RegExp(r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)'),
       RegExp(r'@(-?\d+\.\d+),(-?\d+\.\d+)'),
-      RegExp(r'[?&](?:q|query|ll|center|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)'),
+      RegExp(
+        r'[?&](?:q|query|ll|center|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)',
+      ),
     ];
     for (final re in patterns) {
       // Liên kết chỉ có @vĩ độ,kinh độ mà không phải trang một địa điểm là

@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
@@ -33,11 +32,12 @@ Map<String, Object> _compressSync(Uint8List raw) {
     final side = sides[i];
     final resized = (decoded.width > side || decoded.height > side)
         ? (decoded.width >= decoded.height
-        ? img.copyResize(decoded, width: side)
-        : img.copyResize(decoded, height: side))
+              ? img.copyResize(decoded, width: side)
+              : img.copyResize(decoded, height: side))
         : decoded;
-    final out =
-    Uint8List.fromList(img.encodeJpg(resized, quality: qualities[i]));
+    final out = Uint8List.fromList(
+      img.encodeJpg(resized, quality: qualities[i]),
+    );
     best = out;
     bestW = resized.width;
     bestH = resized.height;

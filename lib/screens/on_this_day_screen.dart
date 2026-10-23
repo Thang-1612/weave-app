@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/l10n.dart';
 import '../services/on_this_day_service.dart';
 import '../theme/app_theme.dart';
@@ -63,10 +64,7 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
         const Icon(Icons.history, size: 56, color: AppColors.textSecondary),
         const SizedBox(height: 16),
         Text(
-          tr(
-            'Chưa có kỷ niệm nào vào ngày này',
-            'No memories on this day yet',
-          ),
+          tr('Chưa có kỷ niệm nào vào ngày này', 'No memories on this day yet'),
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 16,
@@ -128,7 +126,11 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
           child: Row(
             children: [
-              const Icon(Icons.history, size: 18, color: AppColors.textSecondary),
+              const Icon(
+                Icons.history,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 6),
               Text(
                 _yearsLabel(g.yearsAgo),
@@ -213,10 +215,8 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
       height: 52,
       // Màu và viền đã có trong chipTheme chung; chỉ giữ dạng viên thuốc, không tick.
       child: ChipTheme(
-        data: ChipTheme.of(context).copyWith(
-          shape: const StadiumBorder(),
-          showCheckmark: false,
-        ),
+        data: ChipTheme.of(context)
+            .copyWith(shape: const StadiumBorder(), showCheckmark: false),
         child: ListView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -323,9 +323,7 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Ngày này năm xưa', 'On this day')),
-      ),
+      appBar: AppBar(title: Text(tr('Ngày này năm xưa', 'On this day'))),
       body: FutureBuilder<List<OnThisDayGroup>>(
         future: _future,
         builder: (context, snap) {
@@ -368,9 +366,8 @@ class OnThisDayTile extends StatelessWidget {
       leading: const Icon(Icons.history),
       title: Text(tr('Ngày này năm xưa', 'On this day')),
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const OnThisDayScreen()),
-        );
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const OnThisDayScreen()));
       },
     );
   }

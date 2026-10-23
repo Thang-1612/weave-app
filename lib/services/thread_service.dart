@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/interactions.dart';
 import '../models/post.dart';
 import '../models/user_profile.dart';
@@ -37,10 +38,10 @@ class ThreadService {
   }
 
   static Future<void> _notify(
-      String toUid,
-      String id,
-      Map<String, dynamic> data,
-      ) async {
+    String toUid,
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     if (toUid.isEmpty || toUid == 'ai') return;
     try {
       await FirebaseFirestore.instance
@@ -49,10 +50,10 @@ class ThreadService {
           .collection('notifications')
           .doc(id)
           .set({
-        ...data,
-        'read': false,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+            ...data,
+            'read': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
     } catch (_) {
       // Đã tồn tại (chống trùng) hoặc không có quyền: bỏ qua
     }
@@ -96,11 +97,9 @@ class ThreadService {
         'reactionSummary': <String, dynamic>{},
         'createdAt': FieldValue.serverTimestamp(),
       });
-      tx.set(
-        postRef,
-        {'comments': FieldValue.increment(1)},
-        SetOptions(merge: true),
-      );
+      tx.set(postRef, {
+        'comments': FieldValue.increment(1),
+      }, SetOptions(merge: true));
       total = reactions + comments + 1;
     });
 
@@ -171,11 +170,9 @@ class ThreadService {
         'reactionSummary': <String, dynamic>{},
         'createdAt': FieldValue.serverTimestamp(),
       });
-      tx.set(
-        postRef,
-        {'comments': FieldValue.increment(1)},
-        SetOptions(merge: true),
-      );
+      tx.set(postRef, {
+        'comments': FieldValue.increment(1),
+      }, SetOptions(merge: true));
     });
   }
 
@@ -184,10 +181,10 @@ class ThreadService {
   // -------------------------------------------------------------------------
 
   static DocumentReference<Map<String, dynamic>> _commentRef(
-      String postId,
-      String commentId, [
-        String collection = 'posts',
-      ]) {
+    String postId,
+    String commentId, [
+    String collection = 'posts',
+  ]) {
     return FirebaseFirestore.instance
         .collection(collection)
         .doc(postId)
@@ -196,10 +193,10 @@ class ThreadService {
   }
 
   static Stream<String?> watchMyCommentReaction(
-      String postId,
-      String commentId, {
-        String collection = 'posts',
-      }) {
+    String postId,
+    String commentId, {
+    String collection = 'posts',
+  }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return Stream.value(null);
     return _commentRef(postId, commentId, collection)
@@ -211,10 +208,10 @@ class ThreadService {
 
   /// Thả cảm xúc: chưa thả thì thêm, chọn lại cùng icon thì bỏ, icon khác thì đổi.
   static Future<void> setCommentReaction(
-      Post post,
-      Comment comment,
-      String emoji,
-      ) async {
+    Post post,
+    Comment comment,
+    String emoji,
+  ) async {
     final me = _me;
     final commentRef = _commentRef(post.id, comment.id, post.collection);
     final myRef = commentRef.collection('reactions').doc(me.uid);
@@ -233,40 +230,28 @@ class ThreadService {
           'userId': me.uid,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        tx.set(
-          commentRef,
-          {
-            'reactions': FieldValue.increment(1),
-            'reactionSummary': {emoji: FieldValue.increment(1)},
-          },
-          SetOptions(merge: true),
-        );
+        tx.set(commentRef, {
+          'reactions': FieldValue.increment(1),
+          'reactionSummary': {emoji: FieldValue.increment(1)},
+        }, SetOptions(merge: true));
         added = true;
       } else if (old == emoji) {
         tx.delete(myRef);
-        tx.set(
-          commentRef,
-          {
-            'reactions': FieldValue.increment(-1),
-            'reactionSummary': {emoji: FieldValue.increment(-1)},
-          },
-          SetOptions(merge: true),
-        );
+        tx.set(commentRef, {
+          'reactions': FieldValue.increment(-1),
+          'reactionSummary': {emoji: FieldValue.increment(-1)},
+        }, SetOptions(merge: true));
       } else {
         tx.update(myRef, {
           'emoji': emoji,
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        tx.set(
-          commentRef,
-          {
-            'reactionSummary': {
-              old: FieldValue.increment(-1),
-              emoji: FieldValue.increment(1),
-            },
+        tx.set(commentRef, {
+          'reactionSummary': {
+            old: FieldValue.increment(-1),
+            emoji: FieldValue.increment(1),
           },
-          SetOptions(merge: true),
-        );
+        }, SetOptions(merge: true));
       }
     });
 
@@ -307,17 +292,17 @@ class ThreadService {
           .collection('reports')
           .doc('${comment.id}_${me.uid}')
           .set({
-        'type': 'comment',
-        'postId': post.id,
-        'commentId': comment.id,
-        'commentAuthorId': comment.authorId,
-        'commentText': snippet,
-        'reporterId': me.uid,
-        'reason': reason,
-        'note': note.trim(),
-        'status': 'open',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+            'type': 'comment',
+            'postId': post.id,
+            'commentId': comment.id,
+            'commentAuthorId': comment.authorId,
+            'commentText': snippet,
+            'reporterId': me.uid,
+            'reason': reason,
+            'note': note.trim(),
+            'status': 'open',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
       return true;
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') return false;

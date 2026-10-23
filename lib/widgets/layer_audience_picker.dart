@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/weave_layer.dart';
 import '../services/group_service.dart';
 import '../services/l10n.dart';
@@ -41,10 +42,10 @@ String layerAudienceText(LayerAudience a) {
 /// Bảng chọn đối tượng cho một lớp. Chọn "Nhóm riêng" sẽ mở tiếp bảng chọn
 /// (hoặc tạo) nhóm. Trả về null nếu người dùng đóng bảng.
 Future<LayerAudience?> showLayerAudiencePicker(
-    BuildContext context, {
-      required LayerAudience current,
-      String? title,
-    }) async {
+  BuildContext context, {
+  required LayerAudience current,
+  String? title,
+}) async {
   final type = await showModalBottomSheet<String>(
     context: context,
     shape: const RoundedRectangleBorder(
@@ -173,21 +174,26 @@ class _GroupPickerSheetState extends State<_GroupPickerSheet> {
                         ListTile(
                           leading: const CircleAvatar(
                             backgroundColor: AppColors.soft,
-                            child: Icon(Icons.groups_outlined,
-                                color: AppColors.brand),
+                            child: Icon(
+                              Icons.groups_outlined,
+                              color: AppColors.brand,
+                            ),
                           ),
                           title: Text(
                             g.name,
-                            style:
-                            const TextStyle(fontWeight: FontWeight.w600),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           subtitle: Text(
-                            tr('${g.memberIds.length} thành viên',
-                                '${g.memberIds.length} members'),
+                            tr(
+                              '${g.memberIds.length} thành viên',
+                              '${g.memberIds.length} members',
+                            ),
                           ),
                           trailing: widget.currentGroupId == g.id
-                              ? const Icon(Icons.check_circle,
-                              color: AppColors.brand)
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  color: AppColors.brand,
+                                )
                               : null,
                           onTap: () => Navigator.of(context).pop(g),
                         ),
@@ -216,12 +222,12 @@ class _GroupPickerSheetState extends State<_GroupPickerSheet> {
 
 /// Hộp nhập một dòng chữ ngắn (tên lớp, tên nhóm). Trả về null nếu hủy.
 Future<String?> showLayerNameDialog(
-    BuildContext context, {
-      required String title,
-      String initial = '',
-      String? hint,
-      int maxLength = 40,
-    }) {
+  BuildContext context, {
+  required String title,
+  String initial = '',
+  String? hint,
+  int maxLength = 40,
+}) {
   return showDialog<String>(
     context: context,
     builder: (_) => _NameDialog(

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/space.dart';
 import '../services/account_service.dart';
 import '../services/interest_service.dart';
@@ -136,9 +137,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openSettings() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SettingsHubScreen()),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const SettingsHubScreen()));
   }
 
   // Menu chủ đề dùng chung cho Drawer (mobile, tablet) và sidebar (desktop).
@@ -219,25 +219,23 @@ class _HomeScreenState extends State<HomeScreen> {
             // Tìm kiếm chưa được làm: báo rõ cho người dùng thay vì im lặng.
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  tr('Tìm kiếm sắp có', 'Search is coming soon'),
-                ),
+                content: Text(tr('Tìm kiếm sắp có', 'Search is coming soon')),
               ),
             ),
           ),
           IconButton(
             tooltip: tr('Tin nhắn', 'Messages'),
             icon: ChatUnreadBadge(child: const Icon(Icons.chat_bubble_outline)),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ChatListScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ChatListScreen())),
           ),
           IconButton(
             tooltip: 'Weave Storymaker',
             icon: const Icon(Icons.auto_awesome),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const StoryListScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const StoryListScreen())),
           ),
           if (info.isMobile) createAction,
         ],
@@ -427,10 +425,8 @@ class _HomeScreenState extends State<HomeScreen> {
           if (u == null) return;
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => ContributionScreen(
-                userId: u.uid,
-                name: u.displayName ?? '',
-              ),
+              builder: (_) =>
+                  ContributionScreen(userId: u.uid, name: u.displayName ?? ''),
             ),
           );
         },
@@ -505,10 +501,8 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icons.mail_outline,
         selectedIcon: Icons.mail,
         // key theo uid để huy hiệu chưa đọc tự làm mới khi đổi tài khoản
-        iconWrapper: (icon, selected) => UnreadBadge(
-          key: ValueKey('$uid-$selected'),
-          child: icon,
-        ),
+        iconWrapper: (icon, selected) =>
+            UnreadBadge(key: ValueKey('$uid-$selected'), child: icon),
       ),
       WeaveDestination(
         label: tr('Cá nhân', 'Profile'),
@@ -541,11 +535,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _page,
         children: [
-          FeedScreen(
-            key: ValueKey(uid),
-            space: _space,
-            favorites: _favorites,
-          ),
+          FeedScreen(key: ValueKey(uid), space: _space, favorites: _favorites),
           // key theo uid để các trang tự làm mới khi đổi tài khoản
           FriendsScreen(key: ValueKey(uid)),
           NotificationsScreen(key: ValueKey(uid)),

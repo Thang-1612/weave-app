@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/l10n.dart';
 import '../services/response_service.dart';
@@ -28,7 +29,9 @@ class _ResponseBarState extends State<ResponseBar> {
     if (set == null) return;
     try {
       final c = await ResponseService.counts(
-          widget.post, set.map((e) => e.id).toList());
+        widget.post,
+        set.map((e) => e.id).toList(),
+      );
       if (mounted) setState(() => _counts = c);
     } catch (_) {
       // lỗi đếm thì vẫn hiện nút, chỉ không có số
@@ -75,13 +78,15 @@ class _ResponseBarState extends State<ResponseBar> {
                   shape: const StadiumBorder(),
                   label: Text(
                     '${r.emoji} ${tr(r.vi, r.en)}'
-                        '${(_counts[r.id] ?? 0) > 0 ? ' · ${_counts[r.id]}' : ''}',
+                    '${(_counts[r.id] ?? 0) > 0 ? ' · ${_counts[r.id]}' : ''}',
                     style: TextStyle(
                       fontSize: 12.5,
-                      fontWeight:
-                      mine == r.id ? FontWeight.w700 : FontWeight.w500,
-                      color:
-                      mine == r.id ? AppColors.brand : AppColors.textPrimary,
+                      fontWeight: mine == r.id
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: mine == r.id
+                          ? AppColors.brand
+                          : AppColors.textPrimary,
                     ),
                   ),
                   onSelected: (_) => _tap(r.id),

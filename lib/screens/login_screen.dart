@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../services/l10n.dart';
 import '../services/user_prefs.dart';
 import '../theme/app_theme.dart';
@@ -22,10 +23,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (_email.text.trim().isEmpty || _password.text.isEmpty) {
-      setState(() => _error = tr(
-        'Vui lòng nhập email và mật khẩu',
-        'Please enter your email and password',
-      ));
+      setState(
+        () => _error = tr(
+          'Vui lòng nhập email và mật khẩu',
+          'Please enter your email and password',
+        ),
+      );
       return;
     }
     setState(() {
@@ -53,7 +56,10 @@ class _LoginScreenState extends State<LoginScreen> {
       case 'user-not-found':
       case 'wrong-password':
       case 'invalid-credential':
-        return tr('Email hoặc mật khẩu không đúng', 'Incorrect email or password');
+        return tr(
+          'Email hoặc mật khẩu không đúng',
+          'Incorrect email or password',
+        );
       case 'user-disabled':
         return tr(
           'Tài khoản này đã bị vô hiệu hóa',
@@ -88,7 +94,9 @@ class _LoginScreenState extends State<LoginScreen> {
           label,
           style: TextStyle(
             fontWeight: selected ? FontWeight.w800 : FontWeight.w400,
-            decoration: selected ? TextDecoration.underline : TextDecoration.none,
+            decoration: selected
+                ? TextDecoration.underline
+                : TextDecoration.none,
             decorationColor: Colors.white,
           ),
         ),
@@ -99,7 +107,10 @@ class _LoginScreenState extends State<LoginScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         option('vi', 'Tiếng Việt'),
-        const Text('·', style: TextStyle(color: Color.fromRGBO(255, 255, 255, 0.7))),
+        const Text(
+          '·',
+          style: TextStyle(color: Color.fromRGBO(255, 255, 255, 0.7)),
+        ),
         option('en', 'English'),
       ],
     );
@@ -140,8 +151,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
-                      decoration:
-                      authInputDecoration('Email', Icons.email_outlined),
+                      decoration: authInputDecoration(
+                        'Email',
+                        Icons.email_outlined,
+                      ),
                     ),
                     const SizedBox(height: 14),
                     TextField(
@@ -169,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (_loading)
                       const Center(child: CircularProgressIndicator())
                     else
-                    // Nút chính duy nhất của màn hình: kiểu nút theo theme
+                      // Nút chính duy nhất của màn hình: kiểu nút theo theme
                       FilledButton(
                         onPressed: _login,
                         child: Text(tr('Đăng nhập', 'Log in')),
@@ -190,13 +203,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _loading
                           ? null
                           : () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterScreen(),
-                          ),
-                        );
-                      },
-                      child: Text(tr('Tạo tài khoản mới', 'Create new account')),
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const RegisterScreen(),
+                                ),
+                              );
+                            },
+                      child: Text(
+                        tr('Tạo tài khoản mới', 'Create new account'),
+                      ),
                     ),
                   ],
                 ),

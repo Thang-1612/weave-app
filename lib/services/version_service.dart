@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/post.dart';
 import 'l10n.dart';
 import 'post_service.dart';
@@ -81,14 +82,18 @@ class VersionService {
     final fresh = await PostService.getPost(current.id) ?? current;
     await snapshot(
       fresh,
-      tr('Trước khi khôi phục bản ngày ${_fmt(v.savedAt)}',
-          'Before restoring the version from ${_fmt(v.savedAt)}'),
+      tr(
+        'Trước khi khôi phục bản ngày ${_fmt(v.savedAt)}',
+        'Before restoring the version from ${_fmt(v.savedAt)}',
+      ),
     );
     await fresh.ref.update({'blocks': v.blocks, 'text': v.text});
     await LivePostService.addSystemUpdate(
       fresh,
-      tr('Đã khôi phục phiên bản ngày ${_fmt(v.savedAt)}',
-          'Restored the version from ${_fmt(v.savedAt)}'),
+      tr(
+        'Đã khôi phục phiên bản ngày ${_fmt(v.savedAt)}',
+        'Restored the version from ${_fmt(v.savedAt)}',
+      ),
       'restore',
     );
   }

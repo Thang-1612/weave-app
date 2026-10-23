@@ -91,13 +91,17 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final nav = Navigator.of(context);
     if (_title.text.trim().isEmpty) {
-      messenger.showSnackBar(SnackBar(
-          content: Text(tr('Hãy nhập tên hoạt động', 'Enter an activity name'))));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(tr('Hãy nhập tên hoạt động', 'Enter an activity name')),
+        ),
+      );
       return;
     }
     if (_group == null) {
-      messenger.showSnackBar(SnackBar(
-          content: Text(tr('Hãy chọn nhóm', 'Pick a group'))));
+      messenger.showSnackBar(
+        SnackBar(content: Text(tr('Hãy chọn nhóm', 'Pick a group'))),
+      );
       return;
     }
     setState(() => _busy = true);
@@ -110,8 +114,9 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
         endAt: _range?.end,
         inviteeIds: _invitees.toList(),
       );
-      nav.pushReplacement(MaterialPageRoute(
-          builder: (_) => WeaveDetailScreen(activityId: a.id)));
+      nav.pushReplacement(
+        MaterialPageRoute(builder: (_) => WeaveDetailScreen(activityId: a.id)),
+      );
     } catch (e) {
       if (mounted) setState(() => _busy = false);
       messenger.showSnackBar(SnackBar(content: Text('$e')));
@@ -187,10 +192,14 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
       OutlinedButton.icon(
         onPressed: _pickRange,
         icon: const Icon(Icons.event),
-        label: Text(_range == null
-            ? tr('Chọn khoảng ngày (có thể bỏ qua)',
-            'Pick date range (optional)')
-            : weaveRange(_range!.start, _range!.end)),
+        label: Text(
+          _range == null
+              ? tr(
+                  'Chọn khoảng ngày (có thể bỏ qua)',
+                  'Pick date range (optional)',
+                )
+              : weaveRange(_range!.start, _range!.end),
+        ),
       ),
     ];
   }
@@ -204,8 +213,10 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
       _label(tr('Mời thành viên', 'Invite members')),
       if (others.isEmpty)
         Text(
-          tr('Nhóm này chưa có thành viên nào khác.',
-              'No other members in this group.'),
+          tr(
+            'Nhóm này chưa có thành viên nào khác.',
+            'No other members in this group.',
+          ),
           style: const TextStyle(color: AppColors.textSecondary),
         ),
       for (final uid in others)
@@ -231,9 +242,13 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
       onPressed: _busy ? null : _submit,
       child: _busy
           ? const SizedBox(
-          height: 18,
-          width: 18,
-          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
           : Text(tr('Tạo hoạt động', 'Create activity')),
     );
   }
@@ -241,9 +256,7 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Tạo hoạt động', 'New activity')),
-      ),
+      appBar: AppBar(title: Text(tr('Tạo hoạt động', 'New activity'))),
       body: FutureBuilder<List<GroupInfo>>(
         future: _groups,
         builder: (context, snap) {
@@ -262,8 +275,10 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      tr('Bạn chưa tham gia nhóm nào. Hãy tạo nhóm trước.',
-                          'You are not in any group yet. Create a group first.'),
+                      tr(
+                        'Bạn chưa tham gia nhóm nào. Hãy tạo nhóm trước.',
+                        'You are not in any group yet. Create a group first.',
+                      ),
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
@@ -322,19 +337,25 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                     children: _group == null
                                         ? [
-                                      _label(tr('Mời thành viên',
-                                          'Invite members')),
-                                      Text(
-                                        tr('Chọn nhóm để mời thành viên.',
-                                            'Pick a group to invite members.'),
-                                        style: const TextStyle(
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ]
+                                            _label(
+                                              tr(
+                                                'Mời thành viên',
+                                                'Invite members',
+                                              ),
+                                            ),
+                                            Text(
+                                              tr(
+                                                'Chọn nhóm để mời thành viên.',
+                                                'Pick a group to invite members.',
+                                              ),
+                                              style: const TextStyle(
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ]
                                         : _inviteeFields(),
                                   ),
                                 ),

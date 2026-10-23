@@ -8,12 +8,7 @@ class WeavePlace {
   final double? lat;
   final double? lng;
 
-  const WeavePlace({
-    required this.name,
-    this.lat,
-    this.lng,
-    this.address,
-  });
+  const WeavePlace({required this.name, this.lat, this.lng, this.address});
 
   factory WeavePlace.fromMap(Map<String, dynamic> m) => WeavePlace(
     name: m['name'] as String,
@@ -22,8 +17,12 @@ class WeavePlace {
     lng: (m['lng'] as num?)?.toDouble(),
   );
 
-  Map<String, dynamic> toMap() =>
-      {'name': name, 'address': address, 'lat': lat, 'lng': lng};
+  Map<String, dynamic> toMap() => {
+    'name': name,
+    'address': address,
+    'lat': lat,
+    'lng': lng,
+  };
 }
 
 class WeaveActivity {
@@ -83,7 +82,8 @@ class WeaveActivity {
       lockedPlace: d['lockedPlace'] == null
           ? null
           : WeavePlace.fromMap(
-          Map<String, dynamic>.from(d['lockedPlace'] as Map)),
+              Map<String, dynamic>.from(d['lockedPlace'] as Map),
+            ),
       memberIds: List<String>.from(d['memberIds'] as List? ?? const []),
       // createdAt có thể null trong lúc serverTimestamp chưa được ghi xong
       createdAt: ts('createdAt') ?? DateTime.now(),
@@ -99,8 +99,7 @@ class WeaveActivity {
     'status': status.name,
     'startAt': startAt == null ? null : Timestamp.fromDate(startAt!),
     'endAt': endAt == null ? null : Timestamp.fromDate(endAt!),
-    'lockedDate':
-    lockedDate == null ? null : Timestamp.fromDate(lockedDate!),
+    'lockedDate': lockedDate == null ? null : Timestamp.fromDate(lockedDate!),
     'lockedPlace': lockedPlace?.toMap(),
     'memberIds': memberIds,
     'createdAt': FieldValue.serverTimestamp(),

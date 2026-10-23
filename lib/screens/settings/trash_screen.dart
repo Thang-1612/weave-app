@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../models/space.dart';
 import '../../services/l10n.dart';
 import '../../services/trash_service.dart';
@@ -64,8 +65,9 @@ class _TrashScreenState extends State<TrashScreen> {
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content:
-          Text('${tr('Không khôi phục được', 'Could not restore')}: $e'),
+          content: Text(
+            '${tr('Không khôi phục được', 'Could not restore')}: $e',
+          ),
         ),
       );
     }
@@ -157,7 +159,9 @@ class _TrashScreenState extends State<TrashScreen> {
             Text(
               spaceLabel,
               style: const TextStyle(
-                  fontSize: 12, color: AppColors.textSecondary),
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
           const SizedBox(height: 6),
           Text(
@@ -177,7 +181,9 @@ class _TrashScreenState extends State<TrashScreen> {
             Text(
               extras.join(' · '),
               style: const TextStyle(
-                  fontSize: 12, color: AppColors.textSecondary),
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
           const SizedBox(height: 8),
@@ -187,7 +193,9 @@ class _TrashScreenState extends State<TrashScreen> {
               'Deleted ${_ago(item.deletedAt)} · ${item.daysLeft} day(s) left',
             ),
             style: const TextStyle(
-                fontSize: 12, color: AppColors.textSecondary),
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -233,8 +241,11 @@ class _TrashScreenState extends State<TrashScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.delete_outline,
-                  size: 56, color: AppColors.textSecondary),
+              const Icon(
+                Icons.delete_outline,
+                size: 56,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(height: 12),
               Text(
                 tr(
@@ -243,7 +254,9 @@ class _TrashScreenState extends State<TrashScreen> {
                 ),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    color: AppColors.textSecondary, height: 1.4),
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
               ),
             ],
           ),
@@ -265,8 +278,11 @@ class _TrashScreenState extends State<TrashScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline,
-                      size: 20, color: AppColors.brand),
+                  const Icon(
+                    Icons.info_outline,
+                    size: 20,
+                    color: AppColors.brand,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(

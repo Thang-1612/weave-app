@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
 
@@ -49,10 +50,10 @@ String audienceHint(String v) {
 
 /// Bảng chọn đối tượng. Trả về 'public', 'friends', 'me' hoặc null nếu đóng bảng.
 Future<String?> showAudiencePicker(
-    BuildContext context, {
-      required String current,
-      String? title,
-    }) {
+  BuildContext context, {
+  required String current,
+  String? title,
+}) {
   return showModalBottomSheet<String>(
     context: context,
     shape: const RoundedRectangleBorder(

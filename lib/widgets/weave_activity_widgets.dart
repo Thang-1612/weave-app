@@ -91,17 +91,19 @@ class WeaveUserAvatar extends StatelessWidget {
       initialData: WeaveService.cachedProfile(uid),
       builder: (context, snap) {
         final name = snap.data?.name ?? '';
-        final initial =
-        name.isEmpty ? '?' : name.characters.first.toUpperCase();
+        final initial = name.isEmpty
+            ? '?'
+            : name.characters.first.toUpperCase();
         return CircleAvatar(
           radius: radius,
           backgroundColor: AppColors.brand,
           child: Text(
             initial,
             style: TextStyle(
-                color: Colors.white,
-                fontSize: radius * 0.9,
-                fontWeight: FontWeight.w700),
+              color: Colors.white,
+              fontSize: radius * 0.9,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         );
       },
@@ -121,8 +123,11 @@ class WeaveUserName extends StatelessWidget {
       initialData: WeaveService.cachedProfile(uid),
       builder: (context, snap) {
         final name = snap.data?.name ?? '';
-        return Text(name.isEmpty ? '…' : name,
-            style: style, overflow: TextOverflow.ellipsis);
+        return Text(
+          name.isEmpty ? '…' : name,
+          style: style,
+          overflow: TextOverflow.ellipsis,
+        );
       },
     );
   }
@@ -153,7 +158,9 @@ class WeaveAvatarStack extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(1.5),
                     decoration: const BoxDecoration(
-                        color: AppColors.surface, shape: BoxShape.circle),
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                    ),
                     child: WeaveUserAvatar(uid: shown[i], radius: 12),
                   ),
                 ),
@@ -163,8 +170,13 @@ class WeaveAvatarStack extends StatelessWidget {
         if (extra > 0)
           Padding(
             padding: const EdgeInsets.only(left: 6),
-            child: Text('+$extra',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            child: Text(
+              '+$extra',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
           ),
       ],
     );
@@ -201,15 +213,15 @@ class WeaveRsvpSelector extends StatelessWidget {
         for (final s in const [
           RsvpStatus.going,
           RsvpStatus.maybe,
-          RsvpStatus.no
+          RsvpStatus.no,
         ])
           ButtonSegment(value: s, label: Text(weaveRsvpLabel(s))),
       ],
       selected: current == RsvpStatus.pending ? <RsvpStatus>{} : {current},
       onSelectionChanged: enabled
           ? (set) {
-        if (set.isNotEmpty) onChanged(set.first);
-      }
+              if (set.isNotEmpty) onChanged(set.first);
+            }
           : null,
     );
   }
@@ -218,8 +230,11 @@ class WeaveRsvpSelector extends StatelessWidget {
 class WeaveActivityCard extends StatelessWidget {
   final WeaveActivity activity;
   final VoidCallback onTap;
-  const WeaveActivityCard(
-      {super.key, required this.activity, required this.onTap});
+  const WeaveActivityCard({
+    super.key,
+    required this.activity,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +261,9 @@ class WeaveActivityCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 16),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -255,30 +272,53 @@ class WeaveActivityCard extends StatelessWidget {
               ),
               if (a.description != null) ...[
                 const SizedBox(height: 4),
-                Text(a.description!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.textSecondary, height: 1.3)),
+                Text(
+                  a.description!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    height: 1.3,
+                  ),
+                ),
               ],
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.event, size: 16, color: AppColors.textSecondary),
+                  const Icon(
+                    Icons.event,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
-                      child: Text(when,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 13, color: AppColors.textSecondary))),
+                    child: Text(
+                      when,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
                   if (a.lockedPlace != null) ...[
                     const SizedBox(width: 12),
-                    const Icon(Icons.place, size: 16, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.place,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 4),
                     Flexible(
-                        child: Text(a.lockedPlace!.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 13, color: AppColors.textSecondary))),
+                      child: Text(
+                        a.lockedPlace!.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
                   ],
                 ],
               ),

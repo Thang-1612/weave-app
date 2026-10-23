@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/interactions.dart';
 import '../models/post.dart';
 import 'interest_service.dart';
@@ -35,10 +36,10 @@ class NotificationService {
   }
 
   static Future<void> _create(
-      String toUid,
-      String id,
-      Map<String, dynamic> data,
-      ) async {
+    String toUid,
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     if (toUid.isEmpty) return;
     try {
       await _col(toUid).doc(id).set({
@@ -135,6 +136,7 @@ class NotificationService {
       'preview': _preview(text),
     });
   }
+
   static Future<void> notifyFeedback({
     required Post post,
     required String feedbackId,
@@ -175,9 +177,9 @@ class ReactionService {
 
   /// Cảm xúc hiện tại của tôi trên một bài viết (null nếu chưa thả).
   static Stream<String?> watchMyReaction(
-      String postId, {
-        String collection = 'posts',
-      }) {
+    String postId, {
+    String collection = 'posts',
+  }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return Stream.value(null);
     return FirebaseFirestore.instance
@@ -216,41 +218,29 @@ class ReactionService {
           'userId': me.uid,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        tx.set(
-          postRef,
-          {
-            'reactions': FieldValue.increment(1),
-            'reactionSummary': {emoji: FieldValue.increment(1)},
-          },
-          SetOptions(merge: true),
-        );
+        tx.set(postRef, {
+          'reactions': FieldValue.increment(1),
+          'reactionSummary': {emoji: FieldValue.increment(1)},
+        }, SetOptions(merge: true));
         added = true;
         total = reactions + 1 + comments;
       } else if (old == emoji) {
         tx.delete(myRef);
-        tx.set(
-          postRef,
-          {
-            'reactions': FieldValue.increment(-1),
-            'reactionSummary': {emoji: FieldValue.increment(-1)},
-          },
-          SetOptions(merge: true),
-        );
+        tx.set(postRef, {
+          'reactions': FieldValue.increment(-1),
+          'reactionSummary': {emoji: FieldValue.increment(-1)},
+        }, SetOptions(merge: true));
       } else {
         tx.update(myRef, {
           'emoji': emoji,
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        tx.set(
-          postRef,
-          {
-            'reactionSummary': {
-              old: FieldValue.increment(-1),
-              emoji: FieldValue.increment(1),
-            },
+        tx.set(postRef, {
+          'reactionSummary': {
+            old: FieldValue.increment(-1),
+            emoji: FieldValue.increment(1),
           },
-          SetOptions(merge: true),
-        );
+        }, SetOptions(merge: true));
       }
     });
 
@@ -284,9 +274,9 @@ class ReactionService {
 // ---------------------------------------------------------------------------
 class CommentService {
   static Stream<List<Comment>> watchComments(
-      String postId, {
-        String collection = 'posts',
-      }) {
+    String postId, {
+    String collection = 'posts',
+  }) {
     return FirebaseFirestore.instance
         .collection(collection)
         .doc(postId)
@@ -320,11 +310,9 @@ class CommentService {
         'text': clean,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      tx.set(
-        postRef,
-        {'comments': FieldValue.increment(1)},
-        SetOptions(merge: true),
-      );
+      tx.set(postRef, {
+        'comments': FieldValue.increment(1),
+      }, SetOptions(merge: true));
       total = reactions + comments + 1;
     });
 
@@ -344,11 +332,9 @@ class CommentService {
     final commentRef = postRef.collection('comments').doc(comment.id);
     await FirebaseFirestore.instance.runTransaction((tx) async {
       tx.delete(commentRef);
-      tx.set(
-        postRef,
-        {'comments': FieldValue.increment(-1)},
-        SetOptions(merge: true),
-      );
+      tx.set(postRef, {
+        'comments': FieldValue.increment(-1),
+      }, SetOptions(merge: true));
     });
   }
 }

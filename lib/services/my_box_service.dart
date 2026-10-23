@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'l10n.dart';
 
 class BoxNote {
@@ -42,23 +43,23 @@ class MyBoxService {
         .limit(200)
         .snapshots()
         .map((s) {
-      final list = s.docs.map((d) {
-        final m = d.data();
-        final ts = m['createdAt'];
-        return BoxNote(
-          id: d.id,
-          text: m['text'] as String? ?? '',
-          pinned: m['pinned'] as bool? ?? false,
-          posted: m['posted'] as bool? ?? false,
-          // createdAt tạm null ngay lúc vừa ghi, trước khi máy chủ xác nhận
-          createdAt: ts is Timestamp ? ts.toDate() : DateTime.now(),
-        );
-      }).toList();
-      // sort ổn định: ghim trước, giữ nguyên thứ tự mới nhất trước
-      final pinned = list.where((n) => n.pinned);
-      final rest = list.where((n) => !n.pinned);
-      return [...pinned, ...rest];
-    });
+          final list = s.docs.map((d) {
+            final m = d.data();
+            final ts = m['createdAt'];
+            return BoxNote(
+              id: d.id,
+              text: m['text'] as String? ?? '',
+              pinned: m['pinned'] as bool? ?? false,
+              posted: m['posted'] as bool? ?? false,
+              // createdAt tạm null ngay lúc vừa ghi, trước khi máy chủ xác nhận
+              createdAt: ts is Timestamp ? ts.toDate() : DateTime.now(),
+            );
+          }).toList();
+          // sort ổn định: ghim trước, giữ nguyên thứ tự mới nhất trước
+          final pinned = list.where((n) => n.pinned);
+          final rest = list.where((n) => !n.pinned);
+          return [...pinned, ...rest];
+        });
   }
 
   static Future<void> add(String text) async {
@@ -75,10 +76,9 @@ class MyBoxService {
   static Future<void> updateText(String id, String text) async {
     final clean = text.trim();
     if (clean.isEmpty) return;
-    await _col(_uid).doc(id).update({
-      'text': clean,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    await _col(_uid)
+        .doc(id)
+        .update({'text': clean, 'updatedAt': FieldValue.serverTimestamp()});
   }
 
   static Future<void> setPinned(String id, bool pinned) =>

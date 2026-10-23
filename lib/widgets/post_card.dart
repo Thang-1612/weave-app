@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../models/interactions.dart';
 import '../models/post.dart';
 import '../models/space.dart';
@@ -50,26 +51,23 @@ class PostCard extends StatelessWidget {
     if (!openProfileOnTap || post.authorId.isEmpty) return;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => UserProfilePage(
-          userId: post.authorId,
-          title: post.authorName,
-        ),
+        builder: (_) =>
+            UserProfilePage(userId: post.authorId, title: post.authorName),
       ),
     );
   }
 
   void _openComments(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => CommentsScreen(post: post)),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => CommentsScreen(post: post)));
   }
 
   Future<bool> _confirm(
-      BuildContext context, {
-        required String title,
-        String? content,
-        required String action,
-      }) async {
+    BuildContext context, {
+    required String title,
+    String? content,
+    required String action,
+  }) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -155,9 +153,7 @@ class PostCard extends StatelessWidget {
       switch (value) {
         case 'fork':
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => CreatePostScreen(forkOf: post),
-            ),
+            MaterialPageRoute(builder: (_) => CreatePostScreen(forkOf: post)),
           );
           break;
         case 'space':
@@ -168,9 +164,7 @@ class PostCard extends StatelessWidget {
           break;
         case 'layers':
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => LayerManagerScreen(post: post),
-            ),
+            MaterialPageRoute(builder: (_) => LayerManagerScreen(post: post)),
           );
           break;
         case 'pin':
@@ -184,7 +178,10 @@ class PostCard extends StatelessWidget {
             messenger.showSnackBar(
               SnackBar(
                 content: Text(
-                  tr('Đã ghim lên đầu hồ sơ', 'Pinned to the top of your profile'),
+                  tr(
+                    'Đã ghim lên đầu hồ sơ',
+                    'Pinned to the top of your profile',
+                  ),
                 ),
               ),
             );
@@ -206,7 +203,8 @@ class PostCard extends StatelessWidget {
               messenger.showSnackBar(
                 SnackBar(
                   content: Text(
-                      tr('Đã xóa hộp thời gian', 'Time capsule deleted')),
+                    tr('Đã xóa hộp thời gian', 'Time capsule deleted'),
+                  ),
                 ),
               );
             }
@@ -224,9 +222,7 @@ class PostCard extends StatelessWidget {
             await TrashService.moveToTrash(post);
             messenger.showSnackBar(
               SnackBar(
-                content: Text(
-                  tr('Đã chuyển vào thùng rác', 'Moved to trash'),
-                ),
+                content: Text(tr('Đã chuyển vào thùng rác', 'Moved to trash')),
               ),
             );
           }
@@ -385,17 +381,12 @@ class PostCard extends StatelessWidget {
     final link = 'https://social-app-353f0.web.app/post/${post.id}';
     await showModalBottomSheet<void>(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(WeaveRadius.card),
-        ),
-      ),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: Text(
                 tr('Chia sẻ bài viết', 'Share post'),
                 style: const TextStyle(
@@ -533,8 +524,9 @@ class PostCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) {
         final compact = c.maxWidth < 340;
-        final commentText =
-        isQuestion ? tr('Trả lời', 'Answer') : tr('Bình luận', 'Comment');
+        final commentText = isQuestion
+            ? tr('Trả lời', 'Answer')
+            : tr('Bình luận', 'Comment');
         return Row(
           children: [
             ReactionButton(post: post),
@@ -544,8 +536,9 @@ class PostCard extends StatelessWidget {
                   : Icons.chat_bubble_outline,
               label: compact ? null : commentText,
               tooltip: commentText,
-              onPressed:
-              openCommentsOnTap ? () => _openComments(context) : null,
+              onPressed: openCommentsOnTap
+                  ? () => _openComments(context)
+                  : null,
             ),
             const Spacer(),
             ListenableBuilder(
@@ -597,7 +590,7 @@ class PostCard extends StatelessWidget {
     } else {
       final space = findSpace(post.spaceId) ?? defaultSpaces.first;
       topicLabel =
-      '${space.emoji} ${tr(space.name, space.nameEn ?? space.name)}';
+          '${space.emoji} ${tr(space.name, space.nameEn ?? space.name)}';
     }
 
     return Card(
@@ -606,9 +599,9 @@ class PostCard extends StatelessWidget {
       margin: isFork
           ? const EdgeInsets.fromLTRB(40, 2, WeaveSpacing.lg, 6)
           : const EdgeInsets.symmetric(
-        horizontal: WeaveSpacing.lg,
-        vertical: WeaveSpacing.sm,
-      ),
+              horizontal: WeaveSpacing.lg,
+              vertical: WeaveSpacing.sm,
+            ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(
           isFork ? WeaveRadius.control : WeaveRadius.card,
@@ -662,7 +655,8 @@ class PostCard extends StatelessWidget {
                               Text.rich(
                                 TextSpan(
                                   children: [
-                                    if (pinTag.isNotEmpty) TextSpan(text: pinTag),
+                                    if (pinTag.isNotEmpty)
+                                      TextSpan(text: pinTag),
                                     TextSpan(
                                       text: topicLabel,
                                       style: const TextStyle(
@@ -672,7 +666,7 @@ class PostCard extends StatelessWidget {
                                     ),
                                     TextSpan(
                                       text:
-                                      ' · ${formatTimeAgo(post.createdAt)}$audienceTag',
+                                          ' · ${formatTimeAgo(post.createdAt)}$audienceTag',
                                     ),
                                   ],
                                 ),
@@ -821,9 +815,6 @@ class _HintDialogState extends State<_HintDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(WeaveRadius.card),
-      ),
       title: Text(tr('Bổ sung gợi ý', 'Add a hint')),
       content: SizedBox(
         width: 360,

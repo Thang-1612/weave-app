@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/user_profile.dart';
 import '../services/account_service.dart';
 import '../services/friend_service.dart';
@@ -97,10 +98,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
   );
 
   Widget _buildLists(List<Friendship> all, String me, double width) {
-    final incoming =
-    all.where((f) => !f.accepted && f.requesterId != me).toList();
-    final outgoing =
-    all.where((f) => !f.accepted && f.requesterId == me).toList();
+    final incoming = all
+        .where((f) => !f.accepted && f.requesterId != me)
+        .toList();
+    final outgoing = all
+        .where((f) => !f.accepted && f.requesterId == me)
+        .toList();
     final friends = all.where((f) => f.accepted).toList();
 
     Widget row(String prefix, Friendship f) {
@@ -108,11 +111,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       return _PersonRow(
         key: ValueKey('$prefix$uid'),
         uid: uid,
-        trailing: FriendActionButton(
-          uid: uid,
-          friendships: all,
-          compact: true,
-        ),
+        trailing: FriendActionButton(uid: uid, friendships: all, compact: true),
       );
     }
 
@@ -124,7 +123,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
             padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
             child: Column(
               children: [
-                const Icon(Icons.people_outline, size: 56, color: AppColors.textSecondary),
+                const Icon(
+                  Icons.people_outline,
+                  size: 56,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   tr(
@@ -132,7 +135,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     'You have no friends yet.\nSearch by name above, or pick from the suggestions below.',
                   ),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -147,7 +153,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
           for (final f in incoming) row('in_', f),
         ],
         if (friends.isNotEmpty) ...[
-          _header(tr('BẠN BÈ (${friends.length})', 'FRIENDS (${friends.length})')),
+          _header(
+            tr('BẠN BÈ (${friends.length})', 'FRIENDS (${friends.length})'),
+          ),
           for (final f in friends) row('fr_', f),
         ],
         if (outgoing.isNotEmpty) ...[
@@ -227,19 +235,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     controller: _search,
                     onChanged: _onChanged,
                     decoration: InputDecoration(
-                      hintText:
-                      tr('Tìm bạn bè theo tên', 'Search friends by name'),
+                      hintText: tr(
+                        'Tìm bạn bè theo tên',
+                        'Search friends by name',
+                      ),
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: query.isEmpty
                           ? null
                           : IconButton(
-                        tooltip: tr('Xóa', 'Clear'),
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          _search.clear();
-                          _onChanged('');
-                        },
-                      ),
+                              tooltip: tr('Xóa', 'Clear'),
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                _search.clear();
+                                _onChanged('');
+                              },
+                            ),
                     ),
                   ),
                 ),
@@ -349,7 +359,10 @@ class _PersonRowState extends State<_PersonRow> {
                       bio,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                 ],
               ),

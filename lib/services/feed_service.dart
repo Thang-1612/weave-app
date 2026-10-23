@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 import '../models/space.dart';
 import 'post_service.dart';
@@ -46,18 +47,20 @@ class FeedService {
           .snapshots()
           .map(
             (s) => s.docs
-            .map(Post.fromDoc)
-            .where((p) => p.spaceId == spaceId)
-            .take(limit)
-            .toList(),
-      );
+                .map(Post.fromDoc)
+                .where((p) => p.spaceId == spaceId)
+                .take(limit)
+                .toList(),
+          );
     }
   }
 
   /// Bài của nhiều danh mục (một chủ đề lớn), mới nhất trước. Dùng cùng chỉ mục
   /// spaceId + createdAt. Firestore giới hạn tối đa 30 giá trị trong whereIn.
   static Stream<List<Post>> _watchGroupPosts(
-      List<String> spaceIds, int limit) async* {
+    List<String> spaceIds,
+    int limit,
+  ) async* {
     try {
       final query = _posts
           .where('spaceId', whereIn: spaceIds)
@@ -75,18 +78,22 @@ class FeedService {
           .snapshots()
           .map(
             (s) => s.docs
-            .map(Post.fromDoc)
-            .where((p) => ids.contains(p.spaceId))
-            .take(limit)
-            .toList(),
-      );
+                .map(Post.fromDoc)
+                .where((p) => ids.contains(p.spaceId))
+                .take(limit)
+                .toList(),
+          );
     }
   }
+
   /// Bảng tin của một danh sách chủ đề (dùng cho công thức bảng tin).
   static Stream<FeedResult> watchSpaces(List<String> ids) {
-    return _watchGroupPosts(ids.take(30).toList(), 60)
-        .map((p) => FeedResult(p));
+    return _watchGroupPosts(
+      ids.take(30).toList(),
+      60,
+    ).map((p) => FeedResult(p));
   }
+
   /// Bảng tin khi chọn riêng một danh mục.
   static Stream<FeedResult> watchSpace(String spaceId) {
     return _watchSpacePosts(spaceId, 40).map((posts) => FeedResult(posts));
@@ -99,10 +106,10 @@ class FeedService {
 
   /// Bảng tin "Tất cả" có đề xuất theo sở thích.
   static Stream<FeedResult> watchForYou(Map<String, double> affinity) {
-    final ranked = defaultSpaces
-        .where((s) => (affinity[s.id] ?? 0) > 0)
-        .toList()
-      ..sort((a, b) => (affinity[b.id] ?? 0).compareTo(affinity[a.id] ?? 0));
+    final ranked =
+        defaultSpaces.where((s) => (affinity[s.id] ?? 0) > 0).toList()..sort(
+          (a, b) => (affinity[b.id] ?? 0).compareTo(affinity[a.id] ?? 0),
+        );
 
     final maxAff = ranked.isEmpty ? 0.0 : affinity[ranked.first.id]!;
 
@@ -112,8 +119,10 @@ class FeedService {
     }
 
     // Tối đa 2 danh mục ưu tiên: danh mục đứng đầu và danh mục có điểm xấp xỉ
-    final priority =
-    ranked.where((s) => affinity[s.id]! >= maxAff * 0.6).take(2).toList();
+    final priority = ranked
+        .where((s) => affinity[s.id]! >= maxAff * 0.6)
+        .take(2)
+        .toList();
     final priorityIds = priority.map((s) => s.id).toList();
     const recentKey = '_recent';
 
@@ -142,24 +151,18 @@ class FeedService {
         // Chỉ theo dõi các danh mục ưu tiên (25 bài mỗi danh mục)...
         for (final id in priorityIds) {
           subs.add(
-            _watchSpacePosts(id, 25).listen(
-                  (posts) {
-                latest[id] = posts;
-                emit();
-              },
-              onError: onError,
-            ),
+            _watchSpacePosts(id, 25).listen((posts) {
+              latest[id] = posts;
+              emit();
+            }, onError: onError),
           );
         }
         // ...cộng một luồng bài mới nhất chung cho phần còn lại của bảng tin.
         subs.add(
-          PostService.watchPosts().listen(
-                (posts) {
-              latest[recentKey] = posts;
-              emit();
-            },
-            onError: onError,
-          ),
+          PostService.watchPosts().listen((posts) {
+            latest[recentKey] = posts;
+            emit();
+          }, onError: onError),
         );
       },
       onCancel: () async {
@@ -172,10 +175,10 @@ class FeedService {
   }
 
   static List<Post> _rank(
-      Map<String, List<Post>> latest,
-      Map<String, double> affinity,
-      List<String> priorityIds,
-      ) {
+    Map<String, List<Post>> latest,
+    Map<String, double> affinity,
+    List<String> priorityIds,
+  ) {
     // 1. Khối ưu tiên: xen kẽ bài mới nhất của các danh mục ưu tiên cho đến
     //    khi đủ 20 bài (hoặc hết bài).
     final first = <Post>[];
@@ -198,8 +201,9 @@ class FeedService {
     //    cộng thêm tối đa 36 giờ.
     final maxAff = affinity.values.fold<double>(0, (a, b) => a > b ? a : b);
     double effective(Post p) {
-      final bonusHours =
-      maxAff <= 0 ? 0.0 : (affinity[p.spaceId] ?? 0) / maxAff * 36;
+      final bonusHours = maxAff <= 0
+          ? 0.0
+          : (affinity[p.spaceId] ?? 0) / maxAff * 36;
       return p.createdAt.millisecondsSinceEpoch + bonusHours * 3600 * 1000;
     }
 

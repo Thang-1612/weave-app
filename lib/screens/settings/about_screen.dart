@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../services/l10n.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/settings_widgets.dart';
@@ -54,8 +55,14 @@ class AboutScreen extends StatelessWidget {
         SettingsCard(
           children: const [
             SettingsTile(icon: Icons.flutter_dash, title: 'Flutter'),
-            SettingsTile(icon: Icons.cloud_outlined, title: 'Firebase: Authentication, Firestore'),
-            SettingsTile(icon: Icons.auto_awesome, title: 'Gemini (Firebase AI Logic)'),
+            SettingsTile(
+              icon: Icons.cloud_outlined,
+              title: 'Firebase: Authentication, Firestore',
+            ),
+            SettingsTile(
+              icon: Icons.auto_awesome,
+              title: 'Gemini (Firebase AI Logic)',
+            ),
           ],
         ),
         SectionLabel(tr('Thông tin', 'Information')),

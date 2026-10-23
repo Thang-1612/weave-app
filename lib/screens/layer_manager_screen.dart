@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../models/weave_layer.dart';
 import '../services/group_service.dart';
@@ -23,16 +24,22 @@ class LayerManagerScreen extends StatefulWidget {
 }
 
 class _LayerManagerScreenState extends State<LayerManagerScreen> {
-  late final Stream<QuerySnapshot<Map<String, dynamic>>> _stream =
-  widget.post.ref.collection('layers').orderBy('order').snapshots();
+  late final Stream<QuerySnapshot<Map<String, dynamic>>> _stream = widget
+      .post
+      .ref
+      .collection('layers')
+      .orderBy('order')
+      .snapshots();
 
   @override
   void initState() {
     super.initState();
     // Nạp tên nhóm để hiện đúng tên thay vì "Nhóm riêng"
-    GroupService.listMine().then((_) {
-      if (mounted) setState(() {});
-    }).catchError((_) {});
+    GroupService.listMine()
+        .then((_) {
+          if (mounted) setState(() {});
+        })
+        .catchError((_) {});
   }
 
   Future<void> _run(Future<void> Function() fn) async {
@@ -53,17 +60,19 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
       builder: (_) => const _AddLayerSheet(),
     );
     if (r == null || !mounted) return;
-    await _run(() => LayerService.addLayer(
-      widget.post.ref,
-      authorId: widget.post.authorId,
-      name: r.name.isEmpty ? layerAudienceLabel(r.audience.type) : r.name,
-      audience: r.audience,
-      blocks: r.text.isEmpty
-          ? <Map<String, dynamic>>[]
-          : [
-        {'type': 'text', 'text': r.text},
-      ],
-    ));
+    await _run(
+      () => LayerService.addLayer(
+        widget.post.ref,
+        authorId: widget.post.authorId,
+        name: r.name.isEmpty ? layerAudienceLabel(r.audience.type) : r.name,
+        audience: r.audience,
+        blocks: r.text.isEmpty
+            ? <Map<String, dynamic>>[]
+            : [
+                {'type': 'text', 'text': r.text},
+              ],
+      ),
+    );
     if (mounted) setState(() {}); // cập nhật tên nhóm vừa tạo
   }
 
@@ -89,10 +98,12 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(tr('Xóa lớp "${l.name}"?', 'Delete layer "${l.name}"?')),
-        content: Text(tr(
-          'Nội dung của lớp sẽ bị xóa vĩnh viễn, không khôi phục được.',
-          'The content of this layer will be permanently deleted.',
-        )),
+        content: Text(
+          tr(
+            'Nội dung của lớp sẽ bị xóa vĩnh viễn, không khôi phục được.',
+            'The content of this layer will be permanently deleted.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -122,8 +133,10 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
     }
     final images = l.blocks.where((b) => b['type'] == 'image').length;
     if (images > 0) return tr('$images ảnh', '$images photos');
-    return tr('${l.blocks.length} khối nội dung',
-        '${l.blocks.length} content blocks');
+    return tr(
+      '${l.blocks.length} khối nội dung',
+      '${l.blocks.length} content blocks',
+    );
   }
 
   // Card lấy màu, viền, bo góc từ cardTheme.
@@ -159,7 +172,9 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                         'This is the post itself. Change its audience from the post ⋯ menu.',
                       ),
                       style: const TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary),
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -172,13 +187,17 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
           child: Text(
             empty
                 ? tr(
-              'Chưa có lớp nào. Bấm "Thêm lớp" để chia sẻ thêm nội dung cho bạn thân hoặc một nhóm riêng.',
-              'No layers yet. Tap "Add layer" to share more with close friends or a private group.',
-            )
-                : tr('Kéo ⠿ để sắp xếp thứ tự các lớp',
-                'Drag ⠿ to reorder layers'),
+                    'Chưa có lớp nào. Bấm "Thêm lớp" để chia sẻ thêm nội dung cho bạn thân hoặc một nhóm riêng.',
+                    'No layers yet. Tap "Add layer" to share more with close friends or a private group.',
+                  )
+                : tr(
+                    'Kéo ⠿ để sắp xếp thứ tự các lớp',
+                    'Drag ⠿ to reorder layers',
+                  ),
             style: const TextStyle(
-                fontSize: 12.5, color: AppColors.textSecondary),
+              fontSize: 12.5,
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
       ],
@@ -199,8 +218,10 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                   index: i,
                   child: const Padding(
                     padding: EdgeInsets.only(top: 2, right: 8),
-                    child: Icon(Icons.drag_indicator,
-                        color: AppColors.textSecondary),
+                    child: Icon(
+                      Icons.drag_indicator,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -276,12 +297,14 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                 Text(
                   tr('Bình luận', 'Comments'),
                   style: const TextStyle(
-                      fontSize: 13, color: AppColors.textSecondary),
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 Switch(
                   value: l.commentsEnabled,
                   onChanged: (v) => _run(
-                        () => LayerService.setCommentsEnabled(
+                    () => LayerService.setCommentsEnabled(
                       widget.post.ref,
                       l.id,
                       v,
@@ -385,8 +408,9 @@ class _AddLayerSheetState extends State<_AddLayerSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-      EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
@@ -403,8 +427,10 @@ class _AddLayerSheetState extends State<_AddLayerSheet> {
                 controller: _name,
                 maxLength: 40,
                 decoration: InputDecoration(
-                  hintText: tr('Tên lớp (ví dụ: Lớp 12A)',
-                      'Layer name (e.g. Class 12A)'),
+                  hintText: tr(
+                    'Tên lớp (ví dụ: Lớp 12A)',
+                    'Layer name (e.g. Class 12A)',
+                  ),
                 ),
               ),
               Align(
@@ -427,8 +453,10 @@ class _AddLayerSheetState extends State<_AddLayerSheet> {
                 minLines: 3,
                 maxLines: 6,
                 decoration: InputDecoration(
-                  hintText: tr('Nội dung chữ (không bắt buộc)',
-                      'Text content (optional)'),
+                  hintText: tr(
+                    'Nội dung chữ (không bắt buộc)',
+                    'Text content (optional)',
+                  ),
                 ),
               ),
               const SizedBox(height: 12),

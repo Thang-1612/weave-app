@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/capsule_service.dart';
 import '../services/l10n.dart';
@@ -33,8 +34,8 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
       CapsuleService.openedForMe(),
     ]);
     return (
-    r[0] as List<QueryDocumentSnapshot<Map<String, dynamic>>>,
-    r[1] as List<Post>,
+      r[0] as List<QueryDocumentSnapshot<Map<String, dynamic>>>,
+      r[1] as List<Post>,
     );
   }
 
@@ -54,10 +55,12 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(tr('Xóa hộp thời gian?', 'Delete this time capsule?')),
-        content: Text(tr(
-          'Hộp thời gian sẽ bị xóa vĩnh viễn, không khôi phục được.',
-          'The time capsule will be permanently deleted and cannot be restored.',
-        )),
+        content: Text(
+          tr(
+            'Hộp thời gian sẽ bị xóa vĩnh viễn, không khôi phục được.',
+            'The time capsule will be permanently deleted and cannot be restored.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -120,9 +123,11 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
           '${tr('Mở vào', 'Opens on')} ${CapsuleService.fmtDate(openAt)}',
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text(days > 0
-            ? tr('Còn $days ngày', '$days days left')
-            : tr('Sắp mở', 'Opening soon')),
+        subtitle: Text(
+          days > 0
+              ? tr('Còn $days ngày', '$days days left')
+              : tr('Sắp mở', 'Opening soon'),
+        ),
         trailing: IconButton(
           tooltip: tr('Xóa hộp', 'Delete capsule'),
           icon: const Icon(Icons.delete_outline),
@@ -172,13 +177,16 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
     );
   }
 
-  Widget _filters(int mineCount, int lockedCount, int openedCount, int recvCount) {
+  Widget _filters(
+    int mineCount,
+    int lockedCount,
+    int openedCount,
+    int recvCount,
+  ) {
     // Màu và viền đã có trong chipTheme chung; chỉ giữ dạng viên thuốc, không tick.
     return ChipTheme(
-      data: ChipTheme.of(context).copyWith(
-        shape: const StadiumBorder(),
-        showCheckmark: false,
-      ),
+      data: ChipTheme.of(context)
+          .copyWith(shape: const StadiumBorder(), showCheckmark: false),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -197,7 +205,10 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
             label: tr('Trạng thái', 'Status'),
             options: [
               (tr('Tất cả', 'All'), 0),
-              (tr('Đang niêm phong ($lockedCount)', 'Sealed ($lockedCount)'), 1),
+              (
+                tr('Đang niêm phong ($lockedCount)', 'Sealed ($lockedCount)'),
+                1,
+              ),
               (tr('Đã mở ($openedCount)', 'Opened ($openedCount)'), 2),
             ],
             value: _status,
@@ -211,9 +222,7 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Hộp thời gian', 'Time capsules')),
-      ),
+      appBar: AppBar(title: Text(tr('Hộp thời gian', 'Time capsules'))),
       body: FutureBuilder(
         future: _future,
         builder: (context, snap) {
@@ -239,7 +248,8 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
 
           // Áp dụng bộ lọc. Hộp còn niêm phong luôn chỉ vẽ bằng _lockedTile.
           final showMine = _scope != 2;
-          final showReceived = _scope != 1 && _status != 1; // "gửi cho tôi" đều đã mở
+          final showReceived =
+              _scope != 1 && _status != 1; // "gửi cho tôi" đều đã mở
           final mineShown = mine.where((d) {
             if (_status == 0) return true;
             return _status == 1 ? isLocked(d) : !isLocked(d);
@@ -249,11 +259,19 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
             if (showMine) ...[
               _title(tr('Hộp của tôi', 'My capsules')),
               if (mine.isEmpty)
-                _hint(tr('Chưa có hộp nào. Khi soạn bài, chọn "Hẹn giờ mở".',
-                    'None yet. When writing a post, choose "Time capsule".'))
+                _hint(
+                  tr(
+                    'Chưa có hộp nào. Khi soạn bài, chọn "Hẹn giờ mở".',
+                    'None yet. When writing a post, choose "Time capsule".',
+                  ),
+                )
               else if (mineShown.isEmpty)
-                _hint(tr('Không có hộp nào khớp bộ lọc.',
-                    'No capsules match the filter.')),
+                _hint(
+                  tr(
+                    'Không có hộp nào khớp bộ lọc.',
+                    'No capsules match the filter.',
+                  ),
+                ),
               for (final d in mineShown)
                 if (isLocked(d))
                   _lockedTile(d)
@@ -266,15 +284,21 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
             if (showReceived) ...[
               _title(tr('Gửi cho tôi', 'Sent to me')),
               if (received.isEmpty)
-                _hint(tr('Chưa có hộp nào được mở.', 'No capsules opened yet.')),
+                _hint(
+                  tr('Chưa có hộp nào được mở.', 'No capsules opened yet.'),
+                ),
               for (final p in received)
                 PostCard(key: ValueKey('capsules_${p.id}'), post: p),
             ],
             const SizedBox(height: WeaveSpacing.xl),
           ];
 
-          final filters =
-          _filters(mine.length, lockedCount, openedCount, received.length);
+          final filters = _filters(
+            mine.length,
+            lockedCount,
+            openedCount,
+            received.length,
+          );
 
           return LayoutBuilder(
             builder: (context, constraints) {

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../services/friend_service.dart';
 import '../../services/l10n.dart';
 import '../../theme/app_theme.dart';
@@ -28,9 +29,7 @@ class _InviteScreenState extends State<InviteScreen> {
     final messenger = ScaffoldMessenger.of(context);
     await Clipboard.setData(ClipboardData(text: _inviteText));
     messenger.showSnackBar(
-      SnackBar(
-        content: Text(tr('Đã sao chép lời mời', 'Invitation copied')),
-      ),
+      SnackBar(content: Text(tr('Đã sao chép lời mời', 'Invitation copied'))),
     );
   }
 
@@ -43,9 +42,13 @@ class _InviteScreenState extends State<InviteScreen> {
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 2),
-          Text(label,
-              style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 12)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
@@ -61,10 +64,12 @@ class _InviteScreenState extends State<InviteScreen> {
         stream: _stream,
         builder: (context, snap) {
           final all = snap.data ?? const <Friendship>[];
-          final incoming =
-          all.where((f) => !f.accepted && f.requesterId != me).toList();
-          final outgoing =
-          all.where((f) => !f.accepted && f.requesterId == me).toList();
+          final incoming = all
+              .where((f) => !f.accepted && f.requesterId != me)
+              .toList();
+          final outgoing = all
+              .where((f) => !f.accepted && f.requesterId == me)
+              .toList();
           final friends = all.where((f) => f.accepted).length;
 
           return settingsList([
@@ -75,8 +80,10 @@ class _InviteScreenState extends State<InviteScreen> {
                   child: Row(
                     children: [
                       _stat('$friends', tr('Bạn bè', 'Friends')),
-                      _stat('${incoming.length}',
-                          tr('Lời mời nhận', 'Requests')),
+                      _stat(
+                        '${incoming.length}',
+                        tr('Lời mời nhận', 'Requests'),
+                      ),
                       _stat('${outgoing.length}', tr('Đã gửi', 'Sent')),
                     ],
                   ),
@@ -84,33 +91,32 @@ class _InviteScreenState extends State<InviteScreen> {
               ],
             ),
             SectionLabel(tr('Mời bạn bè dùng ứng dụng', 'Invite friends')),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(WeaveRadius.card),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(_inviteText, style: const TextStyle(height: 1.4)),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _copy,
-                    icon: const Icon(Icons.copy, size: 18),
-                    label: Text(tr('Sao chép lời mời', 'Copy invitation')),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    tr(
-                      'Liên kết sẽ mở được khi bản web đã được triển khai lên Firebase Hosting.',
-                      'The link will work once the web app is deployed to Firebase Hosting.',
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_inviteText, style: const TextStyle(height: 1.4)),
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      onPressed: _copy,
+                      icon: const Icon(Icons.copy, size: 18),
+                      label: Text(tr('Sao chép lời mời', 'Copy invitation')),
                     ),
-                    style: const TextStyle(
-                        color: AppColors.textSecondary, fontSize: 12),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      tr(
+                        'Liên kết sẽ mở được khi bản web đã được triển khai lên Firebase Hosting.',
+                        'The link will work once the web app is deployed to Firebase Hosting.',
+                      ),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             if (incoming.isNotEmpty) ...[
@@ -145,8 +151,7 @@ class _InviteScreenState extends State<InviteScreen> {
                     'Prioritize posts from people you care about',
                   ),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (_) => const FavoritesScreen()),
+                    MaterialPageRoute(builder: (_) => const FavoritesScreen()),
                   ),
                 ),
               ],

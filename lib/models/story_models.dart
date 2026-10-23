@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Tâm trạng AI được phép chọn (dùng để gợi ý nhạc).
@@ -18,7 +19,7 @@ const kStoryLayouts = ['timeline', 'chapters', 'highlight'];
 enum StoryKind { week, trip, learning }
 
 StoryKind storyKindFrom(String? s) => StoryKind.values.firstWhere(
-      (k) => k.name == s,
+  (k) => k.name == s,
   orElse: () => StoryKind.week,
 );
 
@@ -26,7 +27,7 @@ StoryKind storyKindFrom(String? s) => StoryKind.values.firstWhere(
 enum SourceType { photo, note, voice }
 
 SourceType sourceTypeFrom(String? s) => SourceType.values.firstWhere(
-      (k) => k.name == s,
+  (k) => k.name == s,
   orElse: () => SourceType.note,
 );
 
@@ -64,14 +65,13 @@ class StorySource {
     'date': Timestamp.fromDate(date),
   };
 
-  factory StorySource.fromMap(String id, Map<String, dynamic> m) =>
-      StorySource(
-        id: id,
-        type: sourceTypeFrom(m['type'] as String?),
-        text: (m['text'] ?? '') as String,
-        imageB64: m['image'] as String?,
-        date: (m['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      );
+  factory StorySource.fromMap(String id, Map<String, dynamic> m) => StorySource(
+    id: id,
+    type: sourceTypeFrom(m['type'] as String?),
+    text: (m['text'] ?? '') as String,
+    imageB64: m['image'] as String?,
+    date: (m['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+  );
 }
 
 const kBlockNarration = 'narration';
@@ -160,8 +160,9 @@ class Story {
       missing: List<String>.from(m['missing'] ?? const []),
       droppedCount: (m['droppedCount'] ?? 0) as int,
       updatedAt: (m['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      publishedPostId: (m['publishedPostId'] is String &&
-          (m['publishedPostId'] as String).isNotEmpty)
+      publishedPostId:
+          (m['publishedPostId'] is String &&
+              (m['publishedPostId'] as String).isNotEmpty)
           ? m['publishedPostId'] as String
           : null,
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/l10n.dart';
 import '../services/post_service.dart';
@@ -36,9 +37,7 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Đề xuất sửa bài', 'Edit proposals')),
-      ),
+      appBar: AppBar(title: Text(tr('Đề xuất sửa bài', 'Edit proposals'))),
       body: FutureBuilder<List<Proposal>>(
         future: _future,
         builder: (context, snap) {
@@ -65,7 +64,9 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
                   ),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      color: AppColors.textSecondary, height: 1.4),
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ),
             );
@@ -85,8 +86,10 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
-                        leading: const Icon(Icons.call_merge,
-                            color: AppColors.brand),
+                        leading: const Icon(
+                          Icons.call_merge,
+                          color: AppColors.brand,
+                        ),
                         title: Text(
                           '${p.fromName} · ${extrasAgo(p.createdAt)}',
                           style: const TextStyle(fontWeight: FontWeight.w700),
@@ -174,7 +177,11 @@ class _CompareScreenState extends State<_CompareScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        '${added ? '+ ' : removed ? '− ' : ''}$text',
+        '${added
+            ? '+ '
+            : removed
+            ? '− '
+            : ''}$text',
         style: TextStyle(
           height: 1.35,
           decoration: removed ? TextDecoration.lineThrough : null,
@@ -188,9 +195,7 @@ class _CompareScreenState extends State<_CompareScreen> {
   Widget build(BuildContext context) {
     final p = widget.proposal;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('So sánh đề xuất', 'Compare proposal')),
-      ),
+      appBar: AppBar(title: Text(tr('So sánh đề xuất', 'Compare proposal'))),
       body: FutureBuilder<List<Post?>>(
         future: _future,
         builder: (context, snap) {
@@ -207,8 +212,10 @@ class _CompareScreenState extends State<_CompareScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  tr('Bài nhánh hoặc bài gốc không còn tồn tại.',
-                      'The fork or the original post no longer exists.'),
+                  tr(
+                    'Bài nhánh hoặc bài gốc không còn tồn tại.',
+                    'The fork or the original post no longer exists.',
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -242,44 +249,56 @@ class _CompareScreenState extends State<_CompareScreen> {
                     children: [
                       Chip(
                         label: Text(
-                            '+$addedCount ${tr('dòng mới', 'new lines')}'),
+                          '+$addedCount ${tr('dòng mới', 'new lines')}',
+                        ),
                         backgroundColor: _addedBg,
                       ),
                       Chip(
                         label: Text(
-                            '−${removed.length} ${tr('dòng bị bỏ', 'removed')}'),
+                          '−${removed.length} ${tr('dòng bị bỏ', 'removed')}',
+                        ),
                         backgroundColor: _removedBg,
                       ),
                       Chip(
                         label: Text(
-                            '${tr('Ảnh', 'Images')}: ${_count(original, 'image')} → ${_count(fork, 'image')}'),
+                          '${tr('Ảnh', 'Images')}: ${_count(original, 'image')} → ${_count(fork, 'image')}',
+                        ),
                       ),
                       Chip(
                         label: Text(
-                            '${tr('Liên kết', 'Links')}: ${_count(original, 'link')} → ${_count(fork, 'link')}'),
+                          '${tr('Liên kết', 'Links')}: ${_count(original, 'link')} → ${_count(fork, 'link')}',
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(tr('Bản đề xuất', 'Proposed version'),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.brand)),
+                  Text(
+                    tr('Bản đề xuất', 'Proposed version'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.brand,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   if (after.isEmpty)
-                    Text(tr('(không có chữ)', '(no text)'),
-                        style:
-                        const TextStyle(color: AppColors.textSecondary)),
+                    Text(
+                      tr('(không có chữ)', '(no text)'),
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
                   for (final l in after)
                     _line(l, added: !beforeSet.contains(l)),
                   if (removed.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Text(
-                        tr('Các dòng bị bỏ khỏi bản gốc',
-                            'Lines removed from the original'),
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.danger)),
+                      tr(
+                        'Các dòng bị bỏ khỏi bản gốc',
+                        'Lines removed from the original',
+                      ),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.danger,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     for (final l in removed) _line(l, removed: true),
                   ],
@@ -290,7 +309,9 @@ class _CompareScreenState extends State<_CompareScreen> {
                       'Accepting replaces the original with the whole proposed version (images and links included) and credits the contributor.',
                     ),
                     style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary),
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -300,10 +321,9 @@ class _CompareScreenState extends State<_CompareScreen> {
                           onPressed: _busy
                               ? null
                               : () => _run(
-                                () => ProposalService.decline(p),
-                            tr('Đã từ chối đề xuất',
-                                'Proposal declined'),
-                          ),
+                                  () => ProposalService.decline(p),
+                                  tr('Đã từ chối đề xuất', 'Proposal declined'),
+                                ),
                           child: Text(tr('Từ chối', 'Decline')),
                         ),
                       ),
@@ -313,9 +333,9 @@ class _CompareScreenState extends State<_CompareScreen> {
                           onPressed: _busy
                               ? null
                               : () => _run(
-                                () => ProposalService.accept(p),
-                            tr('Đã nhận đề xuất', 'Proposal accepted'),
-                          ),
+                                  () => ProposalService.accept(p),
+                                  tr('Đã nhận đề xuất', 'Proposal accepted'),
+                                ),
                           child: Text(tr('Nhận đề xuất', 'Accept')),
                         ),
                       ),

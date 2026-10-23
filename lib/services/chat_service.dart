@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
+
 import '../models/chat_models.dart';
 
 /// Cấu hình chung: chỉnh 1 chỗ cho khớp dự án của bạn (gọi trong main()).
@@ -36,7 +38,8 @@ class ChatService {
   static final ChatService I = ChatService._();
 
   final _db = FirebaseFirestore.instance;
-  CollectionReference<Map<String, dynamic>> get _chats => _db.collection('chats');
+  CollectionReference<Map<String, dynamic>> get _chats =>
+      _db.collection('chats');
   String get me => FirebaseAuth.instance.currentUser!.uid;
 
   static String directId(String a, String b) {
@@ -61,7 +64,12 @@ class ChatService {
           break;
         }
       }
-      final n = (m[ChatConfig.userNameField] ?? m['name'] ?? m['username'] ?? 'Người dùng').toString();
+      final n =
+          (m[ChatConfig.userNameField] ??
+                  m['name'] ??
+                  m['username'] ??
+                  'Người dùng')
+              .toString();
       final u = ChatUser(uid, n, av);
       _resolved[uid] = u;
       return u;
@@ -109,16 +117,16 @@ class ChatService {
       .where('users', arrayContains: me)
       .snapshots()
       .map((s) {
-    final me = this.me;
-    final r = <String>[];
-    for (final d in s.docs) {
-      final m = d.data();
-      if (m['status'] != 'accepted') continue;
-      final u = (m['users'] as List? ?? []).map((e) => e.toString());
-      r.addAll(u.where((x) => x != me));
-    }
-    return r;
-  });
+        final me = this.me;
+        final r = <String>[];
+        for (final d in s.docs) {
+          final m = d.data();
+          if (m['status'] != 'accepted') continue;
+          final u = (m['users'] as List? ?? []).map((e) => e.toString());
+          r.addAll(u.where((x) => x != me));
+        }
+        return r;
+      });
 
   // ───────────── Luồng dữ liệu ─────────────
   Stream<List<Chat>> myChats() => _chats
@@ -157,25 +165,24 @@ class ChatService {
     required List<String> members,
     String name = '',
     List<String> admins = const [],
-  }) =>
-      <String, dynamic>{
-        'type': type,
-        'name': name,
-        'members': members,
-        'admins': admins,
-        'createdBy': me,
-        'acceptedBy': type == 'group' ? members : [me],
-        'mutedBy': [],
-        'pinnedBy': [],
-        'blockedBy': [],
-        'unread': {for (final m in members) m: 0},
-        'lastRead': {},
-        'typing': {},
-        'lastMessage': {'text': '', 'senderId': '', 'type': ''},
-        'lastMessageAt': FieldValue.serverTimestamp(),
-        'createdAt': FieldValue.serverTimestamp(),
-        'disappearAfterSec': 0,
-      };
+  }) => <String, dynamic>{
+    'type': type,
+    'name': name,
+    'members': members,
+    'admins': admins,
+    'createdBy': me,
+    'acceptedBy': type == 'group' ? members : [me],
+    'mutedBy': [],
+    'pinnedBy': [],
+    'blockedBy': [],
+    'unread': {for (final m in members) m: 0},
+    'lastRead': {},
+    'typing': {},
+    'lastMessage': {'text': '', 'senderId': '', 'type': ''},
+    'lastMessageAt': FieldValue.serverTimestamp(),
+    'createdAt': FieldValue.serverTimestamp(),
+    'disappearAfterSec': 0,
+  };
 
   Future<String> ensureDirect(String otherUid) async {
     if (otherUid == me) throw 'Không thể nhắn cho chính mình';
@@ -202,10 +209,18 @@ class ChatService {
   Future<String> createGroup(String name, List<String> others) async {
     final members = {me, ...others}.toList();
     final ref = _chats.doc();
-    await ref.set(_newChat(type: 'group', members: members, name: name, admins: [me]));
+    await ref.set(
+      _newChat(type: 'group', members: members, name: name, admins: [me]),
+    );
     final c = Chat.fromDoc(await ref.get());
     final n = (await user(me)).name;
-    await _send(c, {'text': '$n đã tạo nhóm "$name"'}, 'system', '$n đã tạo nhóm', expire: false);
+    await _send(
+      c,
+      {'text': '$n đã tạo nhóm "$name"'},
+      'system',
+      '$n đã tạo nhóm',
+      expire: false,
+    );
     return ref.id;
   }
 
@@ -217,11 +232,17 @@ class ChatService {
     return m.text.length > 100 ? '${m.text.substring(0, 100)}…' : m.text;
   }
 
-  Map<String, dynamic>? _replyMap(ChatMessage? r) =>
-      r == null ? null : {'id': r.id, 'senderId': r.senderId, 'text': _snippet(r)};
+  Map<String, dynamic>? _replyMap(ChatMessage? r) => r == null
+      ? null
+      : {'id': r.id, 'senderId': r.senderId, 'text': _snippet(r)};
 
-  Future<void> _send(Chat chat, Map<String, dynamic> body, String type, String preview,
-      {bool expire = true}) async {
+  Future<void> _send(
+    Chat chat,
+    Map<String, dynamic> body,
+    String type,
+    String preview, {
+    bool expire = true,
+  }) async {
     final me = this.me;
     final ref = _chats.doc(chat.id);
     final mref = ref.collection('messages').doc();
@@ -235,7 +256,8 @@ class ChatService {
       'deleted': false,
       if (expire && chat.disappearAfterSec > 0)
         'expireAt': Timestamp.fromDate(
-            DateTime.now().add(Duration(seconds: chat.disappearAfterSec))),
+          DateTime.now().add(Duration(seconds: chat.disappearAfterSec)),
+        ),
     });
     final upd = <String, dynamic>{
       'lastMessage': {'text': preview, 'senderId': me, 'type': type},
@@ -256,18 +278,40 @@ class ChatService {
 
   Future<void> sendText(Chat chat, String text, {ChatMessage? replyTo}) {
     final p = text.length > 80 ? '${text.substring(0, 80)}…' : text;
-    return _send(chat, {'text': text, if (replyTo != null) 'replyTo': _replyMap(replyTo)}, 'text', p);
+    return _send(
+      chat,
+      {'text': text, if (replyTo != null) 'replyTo': _replyMap(replyTo)},
+      'text',
+      p,
+    );
   }
 
   Future<void> sendImage(Chat chat, Uint8List bytes, {ChatMessage? replyTo}) {
     final b64 = base64Encode(bytes);
     if (b64.length > 700000) throw 'Ảnh quá lớn (tối đa khoảng 500KB)';
-    return _send(chat, {'imageB64': b64, 'text': '', if (replyTo != null) 'replyTo': _replyMap(replyTo)},
-        'image', '📷 Ảnh');
+    return _send(
+      chat,
+      {
+        'imageB64': b64,
+        'text': '',
+        if (replyTo != null) 'replyTo': _replyMap(replyTo),
+      },
+      'image',
+      '📷 Ảnh',
+    );
   }
 
-  Future<void> sendPost(Chat chat, String postId, String title, String snippet) =>
-      _send(chat, {'postId': postId, 'postTitle': title, 'text': snippet}, 'post', '🔗 $title');
+  Future<void> sendPost(
+    Chat chat,
+    String postId,
+    String title,
+    String snippet,
+  ) => _send(
+    chat,
+    {'postId': postId, 'postTitle': title, 'text': snippet},
+    'post',
+    '🔗 $title',
+  );
 
   Future<void> sendSystem(Chat chat, String text) =>
       _send(chat, {'text': text}, 'system', text, expire: false);
@@ -276,23 +320,29 @@ class ChatService {
   DocumentReference<Map<String, dynamic>> _msg(String chatId, String id) =>
       _chats.doc(chatId).collection('messages').doc(id);
 
-  Future<void> edit(String chatId, String msgId, String text) =>
-      _msg(chatId, msgId).update({'text': text, 'editedAt': FieldValue.serverTimestamp()});
+  Future<void> edit(String chatId, String msgId, String text) => _msg(
+    chatId,
+    msgId,
+  ).update({'text': text, 'editedAt': FieldValue.serverTimestamp()});
 
-  Future<void> recall(String chatId, String msgId) => _msg(chatId, msgId)
-      .update({'deleted': true, 'text': '', 'imageB64': FieldValue.delete()});
+  Future<void> recall(String chatId, String msgId) => _msg(
+    chatId,
+    msgId,
+  ).update({'deleted': true, 'text': '', 'imageB64': FieldValue.delete()});
 
   Future<void> react(String chatId, ChatMessage m, String emoji) {
     final cur = m.reactions[me];
-    return _msg(chatId, m.id)
-        .update({'reactions.$me': cur == emoji ? FieldValue.delete() : emoji});
+    return _msg(
+      chatId,
+      m.id,
+    ).update({'reactions.$me': cur == emoji ? FieldValue.delete() : emoji});
   }
 
   // ───────────── Đã đọc / đang soạn ─────────────
-  Future<void> markRead(Chat c) => _chats.doc(c.id).update({
-    'lastRead.$me': FieldValue.serverTimestamp(),
-    'unread.$me': 0,
-  }).catchError((_) {});
+  Future<void> markRead(Chat c) => _chats
+      .doc(c.id)
+      .update({'lastRead.$me': FieldValue.serverTimestamp(), 'unread.$me': 0})
+      .catchError((_) {});
 
   DateTime _lastTyping = DateTime(2000);
   void typing(String chatId) {
@@ -301,31 +351,39 @@ class ChatService {
     _lastTyping = now;
     _chats
         .doc(chatId)
-        .update({'typing.$me': FieldValue.serverTimestamp()}).catchError((_) {});
+        .update({'typing.$me': FieldValue.serverTimestamp()})
+        .catchError((_) {});
   }
 
   // ───────────── Cài đặt chat ─────────────
-  Future<void> _toggle(Chat c, String field, bool on) => _chats.doc(c.id).update({
-    field: on ? FieldValue.arrayUnion([me]) : FieldValue.arrayRemove([me])
-  });
+  Future<void> _toggle(Chat c, String field, bool on) =>
+      _chats.doc(c.id).update({
+        field: on ? FieldValue.arrayUnion([me]) : FieldValue.arrayRemove([me]),
+      });
   Future<void> setMuted(Chat c, bool on) => _toggle(c, 'mutedBy', on);
   Future<void> setPinned(Chat c, bool on) => _toggle(c, 'pinnedBy', on);
   Future<void> setBlocked(Chat c, bool on) => _toggle(c, 'blockedBy', on);
   Future<void> accept(Chat c) => _toggle(c, 'acceptedBy', true);
 
-  Future<void> rename(Chat c, String name) => _chats.doc(c.id).update({'name': name});
+  Future<void> rename(Chat c, String name) =>
+      _chats.doc(c.id).update({'name': name});
 
   Future<void> setDisappear(Chat c, int sec) async {
     final n = (await user(me)).name;
     await _chats.doc(c.id).update({'disappearAfterSec': sec});
     await sendSystem(
-        c,
-        sec == 0
-            ? '$n đã tắt tin nhắn tự hủy'
-            : '$n đã bật tin nhắn tự hủy sau ${_label(sec)}');
+      c,
+      sec == 0
+          ? '$n đã tắt tin nhắn tự hủy'
+          : '$n đã bật tin nhắn tự hủy sau ${_label(sec)}',
+    );
   }
 
-  String _label(int sec) => sec < 3600 ? '${sec ~/ 60} phút' : sec < 86400 ? '${sec ~/ 3600} giờ' : '${sec ~/ 86400} ngày';
+  String _label(int sec) => sec < 3600
+      ? '${sec ~/ 60} phút'
+      : sec < 86400
+      ? '${sec ~/ 3600} giờ'
+      : '${sec ~/ 86400} ngày';
 
   Future<void> addMembers(Chat c, List<String> uids) async {
     await _chats.doc(c.id).update({
@@ -346,7 +404,9 @@ class ChatService {
     final soleAdmin = c.admins.length == 1 && c.admins.first == me;
     await _chats.doc(c.id).update({
       'members': FieldValue.arrayRemove([me]),
-      'admins': soleAdmin && others.isNotEmpty ? [others.first] : FieldValue.arrayRemove([me]),
+      'admins': soleAdmin && others.isNotEmpty
+          ? [others.first]
+          : FieldValue.arrayRemove([me]),
     });
   }
 

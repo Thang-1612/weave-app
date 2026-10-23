@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/user_profile.dart';
 import 'post_service.dart';
 import 'text_utils.dart';
@@ -10,9 +11,10 @@ class UserService {
   static final _users = FirebaseFirestore.instance.collection('users');
 
   static Stream<UserProfile?> watchProfile(String uid) {
-    return _users.doc(uid).snapshots().map(
-          (s) => s.exists ? UserProfile.fromMap(uid, s.data()!) : null,
-    );
+    return _users
+        .doc(uid)
+        .snapshots()
+        .map((s) => s.exists ? UserProfile.fromMap(uid, s.data()!) : null);
   }
 
   /// Tạo hồ sơ nếu chưa có; bổ sung tên và dữ liệu tìm kiếm nếu còn thiếu.
@@ -99,8 +101,9 @@ class UserService {
         .toList();
     if (words.isEmpty) return [];
 
-    final first =
-    words.first.length > 20 ? words.first.substring(0, 20) : words.first;
+    final first = words.first.length > 20
+        ? words.first.substring(0, 20)
+        : words.first;
     final snap = await _users
         .where('searchTokens', arrayContains: first)
         .limit(30)
@@ -122,17 +125,24 @@ class UserService {
   /// Gợi ý người có chung sở thích / mục tiêu, sắp xếp theo số tag chung.
   /// Chỉ trả về người để `discoverable = true`.
   static Future<List<UserProfile>> suggestByInterests(
-      List<String> myTags, {
-        Set<String> exclude = const {},
-      }) async {
+    List<String> myTags, {
+    Set<String> exclude = const {},
+  }) async {
     final me = FirebaseAuth.instance.currentUser?.uid;
-    final tags = myTags.toSet().take(30).toList(); // giới hạn của array-contains-any
+    final tags = myTags
+        .toSet()
+        .take(30)
+        .toList(); // giới hạn của array-contains-any
     if (tags.isEmpty) return [];
 
-    final byInterest =
-    await _users.where('interests', arrayContainsAny: tags).limit(30).get();
-    final byGoal =
-    await _users.where('goalTags', arrayContainsAny: tags).limit(30).get();
+    final byInterest = await _users
+        .where('interests', arrayContainsAny: tags)
+        .limit(30)
+        .get();
+    final byGoal = await _users
+        .where('goalTags', arrayContainsAny: tags)
+        .limit(30)
+        .get();
 
     final seen = <String>{};
     final scored = <MapEntry<UserProfile, int>>[];
@@ -143,8 +153,10 @@ class UserService {
       final p = UserProfile.fromMap(doc.id, doc.data());
       if (p.name.isEmpty || !p.discoverable) continue;
       if (UserPrefs.instance.isBlocked(doc.id)) continue;
-      final common =
-          {...p.interests, ...p.goalTags}.where(tags.contains).length;
+      final common = {
+        ...p.interests,
+        ...p.goalTags,
+      }.where(tags.contains).length;
       if (common > 0) scored.add(MapEntry(p, common));
     }
     scored.sort((a, b) => b.value.compareTo(a.value));

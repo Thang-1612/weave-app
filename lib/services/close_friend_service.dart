@@ -12,11 +12,11 @@ class CloseFriendService {
     return uid;
   }
 
-  static CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance
-          .collection('users')
-          .doc(_me)
-          .collection('closeFriends');
+  static CollectionReference<Map<String, dynamic>> get _col => FirebaseFirestore
+      .instance
+      .collection('users')
+      .doc(_me)
+      .collection('closeFriends');
 
   /// Tập uid những người tôi đã đánh dấu bạn thân (cập nhật trực tiếp).
   static Stream<Set<String>> watchIds() {

@@ -119,8 +119,9 @@ class WeavePrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Khi loading vẫn để nút "sáng" (không bị xám) nhưng bấm không làm gì.
-    final VoidCallback? effective =
-    onPressed == null ? null : (loading ? () {} : onPressed);
+    final VoidCallback? effective = onPressed == null
+        ? null
+        : (loading ? () {} : onPressed);
 
     final button = FilledButton(
       onPressed: effective,
@@ -130,8 +131,9 @@ class WeavePrimaryButton extends StatelessWidget {
           compact ? WeaveSizes.buttonHeightCompact : WeaveSizes.buttonHeight,
         ),
         backgroundColor: danger ? AppColors.danger : null,
-        disabledBackgroundColor:
-        danger ? AppColors.danger.withValues(alpha: 0.35) : null,
+        disabledBackgroundColor: danger
+            ? AppColors.danger.withValues(alpha: 0.35)
+            : null,
         disabledForegroundColor: danger ? Colors.white : null,
       ),
       child: _ButtonContent(
@@ -141,9 +143,7 @@ class WeavePrimaryButton extends StatelessWidget {
         spinnerColor: Colors.white,
       ),
     );
-    return expanded
-        ? SizedBox(width: double.infinity, child: button)
-        : button;
+    return expanded ? SizedBox(width: double.infinity, child: button) : button;
   }
 }
 
@@ -170,8 +170,9 @@ class WeaveSecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final VoidCallback? effective =
-    onPressed == null ? null : (loading ? () {} : onPressed);
+    final VoidCallback? effective = onPressed == null
+        ? null
+        : (loading ? () {} : onPressed);
     final fg = danger ? AppColors.danger : AppColors.textPrimary;
 
     final button = OutlinedButton(
@@ -196,9 +197,7 @@ class WeaveSecondaryButton extends StatelessWidget {
         spinnerColor: fg,
       ),
     );
-    return expanded
-        ? SizedBox(width: double.infinity, child: button)
-        : button;
+    return expanded ? SizedBox(width: double.infinity, child: button) : button;
   }
 }
 
@@ -320,14 +319,14 @@ class WeaveAvatar extends StatelessWidget {
         child: (url == null || url.isEmpty)
             ? fallback
             : Image.network(
-          url,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stack) => fallback,
-          loadingBuilder: (context, child, progress) =>
-          progress == null ? child : fallback,
-        ),
+                url,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stack) => fallback,
+                loadingBuilder: (context, child, progress) =>
+                    progress == null ? child : fallback,
+              ),
       ),
     );
 
@@ -360,15 +359,19 @@ class _AvatarFallback extends StatelessWidget {
       alignment: Alignment.center,
       color: AppColors.soft,
       child: initials.isEmpty
-          ? Icon(Icons.person_rounded, size: size * 0.55, color: AppColors.brand)
+          ? Icon(
+              Icons.person_rounded,
+              size: size * 0.55,
+              color: AppColors.brand,
+            )
           : Text(
-        initials,
-        style: TextStyle(
-          fontSize: size * 0.38,
-          fontWeight: FontWeight.w700,
-          color: AppColors.brand,
-        ),
-      ),
+              initials,
+              style: TextStyle(
+                fontSize: size * 0.38,
+                fontWeight: FontWeight.w700,
+                color: AppColors.brand,
+              ),
+            ),
     );
   }
 }
@@ -415,12 +418,18 @@ class WeaveEmptyState extends StatelessWidget {
                 child: Icon(icon, size: 28, color: AppColors.brand),
               ),
               const SizedBox(height: WeaveSpacing.lg),
-              Text(title,
-                  style: textTheme.titleMedium, textAlign: TextAlign.center),
+              Text(
+                title,
+                style: textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
               if (message != null && message!.isNotEmpty) ...[
                 const SizedBox(height: WeaveSpacing.xs),
-                Text(message!,
-                    style: textTheme.bodySmall, textAlign: TextAlign.center),
+                Text(
+                  message!,
+                  style: textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
               ],
               if (actionLabel != null && onAction != null) ...[
                 const SizedBox(height: WeaveSpacing.lg),
@@ -521,11 +530,17 @@ class WeaveErrorState extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: WeaveSpacing.lg),
-              Text(title,
-                  style: textTheme.titleMedium, textAlign: TextAlign.center),
+              Text(
+                title,
+                style: textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: WeaveSpacing.xs),
-              Text(message,
-                  style: textTheme.bodySmall, textAlign: TextAlign.center),
+              Text(
+                message,
+                style: textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
               if (onRetry != null) ...[
                 const SizedBox(height: WeaveSpacing.lg),
                 WeaveSecondaryButton(

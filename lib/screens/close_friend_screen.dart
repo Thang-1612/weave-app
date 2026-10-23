@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../services/close_friend_service.dart';
 import '../services/friend_service.dart';
 import '../services/l10n.dart';
@@ -15,9 +16,7 @@ class CloseFriendsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final me = FirebaseAuth.instance.currentUser?.uid ?? '';
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Bạn thân', 'Close friends')),
-      ),
+      appBar: AppBar(title: Text(tr('Bạn thân', 'Close friends'))),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
@@ -103,8 +102,10 @@ class _FriendTile extends StatelessWidget {
     final cached = _names[uid];
     if (cached != null) return cached;
     try {
-      final s =
-      await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final s = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       final d = s.data() ?? <String, dynamic>{};
       for (final key in const ['displayName', 'name', 'fullName', 'username']) {
         final v = d[key];

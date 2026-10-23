@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../services/l10n.dart';
 import 'weave_layer.dart';
 
@@ -129,8 +130,7 @@ class Post {
   bool get hasTopic => spaceId.isNotEmpty;
 
   /// Đã quá hạn tự ẩn.
-  bool get isExpired =>
-      expiresAt != null && DateTime.now().isAfter(expiresAt!);
+  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
 
   /// Câu hỏi đã có đáp án được chọn.
   bool get hasAcceptedAnswer =>
@@ -197,7 +197,9 @@ class Post {
           final t = h['text'];
           final at = h['at'];
           if (t is String && t.isNotEmpty) {
-            hints.add(PostHint(t, at is Timestamp ? at.toDate() : DateTime.now()));
+            hints.add(
+              PostHint(t, at is Timestamp ? at.toDate() : DateTime.now()),
+            );
           }
         }
       }
@@ -207,11 +209,12 @@ class Post {
 
     // Chuỗi rỗng và null đều nghĩa là "chưa có đáp án"
     final rawAccepted = d['acceptedCommentId'];
-    final accepted =
-    (rawAccepted is String && rawAccepted.isNotEmpty) ? rawAccepted : null;
+    final accepted = (rawAccepted is String && rawAccepted.isNotEmpty)
+        ? rawAccepted
+        : null;
     final rawAcceptedAuthor = d['acceptedAuthorId'];
     final acceptedAuthor =
-    (rawAcceptedAuthor is String && rawAcceptedAuthor.isNotEmpty)
+        (rawAcceptedAuthor is String && rawAcceptedAuthor.isNotEmpty)
         ? rawAcceptedAuthor
         : null;
 
@@ -249,7 +252,7 @@ class Post {
       lastUpdateAt: lu is Timestamp ? lu.toDate() : null,
       // Bài cũ chưa có trường công khai: dùng tạm số tổng để không mất khung
       publicUpdateCount:
-      (d['publicUpdateCount'] as num?)?.toInt() ?? updateCount,
+          (d['publicUpdateCount'] as num?)?.toInt() ?? updateCount,
       lastPublicUpdateAt: lpu is Timestamp
           ? lpu.toDate()
           : (lu is Timestamp ? lu.toDate() : null),

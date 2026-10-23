@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/story_models.dart';
 import '../services/friend_service.dart';
 import '../services/l10n.dart';
@@ -68,17 +69,16 @@ String fmtDate(DateTime d) =>
 
 /// Hộp nhập văn bản nhiều dòng. Trả về null nếu hủy.
 Future<String?> showStoryTextDialog(
-    BuildContext context, {
-      required String title,
-      String initial = '',
-      String? hint,
-      int maxLength = 800,
-    }) {
+  BuildContext context, {
+  required String title,
+  String initial = '',
+  String? hint,
+  int maxLength = 800,
+}) {
   final controller = TextEditingController(text: initial);
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text(title),
       content: SizedBox(
         width: 400,
@@ -111,9 +111,6 @@ void showStorySourceSheet(BuildContext context, StorySource s) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
     builder: (ctx) {
       final bytes = s.imageBytes;
       return SafeArea(
@@ -124,10 +121,14 @@ void showStorySourceSheet(BuildContext context, StorySource s) {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                tr('Tư liệu gốc · ${fmtDate(s.date)}',
-                    'Original source · ${fmtDate(s.date)}'),
-                style:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                tr(
+                  'Tư liệu gốc · ${fmtDate(s.date)}',
+                  'Original source · ${fmtDate(s.date)}',
+                ),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 12),
               if (bytes != null)
@@ -136,12 +137,14 @@ void showStorySourceSheet(BuildContext context, StorySource s) {
                   child: Image.memory(bytes, fit: BoxFit.contain),
                 )
               else
-                Flexible(child: SingleChildScrollView(
-                  child: SelectableText(
-                    s.text,
-                    style: const TextStyle(fontSize: 15, height: 1.5),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: SelectableText(
+                      s.text,
+                      style: const TextStyle(fontSize: 15, height: 1.5),
+                    ),
                   ),
-                )),
+                ),
             ],
           ),
         ),
@@ -166,7 +169,6 @@ class StorySourceChip extends StatelessWidget {
       avatar: Icon(icon, size: 14, color: AppColors.brand),
       label: Text(fmtDate(source.date)),
       labelStyle: const TextStyle(fontSize: 12),
-      backgroundColor: Colors.white,
       side: const BorderSide(color: AppColors.border),
       onPressed: () => showStorySourceSheet(context, source),
     );
@@ -201,93 +203,95 @@ class StoryBlockCard extends StatelessWidget {
         ? linked.first.imageBytes
         : null;
 
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (photo != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.memory(
-                  photo,
-                  width: double.infinity,
-                  height: 220,
-                  fit: BoxFit.cover,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (photo != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.memory(
+                    photo,
+                    width: double.infinity,
+                    height: 220,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-            ),
-          if (block.text.isNotEmpty)
-            block.type == kBlockQuote
-                ? Container(
-              padding: const EdgeInsets.only(left: 12),
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: AppColors.brand, width: 3),
+            if (block.text.isNotEmpty)
+              block.type == kBlockQuote
+                  ? Container(
+                      padding: const EdgeInsets.only(left: 12),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          left: BorderSide(color: AppColors.brand, width: 3),
+                        ),
+                      ),
+                      child: Text(
+                        block.text,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.5,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    )
+                  : Text(
+                      block.text,
+                      style: const TextStyle(fontSize: 15, height: 1.5),
+                    ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  block.aiGenerated ? Icons.auto_awesome : Icons.edit_outlined,
+                  size: 14,
+                  color: AppColors.textSecondary,
                 ),
-              ),
-              child: Text(
-                block.text,
-                style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.5,
-                  fontStyle: FontStyle.italic,
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    block.aiGenerated
+                        ? tr(
+                            'AI viết từ nguồn bên dưới',
+                            'AI wrote this from the sources below',
+                          )
+                        : block.lastEditedBy == currentUid
+                        ? tr('Bạn đã chỉnh sửa', 'Edited by you')
+                        : tr('Đã được chỉnh sửa', 'Edited by a collaborator'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ),
-              ),
-            )
-                : Text(
-              block.text,
-              style: const TextStyle(fontSize: 15, height: 1.5),
-            ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Icon(
-                block.aiGenerated ? Icons.auto_awesome : Icons.edit_outlined,
-                size: 14,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  block.aiGenerated
-                      ? tr('AI viết từ nguồn bên dưới',
-                      'AI wrote this from the sources below')
-                      : block.lastEditedBy == currentUid
-                      ? tr('Bạn đã chỉnh sửa', 'Edited by you')
-                      : tr('Đã được chỉnh sửa', 'Edited by a collaborator'),
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-              ),
-              if (canEdit) ...[
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  onPressed: onEdit,
-                ),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  onPressed: onDelete,
-                ),
+                if (canEdit) ...[
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    onPressed: onEdit,
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    onPressed: onDelete,
+                  ),
+                ],
               ],
-            ],
-          ),
-          if (linked.isNotEmpty)
-            Wrap(
-              spacing: 6,
-              runSpacing: 0,
-              children: [for (final s in linked) StorySourceChip(source: s)],
             ),
-        ],
+            if (linked.isNotEmpty)
+              Wrap(
+                spacing: 6,
+                runSpacing: 0,
+                children: [for (final s in linked) StorySourceChip(source: s)],
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -322,8 +326,10 @@ class StoryMissingCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            tr('AI cần thêm thông tin, nên chưa tự điền:',
-                'The AI needs more info and did not guess:'),
+            tr(
+              'AI cần thêm thông tin, nên chưa tự điền:',
+              'The AI needs more info and did not guess:',
+            ),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           for (final q in questions)
@@ -358,15 +364,12 @@ class StoryMissingCard extends StatelessWidget {
 /// Chọn một người bạn (đã chấp nhận kết bạn) chưa có trong [exclude].
 /// Trả về uid, hoặc null nếu đóng bảng.
 Future<String?> showStoryFriendPicker(
-    BuildContext context, {
-      required List<String> exclude,
-    }) {
+  BuildContext context, {
+  required List<String> exclude,
+}) {
   return showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
     builder: (ctx) {
       final me = FirebaseAuth.instance.currentUser?.uid ?? '';
       return SafeArea(
@@ -377,8 +380,10 @@ Future<String?> showStoryFriendPicker(
             children: [
               Text(
                 tr('Mời bạn cùng chỉnh sửa', 'Invite a friend to edit'),
-                style:
-                const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Flexible(
@@ -391,17 +396,24 @@ Future<String?> showStoryFriendPicker(
                         child: Center(child: CircularProgressIndicator()),
                       );
                     }
-                    final uids = [
-                      for (final f in snap.data!)
-                        if (f.accepted) f.otherUid(me),
-                    ].where((u) => u.isNotEmpty && !exclude.contains(u)).toList();
+                    final uids =
+                        [
+                              for (final f in snap.data!)
+                                if (f.accepted) f.otherUid(me),
+                            ]
+                            .where((u) => u.isNotEmpty && !exclude.contains(u))
+                            .toList();
                     if (uids.isEmpty) {
                       return Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text(
-                          tr('Không còn người bạn nào để mời.',
-                              'No more friends to invite.'),
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          tr(
+                            'Không còn người bạn nào để mời.',
+                            'No more friends to invite.',
+                          ),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       );
                     }
@@ -443,7 +455,9 @@ class _FriendTileState extends State<_FriendTile> {
   // đổi danh sách khóa bên dưới (hoặc gọi hàm trong user_service.dart).
   Future<String> _load() async {
     try {
-      final d = await FirebaseFirestore.instance.doc('users/${widget.uid}').get();
+      final d = await FirebaseFirestore.instance
+          .doc('users/${widget.uid}')
+          .get();
       final m = d.data();
       final n = '${m?['displayName'] ?? m?['name'] ?? ''}'.trim();
       if (n.isNotEmpty) return n;

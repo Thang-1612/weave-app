@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 import 'friend_post_sync.dart';
 import 'interaction_service.dart';
 import 'interest_service.dart';
 import 'l10n.dart';
+
 import 'package:flutter/foundation.dart';
 
 class PostService {
@@ -49,9 +51,9 @@ class PostService {
   /// Ghép hai luồng danh sách bài. Luồng phụ lỗi (ví dụ chưa có quyền) thì
   /// coi như rỗng để luồng chính vẫn chạy.
   static Stream<List<Post>> _merge(
-      Stream<List<Post>> primary,
-      Stream<List<Post>> secondary,
-      ) {
+    Stream<List<Post>> primary,
+    Stream<List<Post>> secondary,
+  ) {
     late StreamController<List<Post>> c;
     StreamSubscription<List<Post>>? sa;
     StreamSubscription<List<Post>>? sb;
@@ -67,7 +69,7 @@ class PostService {
     c = StreamController<List<Post>>(
       onListen: () {
         sa = primary.listen(
-              (v) {
+          (v) {
             a = v;
             emit();
           },
@@ -76,7 +78,7 @@ class PostService {
           },
         );
         sb = secondary.listen(
-              (v) {
+          (v) {
             b = v;
             emit();
           },
@@ -126,19 +128,17 @@ class PostService {
           .snapshots()
           .map(
             (s) => s.docs
-            .map(Post.fromDoc)
-            .where((p) => p.authorId == uid)
-            .toList(),
-      );
+                .map(Post.fromDoc)
+                .where((p) => p.authorId == uid)
+                .toList(),
+          );
     }
     return _merge(publicStream, friendStream);
   }
 
   /// Theo dõi một bài viết (null nếu đã bị xóa).
   static Stream<Post?> watchPost(Post post) {
-    return post.ref
-        .snapshots()
-        .map((s) => s.exists ? Post.fromDoc(s) : null);
+    return post.ref.snapshots().map((s) => s.exists ? Post.fromDoc(s) : null);
   }
 
   /// Lấy một bài theo mã: thử bài công khai trước, rồi bài chỉ-bạn-bè.
@@ -215,23 +215,25 @@ class PostService {
     if (options.isNotEmpty) {
       if (options.length < 2) {
         throw Exception(
-          tr('Bình chọn cần ít nhất 2 lựa chọn',
-              'A poll needs at least 2 options'),
+          tr(
+            'Bình chọn cần ít nhất 2 lựa chọn',
+            'A poll needs at least 2 options',
+          ),
         );
       }
       if (options.length > maxPollOptions) {
         throw Exception(
-          tr('Bình chọn có tối đa $maxPollOptions lựa chọn',
-              'A poll can have at most $maxPollOptions options'),
+          tr(
+            'Bình chọn có tối đa $maxPollOptions lựa chọn',
+            'A poll can have at most $maxPollOptions options',
+          ),
         );
       }
       data['pollOptions'] = [
         for (var i = 0; i < options.length; i++)
           {'id': 'o$i', 'text': options[i]},
       ];
-      data['pollOptionIds'] = [
-        for (var i = 0; i < options.length; i++) 'o$i',
-      ];
+      data['pollOptionIds'] = [for (var i = 0; i < options.length; i++) 'o$i'];
       if (pollMultiple) data['pollMultiple'] = true;
       if (pollClosesAt != null) {
         data['pollClosesAt'] = Timestamp.fromDate(pollClosesAt);
@@ -269,24 +271,37 @@ class PostService {
     final me = FirebaseAuth.instance.currentUser;
     if (me == null) throw Exception(msgNotSignedIn);
     if (post.authorId != me.uid) {
-      throw Exception(tr('Chỉ tác giả câu hỏi mới bổ sung gợi ý được',
-          'Only the author of the question can add hints'));
+      throw Exception(
+        tr(
+          'Chỉ tác giả câu hỏi mới bổ sung gợi ý được',
+          'Only the author of the question can add hints',
+        ),
+      );
     }
     if (!post.isQuestion) {
-      throw Exception(tr('Bài viết này không phải câu hỏi',
-          'This post is not a question'));
+      throw Exception(
+        tr('Bài viết này không phải câu hỏi', 'This post is not a question'),
+      );
     }
     final t = text.trim();
     if (t.isEmpty) {
       throw Exception(tr('Gợi ý đang trống', 'The hint is empty'));
     }
     if (t.length > maxHintLength) {
-      throw Exception(tr('Gợi ý tối đa $maxHintLength ký tự',
-          'A hint can have at most $maxHintLength characters'));
+      throw Exception(
+        tr(
+          'Gợi ý tối đa $maxHintLength ký tự',
+          'A hint can have at most $maxHintLength characters',
+        ),
+      );
     }
     if (post.hints.length >= maxHints) {
-      throw Exception(tr('Chỉ bổ sung được tối đa $maxHints gợi ý',
-          'You can add at most $maxHints hints'));
+      throw Exception(
+        tr(
+          'Chỉ bổ sung được tối đa $maxHints gợi ý',
+          'You can add at most $maxHints hints',
+        ),
+      );
     }
     await post.ref.update({
       'hints': FieldValue.arrayUnion([
@@ -302,23 +317,32 @@ class PostService {
   /// thao tác duy nhất. Điểm đóng góp chỉ tính với bài công khai: bài bạn bè
   /// hoặc riêng tư luôn ghi `acceptedAuthorId` rỗng.
   static Future<void> acceptAnswer(
-      Post post, {
-        required String commentId,
-        required String authorId,
-      }) async {
+    Post post, {
+    required String commentId,
+    required String authorId,
+  }) async {
     final me = FirebaseAuth.instance.currentUser;
     if (me == null) throw Exception(msgNotSignedIn);
     if (post.authorId != me.uid) {
-      throw Exception(tr('Chỉ tác giả câu hỏi mới chọn được đáp án',
-          'Only the author of the question can pick the answer'));
+      throw Exception(
+        tr(
+          'Chỉ tác giả câu hỏi mới chọn được đáp án',
+          'Only the author of the question can pick the answer',
+        ),
+      );
     }
     if (!post.isQuestion) {
-      throw Exception(tr('Bài viết này không phải câu hỏi',
-          'This post is not a question'));
+      throw Exception(
+        tr('Bài viết này không phải câu hỏi', 'This post is not a question'),
+      );
     }
     if (authorId == me.uid) {
-      throw Exception(tr('Bạn không thể chọn bình luận của chính mình',
-          'You cannot pick your own comment'));
+      throw Exception(
+        tr(
+          'Bạn không thể chọn bình luận của chính mình',
+          'You cannot pick your own comment',
+        ),
+      );
     }
     await post.ref.update({
       'acceptedCommentId': commentId,
@@ -331,8 +355,12 @@ class PostService {
     final me = FirebaseAuth.instance.currentUser;
     if (me == null) throw Exception(msgNotSignedIn);
     if (post.authorId != me.uid) {
-      throw Exception(tr('Chỉ tác giả câu hỏi mới bỏ chọn được đáp án',
-          'Only the author of the question can unmark the answer'));
+      throw Exception(
+        tr(
+          'Chỉ tác giả câu hỏi mới bỏ chọn được đáp án',
+          'Only the author of the question can unmark the answer',
+        ),
+      );
     }
     await post.ref.update({
       'acceptedCommentId': FieldValue.delete(),
@@ -346,8 +374,10 @@ class PostService {
   /// rất ít lượt đọc. Không cần chỉ mục mới.
   static Future<int> acceptedAnswerCount(String uid) async {
     if (uid.isEmpty) return 0;
-    final agg =
-    await _posts.where('acceptedAuthorId', isEqualTo: uid).count().get();
+    final agg = await _posts
+        .where('acceptedAuthorId', isEqualTo: uid)
+        .count()
+        .get();
     return agg.count ?? 0;
   }
 
@@ -391,10 +421,12 @@ class PostService {
     // Kiểm tra theo dữ liệu thật vừa đọc, không theo đối tượng Post có thể đã cũ
     if (((data['reactions'] as num?) ?? 0) > 0 ||
         ((data['comments'] as num?) ?? 0) > 0) {
-      throw Exception(tr(
-        'Bài viết đã có cảm xúc hoặc bình luận nên không thể chuyển giữa công khai và không công khai. Hãy đăng lại bài viết.',
-        'This post already has reactions or comments, so it cannot be switched between public and non-public. Please publish it again.',
-      ));
+      throw Exception(
+        tr(
+          'Bài viết đã có cảm xúc hoặc bình luận nên không thể chuyển giữa công khai và không công khai. Hãy đăng lại bài viết.',
+          'This post already has reactions or comments, so it cannot be switched between public and non-public. Please publish it again.',
+        ),
+      );
     }
 
     data.remove('acceptedCommentId');
@@ -435,8 +467,12 @@ class PostService {
     final me = FirebaseAuth.instance.currentUser;
     if (me == null) throw Exception(msgNotSignedIn);
     if (post.authorId != me.uid) {
-      throw Exception(tr('Chỉ tác giả mới ghim được bài này',
-          'Only the author can pin this post'));
+      throw Exception(
+        tr(
+          'Chỉ tác giả mới ghim được bài này',
+          'Only the author can pin this post',
+        ),
+      );
     }
     if (post.isPinned) return;
 

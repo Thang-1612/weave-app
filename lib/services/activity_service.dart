@@ -1,6 +1,8 @@
 import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'user_prefs.dart';
 
 class ActivityService {
@@ -27,8 +29,10 @@ class ActivityService {
   loadShares() async {
     final col = _shares();
     if (col == null) return [];
-    final snap =
-    await col.orderBy('createdAt', descending: true).limit(100).get();
+    final snap = await col
+        .orderBy('createdAt', descending: true)
+        .limit(100)
+        .get();
     return snap.docs;
   }
 

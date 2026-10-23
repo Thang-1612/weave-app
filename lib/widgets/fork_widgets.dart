@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../screens/forks_screen.dart';
 import '../services/l10n.dart';
@@ -20,10 +21,12 @@ class ForkOrigin extends StatelessWidget {
     if (original == null) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(tr(
-            'Bài gốc đã bị xóa hoặc bạn không có quyền xem',
-            'The original post was deleted or you cannot view it',
-          )),
+          content: Text(
+            tr(
+              'Bài gốc đã bị xóa hoặc bạn không có quyền xem',
+              'The original post was deleted or you cannot view it',
+            ),
+          ),
         ),
       );
       return;
@@ -110,9 +113,7 @@ class _ForkCountState extends State<ForkCount> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ForksScreen(original: widget.post),
-          ),
+          MaterialPageRoute(builder: (_) => ForksScreen(original: widget.post)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),

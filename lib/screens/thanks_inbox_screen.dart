@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/l10n.dart';
 import '../services/social_extras_service.dart';
 import '../theme/app_theme.dart';
@@ -22,9 +23,7 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Lời cảm ơn', 'Thank-yous')),
-      ),
+      appBar: AppBar(title: Text(tr('Lời cảm ơn', 'Thank-yous'))),
       body: FutureBuilder<List<ThanksItem>>(
         future: _future,
         builder: (context, snap) {
@@ -51,7 +50,9 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
                   ),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      color: AppColors.textSecondary, height: 1.4),
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ),
             );
@@ -92,8 +93,10 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
                                 ),
                                 if (t.note.isNotEmpty) ...[
                                   const SizedBox(height: 4),
-                                  Text(t.note,
-                                      style: const TextStyle(height: 1.35)),
+                                  Text(
+                                    t.note,
+                                    style: const TextStyle(height: 1.35),
+                                  ),
                                 ],
                                 if (t.postPreview.isNotEmpty) ...[
                                   const SizedBox(height: 6),

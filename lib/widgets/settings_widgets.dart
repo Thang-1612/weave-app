@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/user_profile.dart';
 import '../services/account_service.dart';
 import '../services/l10n.dart';
@@ -22,10 +23,7 @@ class SettingsScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       // Không còn flexibleSpace gradient: AppBar lấy nền Surface và viền dưới từ theme.
-      appBar: AppBar(
-        title: Text(title),
-        actions: actions,
-      ),
+      appBar: AppBar(title: Text(title), actions: actions),
       body: body,
     );
   }
@@ -156,7 +154,8 @@ class SettingsTile extends StatelessWidget {
         style: TextStyle(fontWeight: FontWeight.w600, color: color),
       ),
       subtitle: subtitle == null ? null : Text(subtitle!),
-      trailing: trailing ??
+      trailing:
+          trailing ??
           (onTap != null
               ? const Icon(Icons.chevron_right, color: AppColors.textSecondary)
               : null),
@@ -178,8 +177,9 @@ class PersonTile extends StatefulWidget {
 }
 
 class _PersonTileState extends State<PersonTile> {
-  late final Stream<UserProfile?> _stream =
-  UserService.watchProfile(widget.uid);
+  late final Stream<UserProfile?> _stream = UserService.watchProfile(
+    widget.uid,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +200,10 @@ class _PersonTileState extends State<PersonTile> {
               ),
             ),
           ),
-          title: Text(shown, style: const TextStyle(fontWeight: FontWeight.w600)),
+          title: Text(
+            shown,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
           subtitle: bio.isEmpty
               ? null
               : Text(bio, maxLines: 1, overflow: TextOverflow.ellipsis),

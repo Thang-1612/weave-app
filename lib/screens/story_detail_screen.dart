@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/story_models.dart';
 import '../services/l10n.dart';
 import '../services/post_service.dart';
@@ -46,12 +47,18 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         sources: _latestSources,
         visibility: visibility,
       );
-      messenger.showSnackBar(SnackBar(
-        content: Text(r.skippedImages > 0
-            ? tr('Đã đăng. ${r.skippedImages} ảnh không đưa vào bài vì giới hạn dung lượng.',
-            'Posted. ${r.skippedImages} photos were left out because of the size limit.')
-            : tr('Đã đăng lên bảng tin', 'Posted to your feed')),
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            r.skippedImages > 0
+                ? tr(
+                    'Đã đăng. ${r.skippedImages} ảnh không đưa vào bài vì giới hạn dung lượng.',
+                    'Posted. ${r.skippedImages} photos were left out because of the size limit.',
+                  )
+                : tr('Đã đăng lên bảng tin', 'Posted to your feed'),
+          ),
+        ),
+      );
       return true;
     } catch (e) {
       messenger.showSnackBar(
@@ -78,10 +85,16 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final post = await PostService.getPost(story.publishedPostId!);
     if (post == null) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(tr('Bài đã đăng không còn tồn tại. Dùng "Đăng lại bài" ở menu.',
-            'The posted item no longer exists. Use "Post again" in the menu.')),
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            tr(
+              'Bài đã đăng không còn tồn tại. Dùng "Đăng lại bài" ở menu.',
+              'The posted item no longer exists. Use "Post again" in the menu.',
+            ),
+          ),
+        ),
+      );
       return;
     }
     nav.push(MaterialPageRoute(builder: (_) => CommentsScreen(post: post)));
@@ -97,15 +110,18 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(WeaveRadius.card),
+        title: Text(
+          tr(
+            'Đăng câu chuyện này lên bảng tin?',
+            'Post this story to your feed?',
+          ),
         ),
-        title: Text(tr('Đăng câu chuyện này lên bảng tin?',
-            'Post this story to your feed?')),
-        content: Text(tr(
-          'Câu chuyện đã được lưu. Chọn ai được xem bài đăng:',
-          'Your story is saved. Choose who can see the post:',
-        )),
+        content: Text(
+          tr(
+            'Câu chuyện đã được lưu. Chọn ai được xem bài đăng:',
+            'Your story is saved. Choose who can see the post:',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop('later'),
@@ -179,8 +195,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     if (id == currentId) return;
     if (_editorDirty) {
       final discard = await _confirm(
-        tr('Đoạn này có thay đổi chưa lưu. Bỏ thay đổi?',
-            'This part has unsaved changes. Discard them?'),
+        tr(
+          'Đoạn này có thay đổi chưa lưu. Bỏ thay đổi?',
+          'This part has unsaved changes. Discard them?',
+        ),
         tr('Bỏ thay đổi', 'Discard'),
       );
       if (!discard || !mounted) return;
@@ -191,8 +209,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
 
   Future<void> _deleteStory() async {
     if (!await _confirm(
-      tr('Xóa cả câu chuyện? Mọi người cùng sửa cũng sẽ mất nó.',
-          'Delete the whole story? Collaborators will lose it too.'),
+      tr(
+        'Xóa cả câu chuyện? Mọi người cùng sửa cũng sẽ mất nó.',
+        'Delete the whole story? Collaborators will lose it too.',
+      ),
       tr('Xóa', 'Delete'),
     )) {
       return;
@@ -230,8 +250,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     final text = await showStoryTextDialog(
       context,
       title: q,
-      hint: tr('Viết câu trả lời thành một đoạn của câu chuyện',
-          'Write the answer as a part of the story'),
+      hint: tr(
+        'Viết câu trả lời thành một đoạn của câu chuyện',
+        'Write the answer as a part of the story',
+      ),
     );
     if (text == null || text.trim().isEmpty) return;
     await StoryService.answerMissing(widget.storyId, q, text, lastOrder);
@@ -268,16 +290,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   // ---------------------------------------------------------------------
 
   List<Widget> _previewChildren(
-      Story story,
-      List<StoryBlock> blocks,
-      Map<String, StorySource> sources,
-      String me,
-      ) {
+    Story story,
+    List<StoryBlock> blocks,
+    Map<String, StorySource> sources,
+    String me,
+  ) {
     return [
-      Text(
-        story.title,
-        style: Theme.of(context).textTheme.headlineSmall,
-      ),
+      Text(story.title, style: Theme.of(context).textTheme.headlineSmall),
       const SizedBox(height: WeaveSpacing.sm),
       Text(
         '${storyKindLabel(story.kind)} · ${fmtDate(story.updatedAt)}',
@@ -308,11 +327,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(WeaveRadius.card),
-        ),
-      ),
+      showDragHandle: false, // sheet đã có tiêu đề và nút đóng riêng
       builder: (ctx) => DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.9,
@@ -378,10 +393,12 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         ),
         Chip(
           avatar: const Icon(Icons.music_note, size: 16),
-          label: Text(tr(
-            'Gợi ý nhạc: ${storyMusicHint(story.mood)}',
-            'Music idea: ${storyMusicHint(story.mood)}',
-          )),
+          label: Text(
+            tr(
+              'Gợi ý nhạc: ${storyMusicHint(story.mood)}',
+              'Music idea: ${storyMusicHint(story.mood)}',
+            ),
+          ),
         ),
         Chip(
           avatar: const Icon(Icons.group_outlined, size: 16),
@@ -413,11 +430,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         onPressed: _publishing ? null : () => _choosePublish(story),
         icon: _publishing
             ? const SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(
-              strokeWidth: 2, color: Colors.white),
-        )
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
             : const Icon(Icons.publish, size: 18),
         label: Text(tr('Xuất bản', 'Publish')),
       );
@@ -521,13 +540,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   // Bố cục hẹp: một cột như cũ
   // ---------------------------------------------------------------------
   Widget _narrowBody(
-      Story story,
-      List<StoryBlock> blocks,
-      Map<String, StorySource> sources,
-      bool canEdit,
-      String me,
-      int lastOrder,
-      ) {
+    Story story,
+    List<StoryBlock> blocks,
+    Map<String, StorySource> sources,
+    bool canEdit,
+    String me,
+    int lastOrder,
+  ) {
     // ListView full chiều rộng để lăn chuột ở hai lề vẫn hoạt động;
     // nội dung được căn giữa bằng padding.
     return LayoutBuilder(
@@ -568,13 +587,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   // Bố cục rộng: các đoạn | chỉnh sửa | xem trước
   // ---------------------------------------------------------------------
   Widget _wideBody(
-      Story story,
-      List<StoryBlock> blocks,
-      Map<String, StorySource> sources,
-      bool canEdit,
-      String me,
-      int lastOrder,
-      ) {
+    Story story,
+    List<StoryBlock> blocks,
+    Map<String, StorySource> sources,
+    bool canEdit,
+    String me,
+    int lastOrder,
+  ) {
     StoryBlock? selected;
     for (final b in blocks) {
       if (b.id == _selectedBlockId) selected = b;
@@ -615,8 +634,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                   child: Text(
-                    tr('CÁC ĐOẠN (${blocks.length})',
-                        'PARTS (${blocks.length})'),
+                    tr(
+                      'CÁC ĐOẠN (${blocks.length})',
+                      'PARTS (${blocks.length})',
+                    ),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -669,23 +690,28 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
           flex: 3,
           child: selected == null
               ? Center(
-            child: Text(
-              tr('Chưa có đoạn nào để chỉnh sửa.',
-                  'No parts to edit yet.'),
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-          )
+                  child: Text(
+                    tr(
+                      'Chưa có đoạn nào để chỉnh sửa.',
+                      'No parts to edit yet.',
+                    ),
+                    style: const TextStyle(color: AppColors.textSecondary),
+                  ),
+                )
               : _BlockEditor(
-            key: ValueKey(selected.id),
-            block: selected,
-            index: selectedIndex,
-            canEdit: canEdit,
-            onSave: (text) => StoryService.updateBlockText(
-                widget.storyId, selected!.id, text),
-            onDelete: () => _delete(selected!),
-            // Chỉ là cờ, không cần setState
-            onDirtyChanged: (v) => _editorDirty = v,
-          ),
+                  key: ValueKey(selected.id),
+                  block: selected,
+                  index: selectedIndex,
+                  canEdit: canEdit,
+                  onSave: (text) => StoryService.updateBlockText(
+                    widget.storyId,
+                    selected!.id,
+                    text,
+                  ),
+                  onDelete: () => _delete(selected!),
+                  // Chỉ là cờ, không cần setState
+                  onDirtyChanged: (v) => _editorDirty = v,
+                ),
         ),
         const VerticalDivider(width: 1),
         // Cột 3: xem trước (chỉ đọc)
@@ -745,8 +771,14 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         if (story == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: Center(child: Text(tr('Câu chuyện không còn tồn tại',
-                'This story no longer exists'))),
+            body: Center(
+              child: Text(
+                tr(
+                  'Câu chuyện không còn tồn tại',
+                  'This story no longer exists',
+                ),
+              ),
+            ),
           );
         }
         final canEdit = story.collaboratorIds.contains(me);
@@ -769,9 +801,22 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                   _latestSources = sources;
                   final lastOrder = blocks.isEmpty ? 0 : blocks.last.order;
                   return wide
-                      ? _wideBody(story, blocks, sources, canEdit, me, lastOrder)
+                      ? _wideBody(
+                          story,
+                          blocks,
+                          sources,
+                          canEdit,
+                          me,
+                          lastOrder,
+                        )
                       : _narrowBody(
-                      story, blocks, sources, canEdit, me, lastOrder);
+                          story,
+                          blocks,
+                          sources,
+                          canEdit,
+                          me,
+                          lastOrder,
+                        );
                 },
               );
             },
@@ -816,13 +861,15 @@ class _BlockEditor extends StatefulWidget {
 }
 
 class _BlockEditorState extends State<_BlockEditor> {
-  late final TextEditingController _ctrl =
-  TextEditingController(text: widget.block.text);
+  late final TextEditingController _ctrl = TextEditingController(
+    text: widget.block.text,
+  );
   late String _saved = widget.block.text;
   bool _saving = false;
 
   bool get _dirty => _ctrl.text.trim() != _saved.trim();
-  bool get _canSave => widget.canEdit && _dirty && _ctrl.text.trim().isNotEmpty && !_saving;
+  bool get _canSave =>
+      widget.canEdit && _dirty && _ctrl.text.trim().isNotEmpty && !_saving;
 
   @override
   void initState() {
@@ -908,11 +955,13 @@ class _BlockEditorState extends State<_BlockEditor> {
                       onPressed: _canSave ? _save : null,
                       child: _saving
                           ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
                           : Text(tr('Lưu', 'Save')),
                     ),
                   ],

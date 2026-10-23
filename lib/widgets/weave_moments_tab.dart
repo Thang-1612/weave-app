@@ -49,10 +49,15 @@ class WeaveMomentsTab extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 40),
                     child: Text(
-                      tr('Chưa có khoảnh khắc nào.\nChia sẻ ảnh hoặc vài dòng để cả nhóm cùng nhớ.',
-                          'No moments yet.\nShare a photo or a few words so the group remembers.'),
+                      tr(
+                        'Chưa có khoảnh khắc nào.\nChia sẻ ảnh hoặc vài dòng để cả nhóm cùng nhớ.',
+                        'No moments yet.\nShare a photo or a few words so the group remembers.',
+                      ),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 for (final m in moments)
@@ -75,7 +80,9 @@ class WeaveMomentsTab extends StatelessWidget {
       isScrollControlled: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(WeaveRadius.card)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(WeaveRadius.card),
+        ),
       ),
       builder: (_) => _AddMomentSheet(activityId: activity.id),
     );
@@ -102,7 +109,7 @@ class _MomentCardState extends State<_MomentCard> {
 
   bool get _canDelete =>
       m.authorId == WeaveService.me ||
-          widget.activity.hostId == WeaveService.me;
+      widget.activity.hostId == WeaveService.me;
 
   Future<void> _delete() async {
     final messenger = ScaffoldMessenger.of(context);
@@ -110,16 +117,22 @@ class _MomentCardState extends State<_MomentCard> {
       context: context,
       builder: (c) => AlertDialog(
         title: Text(tr('Xóa khoảnh khắc?', 'Delete this moment?')),
-        content: Text(tr('Khoảnh khắc sẽ bị xóa khỏi hoạt động.',
-            'It will be removed from the activity.')),
+        content: Text(
+          tr(
+            'Khoảnh khắc sẽ bị xóa khỏi hoạt động.',
+            'It will be removed from the activity.',
+          ),
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(c, false),
-              child: Text(tr('Hủy', 'Cancel'))),
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(tr('Hủy', 'Cancel')),
+          ),
           FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
-              onPressed: () => Navigator.pop(c, true),
-              child: Text(tr('Xóa', 'Delete'))),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(tr('Xóa', 'Delete')),
+          ),
         ],
       ),
     );
@@ -142,42 +155,56 @@ class _MomentCardState extends State<_MomentCard> {
           ListTile(
             leading: _former
                 ? const CircleAvatar(
-                radius: 16,
-                backgroundColor: AppColors.soft,
-                child: Icon(Icons.person_outline,
-                    size: 18, color: AppColors.textSecondary))
+                    radius: 16,
+                    backgroundColor: AppColors.soft,
+                    child: Icon(
+                      Icons.person_outline,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
+                  )
                 : WeaveUserAvatar(uid: m.authorId),
             title: _former
-                ? Text(tr('Thành viên cũ', 'Former member'),
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600, color: AppColors.textSecondary))
+                ? Text(
+                    tr('Thành viên cũ', 'Former member'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  )
                 : WeaveUserName(
-                uid: m.authorId,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+                    uid: m.authorId,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
             subtitle: Text(weaveDate(m.createdAt)),
             trailing: _canDelete
                 ? IconButton(
-              icon: const Icon(Icons.delete_outline),
-              tooltip: tr('Xóa', 'Delete'),
-              onPressed: _delete,
-            )
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: tr('Xóa', 'Delete'),
+                    onPressed: _delete,
+                  )
                 : null,
           ),
           // Mọi ảnh cùng tỷ lệ 4:3 và co theo chiều rộng thẻ
           if (_bytes != null)
             AspectRatio(
               aspectRatio: 4 / 3,
-              child: Image.memory(_bytes,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true),
+              child: Image.memory(
+                _bytes,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+              ),
             ),
           if (m.caption.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(14),
               child: Text(
                 m.caption,
-                style: const TextStyle(height: 1.4, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  height: 1.4,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
         ],
@@ -210,8 +237,7 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
 
   Future<void> _pick() async {
     try {
-      final picked =
-      await ImagePicker().pickImage(source: ImageSource.gallery);
+      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (picked == null) return;
       setState(() => _busy = true);
       final c = await compressImage(await picked.readAsBytes());
@@ -226,8 +252,11 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
     final nav = Navigator.of(context);
     setState(() => _busy = true);
     try {
-      await WeaveMomentService.add(widget.activityId,
-          caption: _caption.text, imageBytes: _image);
+      await WeaveMomentService.add(
+        widget.activityId,
+        caption: _caption.text,
+        imageBytes: _image,
+      );
       nav.pop();
     } catch (e) {
       _toast('$e');
@@ -239,7 +268,11 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+        16,
+        0,
+        16,
+        MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -255,16 +288,20 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
                       // Xem trước theo cùng tỷ lệ 4:3 như khi hiển thị trong tab
                       child: AspectRatio(
                         aspectRatio: 4 / 3,
-                        child: Image.memory(_image!,
-                            width: double.infinity, fit: BoxFit.cover),
+                        child: Image.memory(
+                          _image!,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     Positioned(
                       right: 4,
                       top: 4,
                       child: IconButton.filledTonal(
-                        onPressed:
-                        _busy ? null : () => setState(() => _image = null),
+                        onPressed: _busy
+                            ? null
+                            : () => setState(() => _image = null),
                         icon: const Icon(Icons.close),
                       ),
                     ),
@@ -279,8 +316,10 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
               minLines: 2,
               maxLength: WeaveMomentService.maxCaption,
               decoration: InputDecoration(
-                hintText: tr('Bạn muốn nhớ điều gì về khoảnh khắc này?',
-                    'What do you want to remember about this moment?'),
+                hintText: tr(
+                  'Bạn muốn nhớ điều gì về khoảnh khắc này?',
+                  'What do you want to remember about this moment?',
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -289,19 +328,24 @@ class _AddMomentSheetState extends State<_AddMomentSheet> {
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _pick,
                   icon: const Icon(Icons.photo_outlined),
-                  label: Text(_image == null
-                      ? tr('Thêm ảnh', 'Add photo')
-                      : tr('Đổi ảnh', 'Change photo')),
+                  label: Text(
+                    _image == null
+                        ? tr('Thêm ảnh', 'Add photo')
+                        : tr('Đổi ảnh', 'Change photo'),
+                  ),
                 ),
                 const Spacer(),
                 FilledButton(
                   onPressed: _busy ? null : _post,
                   child: _busy
                       ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : Text(tr('Đăng', 'Post')),
                 ),
               ],

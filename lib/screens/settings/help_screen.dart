@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import '../../services/l10n.dart';
 import '../../services/user_prefs.dart';
 import '../../theme/app_theme.dart';
@@ -80,10 +81,7 @@ class HelpScreen extends StatelessWidget {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            tr(
-              'Đã gửi phản hồi. Cảm ơn bạn!',
-              'Feedback sent. Thank you!',
-            ),
+            tr('Đã gửi phản hồi. Cảm ơn bạn!', 'Feedback sent. Thank you!'),
           ),
         ),
       );
@@ -116,13 +114,9 @@ class HelpScreen extends StatelessWidget {
           title: tr('Trợ giúp', 'Help'),
           body: settingsList([
             SectionLabel(
-                tr('Câu hỏi thường gặp', 'Frequently asked questions')),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(WeaveRadius.card),
-                border: Border.all(color: AppColors.border),
-              ),
+              tr('Câu hỏi thường gặp', 'Frequently asked questions'),
+            ),
+            Card(
               clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [
@@ -139,12 +133,18 @@ class HelpScreen extends StatelessWidget {
                           en ? _faqs[i].qEn : _faqs[i].qVi,
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        childrenPadding:
-                        const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                        childrenPadding: const EdgeInsets.fromLTRB(
+                          16,
+                          0,
+                          16,
+                          14,
+                        ),
                         expandedAlignment: Alignment.centerLeft,
                         children: [
-                          Text(en ? _faqs[i].aEn : _faqs[i].aVi,
-                              style: const TextStyle(height: 1.4)),
+                          Text(
+                            en ? _faqs[i].aEn : _faqs[i].aVi,
+                            style: const TextStyle(height: 1.4),
+                          ),
                         ],
                       ),
                     ),
@@ -157,8 +157,10 @@ class HelpScreen extends StatelessWidget {
               children: [
                 SettingsTile(
                   icon: Icons.feedback_outlined,
-                  title: tr('Gửi phản hồi hoặc báo lỗi',
-                      'Send feedback or report a bug'),
+                  title: tr(
+                    'Gửi phản hồi hoặc báo lỗi',
+                    'Send feedback or report a bug',
+                  ),
                   subtitle: tr(
                     'Cho chúng tôi biết điều gì cần cải thiện',
                     'Tell us what needs improving',
@@ -225,10 +227,12 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
   Future<void> _send() async {
     final message = _text.text.trim();
     if (message.length < 10) {
-      setState(() => _error = tr(
-        'Vui lòng mô tả ít nhất 10 ký tự',
-        'Please write at least 10 characters',
-      ));
+      setState(
+        () => _error = tr(
+          'Vui lòng mô tả ít nhất 10 ký tự',
+          'Please write at least 10 characters',
+        ),
+      );
       return;
     }
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -301,8 +305,10 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text(_error!,
-                      style: const TextStyle(color: AppColors.danger)),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: AppColors.danger),
+                  ),
                 ),
             ],
           ),
@@ -317,10 +323,10 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
           onPressed: _sending ? null : _send,
           child: _sending
               ? const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : Text(tr('Gửi', 'Send')),
         ),
       ],

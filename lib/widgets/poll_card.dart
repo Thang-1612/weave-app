@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/l10n.dart';
 import '../services/poll_service.dart';
@@ -21,8 +22,7 @@ class PollCard extends StatefulWidget {
 }
 
 class _PollCardState extends State<PollCard> {
-  late final Stream<List<String>?> _mine =
-  PollService.watchMyVote(widget.post);
+  late final Stream<List<String>?> _mine = PollService.watchMyVote(widget.post);
 
   final Set<String> _selected = {};
   PollResults? _results;
@@ -140,17 +140,11 @@ class _PollCardState extends State<PollCard> {
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         if (widget.post.pollMultiple)
-          Text(
-            ' · ${tr('chọn nhiều', 'multiple answers')}',
-            style: _grey,
-          ),
+          Text(' · ${tr('chọn nhiều', 'multiple answers')}', style: _grey),
         if (closed)
           Text(' · 🔒 ${tr('đã khóa', 'closed')}', style: _grey)
         else if (closes != null)
-          Text(
-            ' · ${tr('khóa lúc', 'closes')} ${_fmt(closes)}',
-            style: _grey,
-          ),
+          Text(' · ${tr('khóa lúc', 'closes')} ${_fmt(closes)}', style: _grey),
       ],
     );
   }
@@ -159,34 +153,42 @@ class _PollCardState extends State<PollCard> {
     final picked = _selected.contains(o.id);
     final multiple = widget.post.pollMultiple;
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(WeaveRadius.control),
       onTap: _voting
           ? null
           : () => setState(() {
-        if (multiple) {
-          if (!_selected.remove(o.id)) _selected.add(o.id);
-        } else {
-          _selected
-            ..clear()
-            ..add(o.id);
-        }
-      }),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Row(
-          children: [
-            Icon(
-              multiple
-                  ? (picked ? Icons.check_box : Icons.check_box_outline_blank)
-                  : (picked
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked),
-              color: picked ? AppColors.brand : AppColors.textSecondary,
-              size: 22,
-            ),
-            const SizedBox(width: 10),
-            Expanded(child: Text(o.text)),
-          ],
+              if (multiple) {
+                if (!_selected.remove(o.id)) _selected.add(o.id);
+              } else {
+                _selected
+                  ..clear()
+                  ..add(o.id);
+              }
+            }),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: WeaveSizes.buttonHeightCompact,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: WeaveSpacing.sm,
+            horizontal: WeaveSpacing.xs,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                multiple
+                    ? (picked ? Icons.check_box : Icons.check_box_outline_blank)
+                    : (picked
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked),
+                color: picked ? AppColors.brand : AppColors.textSecondary,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Text(o.text)),
+            ],
+          ),
         ),
       ),
     );
@@ -201,17 +203,16 @@ class _PollCardState extends State<PollCard> {
         spacing: 8,
         children: [
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
             onPressed: _selected.isEmpty || _voting ? null : _submit,
             child: _voting
                 ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : Text(tr('Bình chọn', 'Vote')),
           ),
           if (_changing)
@@ -247,20 +248,16 @@ class _PollCardState extends State<PollCard> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(WeaveRadius.control),
         child: Stack(
           children: [
-            const SizedBox(
-              height: 40,
-              width: double.infinity,
-              child: ColoredBox(color: AppColors.border),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: frac,
-                child: SizedBox(
-                  height: 40,
+            const Positioned.fill(child: ColoredBox(color: AppColors.border)),
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: frac,
+                  heightFactor: 1,
                   child: ColoredBox(
                     color: isMine
                         ? AppColors.brandTint
@@ -269,9 +266,15 @@ class _PollCardState extends State<PollCard> {
                 ),
               ),
             ),
-            Positioned.fill(
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: WeaveSizes.buttonHeightCompact,
+              ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: WeaveSpacing.md,
+                  vertical: WeaveSpacing.sm,
+                ),
                 child: Row(
                   children: [
                     if (isMine) ...[
@@ -285,16 +288,18 @@ class _PollCardState extends State<PollCard> {
                     Expanded(
                       child: Text(
                         o.text,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontWeight:
-                          isMine ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isMine
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
                       ),
                     ),
+                    const SizedBox(width: WeaveSpacing.sm),
                     Text(
-                      '$count · ${(frac * 100).round()}%',
+                      '$count \u00B7 ${(frac * 100).round()}%',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -407,8 +412,13 @@ class _PollCardState extends State<PollCard> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  detail.length > 140 ? '${detail.substring(0, 140)}...' : detail,
-                  style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                  detail.length > 140
+                      ? '${detail.substring(0, 140)}...'
+                      : detail,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             );
@@ -417,8 +427,7 @@ class _PollCardState extends State<PollCard> {
             return const LinearProgressIndicator(minHeight: 2);
           }
           final mine = snap.data;
-          final showResults =
-              closed || (mine != null && !_changing) || _peek;
+          final showResults = closed || (mine != null && !_changing) || _peek;
           // Kết quả không tự cập nhật theo thời gian thực, nên tải lại mỗi khi
           // phiếu của mình đổi (kể cả đổi từ một thẻ khác của cùng bài, ví dụ
           // ở màn hình chính). Chờ một chút để phiếu kịp ghi lên máy chủ.

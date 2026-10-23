@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
 
 /// Hộp thoại nhập một đoạn chữ ngắn. Trả về chữ đã cắt khoảng trắng,
 /// hoặc null nếu người dùng hủy.
 Future<String?> showTextPrompt(
-    BuildContext context, {
-      required String title,
-      required String hint,
-      required String action,
-      int maxLen = 300,
-      bool allowEmpty = false,
-    }) {
+  BuildContext context, {
+  required String title,
+  required String hint,
+  required String action,
+  int maxLen = 300,
+  bool allowEmpty = false,
+}) {
   return showDialog<String>(
     context: context,
     builder: (_) => _TextPromptDialog(
@@ -86,7 +87,9 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
         ),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
-          onPressed: _ok ? () => Navigator.of(context).pop(_c.text.trim()) : null,
+          onPressed: _ok
+              ? () => Navigator.of(context).pop(_c.text.trim())
+              : null,
           child: Text(widget.action),
         ),
       ],

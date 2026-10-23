@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 import 'l10n.dart';
 
@@ -94,12 +95,14 @@ class LivePostService {
         .limit(50)
         .get();
     return s.docs
-        .map((d) => LiveUpdate(
-      d.id,
-      d.data()['text'] as String? ?? '',
-      _ts(d.data()['createdAt']),
-      kind: d.data()['kind'] as String? ?? 'manual',
-    ))
+        .map(
+          (d) => LiveUpdate(
+            d.id,
+            d.data()['text'] as String? ?? '',
+            _ts(d.data()['createdAt']),
+            kind: d.data()['kind'] as String? ?? 'manual',
+          ),
+        )
         .toList();
   }
 
@@ -117,9 +120,9 @@ class LivePostService {
   static Stream<Map<String, dynamic>?> watchFollow(String postId) {
     final ref = _follow(postId);
     if (ref == null) return Stream.value(null);
-    return ref
-        .snapshots()
-        .map((s) => s.exists ? (s.data() ?? <String, dynamic>{}) : null);
+    return ref.snapshots().map(
+      (s) => s.exists ? (s.data() ?? <String, dynamic>{}) : null,
+    );
   }
 
   static Future<void> setFollow(String postId, bool on) async {
@@ -137,7 +140,8 @@ class LivePostService {
 
   static Future<void> markSeen(String postId) async {
     try {
-      await _follow(postId)?.update({'lastSeenAt': FieldValue.serverTimestamp()});
+      await _follow(postId)
+          ?.update({'lastSeenAt': FieldValue.serverTimestamp()});
     } catch (_) {}
   }
 }
@@ -153,7 +157,12 @@ class ThanksItem {
   final String note;
   final DateTime createdAt;
   const ThanksItem(
-      this.id, this.fromName, this.postPreview, this.note, this.createdAt);
+    this.id,
+    this.fromName,
+    this.postPreview,
+    this.note,
+    this.createdAt,
+  );
 }
 
 class ThanksService {
@@ -167,8 +176,7 @@ class ThanksService {
   static Future<void> send(Post p, String note) async {
     final me = FirebaseAuth.instance.currentUser;
     if (me == null || me.uid == p.authorId) return;
-    final preview =
-    p.text.length > 80 ? '${p.text.substring(0, 80)}…' : p.text;
+    final preview = p.text.length > 80 ? '${p.text.substring(0, 80)}…' : p.text;
     await _inbox(p.authorId).doc('${p.id}_${me.uid}').set({
       'fromUserId': me.uid,
       'fromName': _myName(me),
@@ -216,8 +224,14 @@ class BlockNote {
   final String authorName;
   final String text;
   final DateTime createdAt;
-  const BlockNote(this.id, this.blockIndex, this.authorId, this.authorName,
-      this.text, this.createdAt);
+  const BlockNote(
+    this.id,
+    this.blockIndex,
+    this.authorId,
+    this.authorName,
+    this.text,
+    this.createdAt,
+  );
 }
 
 class BlockNoteService {
@@ -228,19 +242,23 @@ class BlockNoteService {
           .collection('block_notes');
 
   static Stream<List<BlockNote>> watch(Post p) {
-    return _col(p).orderBy('createdAt').limit(200).snapshots().map(
+    return _col(p)
+        .orderBy('createdAt')
+        .limit(200)
+        .snapshots()
+        .map(
           (s) => s.docs.map((d) {
-        final m = d.data();
-        return BlockNote(
-          d.id,
-          (m['blockIndex'] as num?)?.toInt() ?? 0,
-          m['authorId'] as String? ?? '',
-          m['authorName'] as String? ?? '',
-          m['text'] as String? ?? '',
-          _ts(m['createdAt']),
+            final m = d.data();
+            return BlockNote(
+              d.id,
+              (m['blockIndex'] as num?)?.toInt() ?? 0,
+              m['authorId'] as String? ?? '',
+              m['authorName'] as String? ?? '',
+              m['text'] as String? ?? '',
+              _ts(m['createdAt']),
+            );
+          }).toList(),
         );
-      }).toList(),
-    );
   }
 
   static Future<void> add(Post p, int blockIndex, String text) async {

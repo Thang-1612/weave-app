@@ -12,9 +12,10 @@ Future<void> openInGoogleMaps(BuildContext context, WeavePlace p) async {
   if (p.lat != null && p.lng != null) {
     query = '${p.lat},${p.lng}';
   } else {
-    query = [p.name, p.address ?? '']
-        .where((s) => s.trim().isNotEmpty)
-        .join(', ');
+    query = [
+      p.name,
+      p.address ?? '',
+    ].where((s) => s.trim().isNotEmpty).join(', ');
   }
   final uri = Uri.https('www.google.com', '/maps/search/', {
     'api': '1',
@@ -24,8 +25,12 @@ Future<void> openInGoogleMaps(BuildContext context, WeavePlace p) async {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok) throw Exception('launch failed');
   } catch (_) {
-    messenger.showSnackBar(SnackBar(
-        content: Text(tr('Không mở được Google Maps.',
-            'Could not open Google Maps.'))));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          tr('Không mở được Google Maps.', 'Could not open Google Maps.'),
+        ),
+      ),
+    );
   }
 }

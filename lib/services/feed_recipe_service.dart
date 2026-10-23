@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 
 /// Một công thức bảng tin do người dùng tự đặt.
@@ -29,7 +30,8 @@ class FeedRecipe {
     if (withImages && !p.blocks.any((b) => b['type'] == 'image')) return false;
     if (maxAgeDays > 0) {
       // Bài sống được coi là "mới" theo lần cập nhật gần nhất
-      final last = p.lastUpdateAt != null && p.lastUpdateAt!.isAfter(p.createdAt)
+      final last =
+          p.lastUpdateAt != null && p.lastUpdateAt!.isAfter(p.createdAt)
           ? p.lastUpdateAt!
           : p.createdAt;
       if (DateTime.now().difference(last).inDays > maxAgeDays) return false;

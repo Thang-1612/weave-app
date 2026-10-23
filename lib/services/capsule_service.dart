@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
+
 import 'dart:async';
 
 class CapsuleService {
@@ -63,33 +65,43 @@ class CapsuleService {
       subs.clear();
       final safeNow = _safeNow();
 
-      subs.add(_col
-          .where('audience', arrayContains: uid)
-          .where('openAt', isLessThanOrEqualTo: safeNow)
-          .orderBy('openAt', descending: true)
-          .limit(20)
-          .snapshots()
-          .listen((s) {
-        forMe = s.docs.map(Post.fromDoc).toList();
-        emit();
-      }, onError: (_) {
-        forMe = <Post>[]; // lỗi thì bảng tin vẫn chạy bình thường
-        emit();
-      }));
+      subs.add(
+        _col
+            .where('audience', arrayContains: uid)
+            .where('openAt', isLessThanOrEqualTo: safeNow)
+            .orderBy('openAt', descending: true)
+            .limit(20)
+            .snapshots()
+            .listen(
+              (s) {
+                forMe = s.docs.map(Post.fromDoc).toList();
+                emit();
+              },
+              onError: (_) {
+                forMe = <Post>[]; // lỗi thì bảng tin vẫn chạy bình thường
+                emit();
+              },
+            ),
+      );
 
-      subs.add(_col
-          .where('authorId', isEqualTo: uid)
-          .where('openAt', isLessThanOrEqualTo: safeNow)
-          .orderBy('openAt', descending: true)
-          .limit(20)
-          .snapshots()
-          .listen((s) {
-        fromMe = s.docs.map(Post.fromDoc).toList();
-        emit();
-      }, onError: (_) {
-        fromMe = <Post>[];
-        emit();
-      }));
+      subs.add(
+        _col
+            .where('authorId', isEqualTo: uid)
+            .where('openAt', isLessThanOrEqualTo: safeNow)
+            .orderBy('openAt', descending: true)
+            .limit(20)
+            .snapshots()
+            .listen(
+              (s) {
+                fromMe = s.docs.map(Post.fromDoc).toList();
+                emit();
+              },
+              onError: (_) {
+                fromMe = <Post>[];
+                emit();
+              },
+            ),
+      );
     }
 
     controller = StreamController<List<Post>>(
@@ -117,9 +129,12 @@ class CapsuleService {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     final name = user.displayName?.trim() ?? '';
-    final firstText = blocks
-        .firstWhere((b) => b['type'] == 'text', orElse: () => {'text': ''})['text']
-    as String;
+    final firstText =
+        blocks.firstWhere(
+              (b) => b['type'] == 'text',
+              orElse: () => {'text': ''},
+            )['text']
+            as String;
     await _col.add({
       'authorId': user.uid,
       'authorName': name.isNotEmpty ? name : (user.email ?? 'Người dùng'),
@@ -134,7 +149,9 @@ class CapsuleService {
       'createdAt': FieldValue.serverTimestamp(),
       'openAt': Timestamp.fromDate(openAt),
       'visibility': visibility,
-      'audience': visibility == 'friends' ? await _friendIds(user.uid) : <String>[],
+      'audience': visibility == 'friends'
+          ? await _friendIds(user.uid)
+          : <String>[],
     });
   }
 
@@ -152,7 +169,8 @@ class CapsuleService {
   }
 
   /// Hộp do mình niêm phong (cả đã mở lẫn chưa mở).
-  static Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> mine() async {
+  static Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+  mine() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return [];
     final s = await _col

@@ -6,10 +6,10 @@ import 'weave_ui.dart';
 /// Decoration cho ô nhập ở màn đăng nhập/đăng ký. Viền, nền, bo góc lấy từ
 /// inputDecorationTheme trong app_theme.dart.
 InputDecoration authInputDecoration(
-    String label,
-    IconData icon, {
-      Widget? suffix,
-    }) {
+  String label,
+  IconData icon, {
+  Widget? suffix,
+}) {
   return InputDecoration(
     labelText: label,
     prefixIcon: Icon(icon),
@@ -35,8 +35,11 @@ class AuthErrorBox extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded,
-              size: 18, color: AppColors.danger),
+          const Icon(
+            Icons.error_outline_rounded,
+            size: 18,
+            color: AppColors.danger,
+          ),
           const SizedBox(width: WeaveSpacing.sm),
           Expanded(
             child: Text(
@@ -68,8 +71,10 @@ class AuthBackground extends StatelessWidget {
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final minHeight =
-            (constraints.maxHeight - padding.vertical).clamp(0.0, double.infinity);
+            final minHeight = (constraints.maxHeight - padding.vertical).clamp(
+              0.0,
+              double.infinity,
+            );
             return SingleChildScrollView(
               padding: padding,
               child: ConstrainedBox(
@@ -107,8 +112,11 @@ class AuthBrand extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Icon(Icons.forum_rounded,
-              size: 36, color: AppColors.brand),
+          child: const Icon(
+            Icons.forum_rounded,
+            size: 36,
+            color: AppColors.brand,
+          ),
         ),
         const SizedBox(height: WeaveSpacing.lg),
         const Text(

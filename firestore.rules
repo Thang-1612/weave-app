@@ -1418,6 +1418,7 @@ service cloud.firestore {
             && !(request.auth.uid in request.resource.data.collaboratorIds)
             && request.resource.data.collaboratorIds.size()
                  == resource.data.collaboratorIds.size() - 1
+            && request.resource.data.memberIds.hasOnly(resource.data.memberIds)
             && request.resource.data.collaboratorIds
                  .hasOnly(resource.data.collaboratorIds)
           )

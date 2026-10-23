@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../../services/account_service.dart';
 import '../../services/l10n.dart';
 import '../../services/text_utils.dart';
@@ -38,13 +39,13 @@ class _Item {
   final VoidCallback? action;
 
   const _Item(
-      this.id,
-      this.icon,
-      this.title, {
-        this.subtitle,
-        this.page,
-        this.action,
-      }) : assert(page != null || action != null);
+    this.id,
+    this.icon,
+    this.title, {
+    this.subtitle,
+    this.page,
+    this.action,
+  }) : assert(page != null || action != null);
 }
 
 class _Section {
@@ -155,10 +156,7 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
           'favorites',
           Icons.star_border,
           tr('Yêu thích', 'Favorites'),
-          subtitle: tr(
-            'Người và chủ đề ưu tiên',
-            'Priority people and topics',
-          ),
+          subtitle: tr('Người và chủ đề ưu tiên', 'Priority people and topics'),
           page: () => const FavoritesScreen(),
         ),
       ]),
@@ -184,7 +182,7 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
           Icons.block,
           tr('Đã chặn và tắt tiếng', 'Blocked and muted'),
           subtitle:
-          '${prefs.blocked.length} ${tr('đã chặn', 'blocked')} · ${prefs.mutedUsers.length} ${tr('tắt tiếng', 'muted')}',
+              '${prefs.blocked.length} ${tr('đã chặn', 'blocked')} · ${prefs.mutedUsers.length} ${tr('tắt tiếng', 'muted')}',
           page: () => const BlockedScreen(),
         ),
         _Item(
@@ -246,8 +244,10 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
     return [
       for (final s in all)
         if (s.items.any((i) => normalizeVi(i.title).contains(q)))
-          _Section(s.label,
-              s.items.where((i) => normalizeVi(i.title).contains(q)).toList()),
+          _Section(
+            s.label,
+            s.items.where((i) => normalizeVi(i.title).contains(q)).toList(),
+          ),
     ];
   }
 
@@ -344,7 +344,7 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
     ];
     // Chưa chọn (hoặc mục đã chọn không còn) thì mở mục trang đầu tiên
     final selected = pages.firstWhere(
-          (i) => i.id == _selectedId,
+      (i) => i.id == _selectedId,
       orElse: () => pages.first,
     );
 
@@ -361,8 +361,9 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
                   // Cao bằng AppBar của màn hình bên phải để hai bên thẳng hàng
                   DecoratedBox(
                     decoration: const BoxDecoration(
-                      border:
-                      Border(bottom: BorderSide(color: AppColors.border)),
+                      border: Border(
+                        bottom: BorderSide(color: AppColors.border),
+                      ),
                     ),
                     child: SafeArea(
                       bottom: false,
@@ -377,7 +378,10 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
                             ),
                             Expanded(
                               child: Text(
-                                tr('Cài đặt và hoạt động', 'Settings and activity'),
+                                tr(
+                                  'Cài đặt và hoạt động',
+                                  'Settings and activity',
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -397,7 +401,10 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
                     child: TextField(
                       onChanged: (v) => setState(() => _query = v),
                       decoration: InputDecoration(
-                        hintText: tr('Tìm kiếm trong cài đặt', 'Search settings'),
+                        hintText: tr(
+                          'Tìm kiếm trong cài đặt',
+                          'Search settings',
+                        ),
                         prefixIcon: const Icon(Icons.search, size: 20),
                         isDense: true,
                       ),
@@ -427,10 +434,10 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
                               subtitle: i.subtitle == null
                                   ? null
                                   : Text(
-                                i.subtitle!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                      i.subtitle!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                               // Màu mục đang chọn lấy từ listTileTheme
                               selected: i.page != null && i.id == selected.id,
                               onTap: i.page != null
@@ -443,7 +450,10 @@ class _SettingsHubScreenState extends State<SettingsHubScreen> {
                             padding: const EdgeInsets.all(32),
                             child: Center(
                               child: Text(
-                                tr('Không tìm thấy mục nào', 'No settings found'),
+                                tr(
+                                  'Không tìm thấy mục nào',
+                                  'No settings found',
+                                ),
                                 style: const TextStyle(
                                   color: AppColors.textSecondary,
                                 ),

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/l10n.dart';
 import '../services/social_extras_service.dart';
@@ -62,8 +63,10 @@ class BlockNotesScreen extends StatelessWidget {
     final text = await showTextPrompt(
       context,
       title: tr('Ghi chú cho khối này', 'Note on this block'),
-      hint: tr('Bạn muốn hỏi hoặc góp ý gì ở đây?',
-          'What would you like to ask or suggest here?'),
+      hint: tr(
+        'Bạn muốn hỏi hoặc góp ý gì ở đây?',
+        'What would you like to ask or suggest here?',
+      ),
       action: tr('Gửi', 'Send'),
       maxLen: 300,
     );
@@ -82,9 +85,7 @@ class BlockNotesScreen extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Ghi chú theo khối', 'Block notes')),
-      ),
+      appBar: AppBar(title: Text(tr('Ghi chú theo khối', 'Block notes'))),
       body: StreamBuilder<List<BlockNote>>(
         stream: BlockNoteService.watch(post),
         builder: (context, snap) {
@@ -131,7 +132,7 @@ class BlockNotesScreen extends StatelessWidget {
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         '${n.authorName} · ${extrasAgo(n.createdAt)}',
@@ -160,8 +161,10 @@ class BlockNotesScreen extends StatelessWidget {
                           alignment: Alignment.centerLeft,
                           child: TextButton.icon(
                             onPressed: () => _addNote(context, i),
-                            icon: const Icon(Icons.add_comment_outlined,
-                                size: 16),
+                            icon: const Icon(
+                              Icons.add_comment_outlined,
+                              size: 16,
+                            ),
                             label: Text(
                               tr('Ghi chú', 'Add note'),
                               style: const TextStyle(fontSize: 12.5),

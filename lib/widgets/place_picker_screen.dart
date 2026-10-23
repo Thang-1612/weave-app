@@ -15,14 +15,15 @@ const _appPackage = 'com.example.social_app';
 /// hoặc chạm bản đồ để ghim, rồi bấm "Lưu địa điểm".
 /// Trả về địa điểm đã chọn (có tọa độ), hoặc null nếu hủy.
 Future<WeavePlace?> pickWeavePlace(
-    BuildContext context, {
-      WeavePlace? initial,
-      String initialName = '',
-    }) =>
-    Navigator.of(context).push<WeavePlace>(MaterialPageRoute(
-      builder: (_) =>
-          PlacePickerScreen(initial: initial, initialName: initialName),
-    ));
+  BuildContext context, {
+  WeavePlace? initial,
+  String initialName = '',
+}) => Navigator.of(context).push<WeavePlace>(
+  MaterialPageRoute(
+    builder: (_) =>
+        PlacePickerScreen(initial: initial, initialName: initialName),
+  ),
+);
 
 class PlacePickerScreen extends StatefulWidget {
   final WeavePlace? initial;
@@ -102,8 +103,10 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
           _name.text = parsed.name;
           _nameEdited = false;
         });
-        final r =
-        await PlaceSearchService.reverse(point.latitude, point.longitude);
+        final r = await PlaceSearchService.reverse(
+          point.latitude,
+          point.longitude,
+        );
         if (mounted && r != null && _pin == point) {
           setState(() => _address = r.address);
         }
@@ -113,9 +116,12 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
       return;
     }
     if (PlaceSearchService.looksLikeLink(q)) {
-      _toast(tr(
+      _toast(
+        tr(
           'Không đọc được liên kết rút gọn. Mở liên kết trong trình duyệt, rồi sao chép đường dẫn đầy đủ trên thanh địa chỉ.',
-          'Cannot read short links. Open the link in a browser and copy the full address from the address bar.'));
+          'Cannot read short links. Open the link in a browser and copy the full address from the address bar.',
+        ),
+      );
       return;
     }
     if (q.length < 3) {
@@ -126,16 +132,26 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
     setState(() => _searching = true);
     try {
       final c = _center();
-      final r = await PlaceSearchService.search(q,
-          vietnamOnly: _vnOnly, biasLat: c?.latitude, biasLng: c?.longitude);
+      final r = await PlaceSearchService.search(
+        q,
+        vietnamOnly: _vnOnly,
+        biasLat: c?.latitude,
+        biasLng: c?.longitude,
+      );
       if (!mounted) return;
       setState(() => _results = r);
       if (r.isEmpty) {
-        _toast(_vnOnly
-            ? tr('Không tìm thấy ở Việt Nam. Thử từ khóa khác, tắt "Chỉ ở Việt Nam", hoặc chạm bản đồ để ghim.',
-            'Nothing found in Vietnam. Try other words, turn off "Vietnam only", or tap the map.')
-            : tr('Không tìm thấy. Hãy thử từ khóa khác hoặc chạm bản đồ để ghim.',
-            'Nothing found. Try other words or tap the map.'));
+        _toast(
+          _vnOnly
+              ? tr(
+                  'Không tìm thấy ở Việt Nam. Thử từ khóa khác, tắt "Chỉ ở Việt Nam", hoặc chạm bản đồ để ghim.',
+                  'Nothing found in Vietnam. Try other words, turn off "Vietnam only", or tap the map.',
+                )
+              : tr(
+                  'Không tìm thấy. Hãy thử từ khóa khác hoặc chạm bản đồ để ghim.',
+                  'Nothing found. Try other words or tap the map.',
+                ),
+        );
       } else {
         _choose(r.first, 0); // bản đồ nhảy tới kết quả đầu tiên
       }
@@ -185,12 +201,14 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
     final p = _pin;
     final name = _name.text.trim();
     if (p == null || name.isEmpty) return;
-    Navigator.of(context).pop(WeavePlace(
-      name: name,
-      address: _address,
-      lat: p.latitude,
-      lng: p.longitude,
-    ));
+    Navigator.of(context).pop(
+      WeavePlace(
+        name: name,
+        address: _address,
+        lat: p.latitude,
+        lng: p.longitude,
+      ),
+    );
   }
 
   @override
@@ -209,20 +227,24 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
               onSubmitted: (_) => _runSearch(),
               decoration: InputDecoration(
                 hintText: tr(
-                    'Tìm địa điểm, hoặc dán liên kết / tọa độ Google Maps',
-                    'Search a place, or paste a Google Maps link / coordinates'),
+                  'Tìm địa điểm, hoặc dán liên kết / tọa độ Google Maps',
+                  'Search a place, or paste a Google Maps link / coordinates',
+                ),
                 isDense: true,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searching
                     ? const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2)))
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
                     : IconButton(
-                    icon: const Icon(Icons.arrow_forward),
-                    onPressed: _runSearch),
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: _runSearch,
+                      ),
               ),
             ),
           ),
@@ -251,10 +273,16 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                       dense: true,
                       selected: _selected == i,
                       leading: const Icon(Icons.place_outlined),
-                      title: Text(_results[i].name,
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      subtitle: Text(_results[i].address ?? '',
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                      title: Text(
+                        _results[i].name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        _results[i].address ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       onTap: () => _choose(_results[i], i),
                     ),
                 ],
@@ -276,27 +304,36 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                       userAgentPackageName: _appPackage,
                     ),
                     if (_pin != null)
-                      MarkerLayer(markers: [
-                        Marker(
-                          point: _pin!,
-                          width: 44,
-                          height: 44,
-                          alignment: Alignment.topCenter,
-                          child: const Icon(Icons.location_on,
-                              size: 44, color: AppColors.danger),
-                        ),
-                      ]),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _pin!,
+                            width: 44,
+                            height: 44,
+                            alignment: Alignment.topCenter,
+                            child: const Icon(
+                              Icons.location_on,
+                              size: 44,
+                              color: AppColors.danger,
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
                 Positioned(
                   left: 8,
                   bottom: 6,
                   child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     color: Colors.white70,
-                    child: const Text('© OpenStreetMap contributors',
-                        style: TextStyle(fontSize: 11)),
+                    child: const Text(
+                      '© OpenStreetMap contributors',
+                      style: TextStyle(fontSize: 11),
+                    ),
                   ),
                 ),
                 if (_pin == null)
@@ -307,15 +344,20 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                     child: Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black54,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                            tr('Tìm địa điểm hoặc chạm vào bản đồ để ghim',
-                                'Search a place or tap the map to drop a pin'),
-                            style: const TextStyle(color: Colors.white)),
+                          tr(
+                            'Tìm địa điểm hoặc chạm vào bản đồ để ghim',
+                            'Search a place or tap the map to drop a pin',
+                          ),
+                          style: const TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
                   ),
@@ -340,29 +382,40 @@ class _PlacePickerScreenState extends State<PlacePickerScreen> {
                     ),
                   ),
                   if (_resolving)
-                    Text(tr('Đang tra địa chỉ…', 'Looking up address…'),
-                        style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 12))
+                    Text(
+                      tr('Đang tra địa chỉ…', 'Looking up address…'),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    )
                   else if ((_address ?? '').isNotEmpty)
-                    Text(_address!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 12)),
+                    Text(
+                      _address!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       if (_pin != null)
                         TextButton.icon(
                           onPressed: () => openInGoogleMaps(
-                              context,
-                              WeavePlace(
-                                  name: _name.text.trim(),
-                                  lat: _pin!.latitude,
-                                  lng: _pin!.longitude)),
+                            context,
+                            WeavePlace(
+                              name: _name.text.trim(),
+                              lat: _pin!.latitude,
+                              lng: _pin!.longitude,
+                            ),
+                          ),
                           icon: const Icon(Icons.map_outlined),
-                          label: Text(tr(
-                              'Xem trên Google Maps', 'View in Google Maps')),
+                          label: Text(
+                            tr('Xem trên Google Maps', 'View in Google Maps'),
+                          ),
                         ),
                       const Spacer(),
                       // Nút chính duy nhất của màn hình: màu theo theme
@@ -405,8 +458,9 @@ class WeaveMapPreview extends StatelessWidget {
               options: MapOptions(
                 initialCenter: point,
                 initialZoom: 15,
-                interactionOptions:
-                const InteractionOptions(flags: InteractiveFlag.none),
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.none,
+                ),
                 onTap: (_, _) => openInGoogleMaps(context, place),
               ),
               children: [
@@ -414,27 +468,33 @@ class WeaveMapPreview extends StatelessWidget {
                   urlTemplate: _tileUrl,
                   userAgentPackageName: _appPackage,
                 ),
-                MarkerLayer(markers: [
-                  Marker(
-                    point: point,
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.topCenter,
-                    child: const Icon(Icons.location_on,
-                        size: 40, color: AppColors.danger),
-                  ),
-                ]),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: point,
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.topCenter,
+                      child: const Icon(
+                        Icons.location_on,
+                        size: 40,
+                        color: AppColors.danger,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
             Positioned(
               left: 6,
               bottom: 4,
               child: Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 color: Colors.white70,
-                child: const Text('© OpenStreetMap contributors',
-                    style: TextStyle(fontSize: 10)),
+                child: const Text(
+                  '© OpenStreetMap contributors',
+                  style: TextStyle(fontSize: 10),
+                ),
               ),
             ),
           ],

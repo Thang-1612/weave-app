@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 import 'l10n.dart';
 import 'interaction_service.dart';
@@ -93,31 +95,37 @@ class FeedbackService {
 
     ctrl = StreamController<List<FeedbackItem>>(
       onListen: () {
-        subs.add(col
-            .where('visibility', isEqualTo: 'public')
-            .limit(100)
-            .snapshots()
-            .listen((s) {
-          pub = _parse(s);
-          emit();
-        }, onError: ctrl.addError));
-        subs.add(col
-            .where('authorId', isEqualTo: me.uid)
-            .limit(100)
-            .snapshots()
-            .listen((s) {
-          mine = _parse(s);
-          emit();
-        }, onError: ctrl.addError));
+        subs.add(
+          col
+              .where('visibility', isEqualTo: 'public')
+              .limit(100)
+              .snapshots()
+              .listen((s) {
+                pub = _parse(s);
+                emit();
+              }, onError: ctrl.addError),
+        );
+        subs.add(
+          col
+              .where('authorId', isEqualTo: me.uid)
+              .limit(100)
+              .snapshots()
+              .listen((s) {
+                mine = _parse(s);
+                emit();
+              }, onError: ctrl.addError),
+        );
         // Câu trả lời riêng tư dành cho góp ý của mình
-        subs.add(col
-            .where('parentAuthorId', isEqualTo: me.uid)
-            .limit(100)
-            .snapshots()
-            .listen((s) {
-          toMe = _parse(s);
-          emit();
-        }, onError: ctrl.addError));
+        subs.add(
+          col
+              .where('parentAuthorId', isEqualTo: me.uid)
+              .limit(100)
+              .snapshots()
+              .listen((s) {
+                toMe = _parse(s);
+                emit();
+              }, onError: ctrl.addError),
+        );
       },
       onCancel: () {
         for (final s in subs) {
@@ -131,12 +139,12 @@ class FeedbackService {
   /// Gửi góp ý mới, hoặc trả lời nếu có [replyRoot] (góp ý gốc của chuỗi).
   /// Trả lời luôn cùng chế độ công khai/riêng tư với góp ý gốc.
   static Future<void> send(
-      Post post,
-      String text, {
-        required bool isPublic,
-        FeedbackItem? replyRoot,
-        String replyToName = '',
-      }) async {
+    Post post,
+    String text, {
+    required bool isPublic,
+    FeedbackItem? replyRoot,
+    String replyToName = '',
+  }) async {
     final me = FirebaseAuth.instance.currentUser;
     if (me == null) throw Exception(msgNotSignedIn);
     final name = (me.displayName?.trim().isNotEmpty ?? false)

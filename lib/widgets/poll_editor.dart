@@ -1,5 +1,7 @@
 import '../theme/app_theme.dart';
+
 import 'package:flutter/material.dart';
+
 import '../services/l10n.dart';
 import '../services/post_service.dart';
 
@@ -79,10 +81,7 @@ Future<void> showPollEditorSheet(BuildContext context, PollDraft draft) {
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
       child: SafeArea(
-        child: PollEditor(
-          draft: draft,
-          onDone: () => Navigator.of(ctx).pop(),
-        ),
+        child: PollEditor(draft: draft, onDone: () => Navigator.of(ctx).pop()),
       ),
     ),
   );
@@ -131,7 +130,10 @@ class PollEditor extends StatelessWidget {
                     'Tối đa ${PostService.maxPollOptions} lựa chọn. Người xem phải bình chọn mới thấy kết quả.',
                     'Up to ${PostService.maxPollOptions} options. Viewers must vote to see the results.',
                   ),
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 for (var i = 0; i < n; i++)
@@ -152,9 +154,9 @@ class PollEditor extends StatelessWidget {
                         ),
                         suffixIcon: n > 2
                             ? IconButton(
-                          icon: const Icon(Icons.close, size: 18),
-                          onPressed: () => draft.removeAt(i),
-                        )
+                                icon: const Icon(Icons.close, size: 18),
+                                onPressed: () => draft.removeAt(i),
+                              )
                             : null,
                       ),
                     ),
@@ -198,7 +200,10 @@ class PollEditor extends StatelessWidget {
                     'Sau khi khóa, không ai bỏ phiếu, đổi hay rút phiếu được nữa và mọi người đều xem được kết quả.',
                     'Once closed, nobody can vote, change or remove a vote, and everyone can see the results.',
                   ),
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(

@@ -11,9 +11,9 @@ class FriendPostSync {
   static String? _last;
 
   static List<String> _accepted(
-      Iterable<Map<String, dynamic>> docs,
-      String me,
-      ) {
+    Iterable<Map<String, dynamic>> docs,
+    String me,
+  ) {
     final out = <String>{};
     for (final d in docs) {
       if (d['status'] != 'accepted') continue;
@@ -47,14 +47,14 @@ class FriendPostSync {
         .where('users', arrayContains: me)
         .snapshots()
         .listen((snap) {
-      // Dữ liệu từ bộ nhớ đệm có thể chưa đầy đủ: bỏ qua để không xóa nhầm
-      if (snap.metadata.isFromCache) return;
-      final friends = _accepted(snap.docs.map((d) => d.data()), me);
-      final key = friends.join(',');
-      if (key == _last) return;
-      _last = key;
-      _sync(me, friends).catchError((_) {});
-    }, onError: (_) {});
+          // Dữ liệu từ bộ nhớ đệm có thể chưa đầy đủ: bỏ qua để không xóa nhầm
+          if (snap.metadata.isFromCache) return;
+          final friends = _accepted(snap.docs.map((d) => d.data()), me);
+          final key = friends.join(',');
+          if (key == _last) return;
+          _last = key;
+          _sync(me, friends).catchError((_) {});
+        }, onError: (_) {});
   }
 
   static void stop() {
@@ -74,7 +74,8 @@ class FriendPostSync {
     var count = 0;
 
     for (final doc in snap.docs) {
-      if (doc.data()['visibility'] == 'me') continue; // chỉ mình tôi: không có người xem
+      if (doc.data()['visibility'] == 'me')
+        continue; // chỉ mình tôi: không có người xem
       final current = {
         for (final v in (doc.data()['audience'] as List? ?? const []))
           if (v is String) v,

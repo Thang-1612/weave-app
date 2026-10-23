@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../services/account_service.dart';
 import '../services/l10n.dart';
 import '../services/user_prefs.dart';
@@ -8,16 +9,14 @@ import 'auth_widgets.dart';
 
 /// Mở bảng chuyển tài khoản. [onSwitched] được gọi sau khi chuyển thành công.
 Future<void> showAccountSwitcher(
-    BuildContext context,
-    VoidCallback onSwitched,
-    ) {
+  BuildContext context,
+  VoidCallback onSwitched,
+) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     clipBehavior: Clip.antiAlias,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
+    showDragHandle: false, // đầu bảng đã là khối gradient
     builder: (_) => _AccountSwitcherSheet(onSwitched: onSwitched),
   );
 }
@@ -168,7 +167,6 @@ class _AccountSwitcherSheetState extends State<_AccountSwitcherSheet> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         icon: const Icon(Icons.logout, color: AppColors.danger, size: 32),
         title: Text(tr('Đăng xuất?', 'Log out?')),
         content: Text(
@@ -217,9 +215,9 @@ class _AccountSwitcherSheetState extends State<_AccountSwitcherSheet> {
             title: tr('Tài khoản', 'Accounts'),
             subtitle: current == null
                 ? tr(
-              'Chuyển đổi hoặc thêm tài khoản',
-              'Switch or add an account',
-            )
+                    'Chuyển đổi hoặc thêm tài khoản',
+                    'Switch or add an account',
+                  )
                 : (nameOf(FirebaseAuth.instance.currentUser) ?? current),
           ),
           if (!_loaded)
@@ -286,17 +284,17 @@ class _AccountSwitcherSheetState extends State<_AccountSwitcherSheet> {
         name != null
             ? email
             : (isCurrent
-            ? tr('Đang sử dụng', 'In use')
-            : tr('Nhấn để chuyển', 'Tap to switch')),
+                  ? tr('Đang sử dụng', 'In use')
+                  : tr('Nhấn để chuyển', 'Tap to switch')),
         overflow: TextOverflow.ellipsis,
       ),
       trailing: isCurrent
           ? const Icon(Icons.check_circle, color: AppColors.brand)
           : IconButton(
-        icon: const Icon(Icons.close),
-        tooltip: tr('Xóa khỏi danh sách', 'Remove from list'),
-        onPressed: () => _remove(email),
-      ),
+              icon: const Icon(Icons.close),
+              tooltip: tr('Xóa khỏi danh sách', 'Remove from list'),
+              onPressed: () => _remove(email),
+            ),
       onTap: isCurrent ? null : () => _openSignIn(email: email),
     );
   }
@@ -315,8 +313,9 @@ class _SignInDialog extends StatefulWidget {
 }
 
 class _SignInDialogState extends State<_SignInDialog> {
-  late final TextEditingController _email =
-  TextEditingController(text: widget.email ?? '');
+  late final TextEditingController _email = TextEditingController(
+    text: widget.email ?? '',
+  );
   final _ho = TextEditingController();
   final _ten = TextEditingController();
   final _password = TextEditingController();
@@ -339,39 +338,47 @@ class _SignInDialogState extends State<_SignInDialog> {
   Future<void> _submit() async {
     final email = _email.text.trim().toLowerCase();
     if (email.isEmpty || _password.text.isEmpty) {
-      setState(() => _error = tr(
-        'Vui lòng nhập đủ thông tin',
-        'Please fill in all fields',
-      ));
+      setState(
+        () => _error = tr(
+          'Vui lòng nhập đủ thông tin',
+          'Please fill in all fields',
+        ),
+      );
       return;
     }
     if (_register) {
       if (_ho.text.trim().isEmpty || _ten.text.trim().isEmpty) {
-        setState(() => _error = tr(
-          'Vui lòng nhập họ và tên',
-          'Please enter your family and given name',
-        ));
+        setState(
+          () => _error = tr(
+            'Vui lòng nhập họ và tên',
+            'Please enter your family and given name',
+          ),
+        );
         return;
       }
       if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-        setState(() => _error = tr(
-          'Email không đúng định dạng',
-          'Invalid email format',
-        ));
+        setState(
+          () =>
+              _error = tr('Email không đúng định dạng', 'Invalid email format'),
+        );
         return;
       }
       if (_password.text.length < 6) {
-        setState(() => _error = tr(
-          'Mật khẩu phải có ít nhất 6 ký tự',
-          'Password must be at least 6 characters',
-        ));
+        setState(
+          () => _error = tr(
+            'Mật khẩu phải có ít nhất 6 ký tự',
+            'Password must be at least 6 characters',
+          ),
+        );
         return;
       }
       if (_password.text != _confirm.text) {
-        setState(() => _error = tr(
-          'Mật khẩu xác nhận không khớp',
-          'Passwords do not match',
-        ));
+        setState(
+          () => _error = tr(
+            'Mật khẩu xác nhận không khớp',
+            'Passwords do not match',
+          ),
+        );
         return;
       }
     }
@@ -418,7 +425,10 @@ class _SignInDialogState extends State<_SignInDialog> {
       case 'invalid-email':
         return tr('Email không hợp lệ', 'Invalid email address');
       case 'email-already-in-use':
-        return tr('Email này đã được đăng ký', 'This email is already registered');
+        return tr(
+          'Email này đã được đăng ký',
+          'This email is already registered',
+        );
       case 'weak-password':
         return tr(
           'Mật khẩu quá yếu (ít nhất 6 ký tự)',
@@ -432,7 +442,10 @@ class _SignInDialogState extends State<_SignInDialog> {
       case 'user-not-found':
       case 'wrong-password':
       case 'invalid-credential':
-        return tr('Email hoặc mật khẩu không đúng', 'Incorrect email or password');
+        return tr(
+          'Email hoặc mật khẩu không đúng',
+          'Incorrect email or password',
+        );
       case 'user-disabled':
         return tr(
           'Tài khoản này đã bị vô hiệu hóa',
@@ -466,7 +479,10 @@ class _SignInDialogState extends State<_SignInDialog> {
     final String actionLabel;
     if (!_isAdd) {
       title = tr('Chuyển tài khoản', 'Switch account');
-      subtitle = tr('Nhập mật khẩu để tiếp tục', 'Enter your password to continue');
+      subtitle = tr(
+        'Nhập mật khẩu để tiếp tục',
+        'Enter your password to continue',
+      );
       icon = Icons.switch_account_outlined;
       actionLabel = tr('Chuyển', 'Switch');
     } else if (_register) {
@@ -496,7 +512,6 @@ class _SignInDialogState extends State<_SignInDialog> {
 
     return Dialog(
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: SingleChildScrollView(
@@ -543,15 +558,19 @@ class _SignInDialogState extends State<_SignInDialog> {
                       TextField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
-                        decoration:
-                        authInputDecoration('Email', Icons.email_outlined),
+                        decoration: authInputDecoration(
+                          'Email',
+                          Icons.email_outlined,
+                        ),
                       )
                     else
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: AppColors.background,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(
+                            WeaveRadius.control,
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -617,10 +636,6 @@ class _SignInDialogState extends State<_SignInDialog> {
                         onPressed: _submit,
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(50),
-                          backgroundColor: AppColors.brand,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
                         ),
                         child: Text(
                           actionLabel,
@@ -634,13 +649,13 @@ class _SignInDialogState extends State<_SignInDialog> {
                         child: Text(
                           _register
                               ? tr(
-                            'Đã có tài khoản? Đăng nhập để thêm',
-                            'Already have an account? Log in to add it',
-                          )
+                                  'Đã có tài khoản? Đăng nhập để thêm',
+                                  'Already have an account? Log in to add it',
+                                )
                               : tr(
-                            'Chưa có tài khoản? Tạo tài khoản mới',
-                            'No account yet? Create one',
-                          ),
+                                  'Chưa có tài khoản? Tạo tài khoản mới',
+                                  'No account yet? Create one',
+                                ),
                         ),
                       ),
                     ],
@@ -651,9 +666,6 @@ class _SignInDialogState extends State<_SignInDialog> {
                           : () => Navigator.of(context).pop(false),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size.fromHeight(46),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
                       ),
                       child: Text(tr('Hủy', 'Cancel')),
                     ),

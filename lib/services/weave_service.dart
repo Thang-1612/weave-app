@@ -11,8 +11,7 @@ import 'l10n.dart';
 class WeaveService {
   WeaveService._();
 
-  static final _col =
-  FirebaseFirestore.instance.collection('weave_activities');
+  static final _col = FirebaseFirestore.instance.collection('weave_activities');
 
   static CollectionReference<Map<String, dynamic>> _members(String id) =>
       _col.doc(id).collection('members');
@@ -89,8 +88,7 @@ class WeaveService {
   static Stream<List<WeaveActivity>> watchMine() =>
       _col.where('memberIds', arrayContains: me).snapshots().map(_sorted);
 
-  static List<WeaveActivity> _sorted(
-      QuerySnapshot<Map<String, dynamic>> s) {
+  static List<WeaveActivity> _sorted(QuerySnapshot<Map<String, dynamic>> s) {
     final list = s.docs.map(WeaveActivity.fromDoc).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
@@ -111,11 +109,10 @@ class WeaveService {
   static Future<void> updateRsvp(String activityId, RsvpStatus status) =>
       _members(activityId).doc(me).update({'rsvp': status.name});
 
-  static Future<void> start(String activityId) =>
-      _col.doc(activityId).update({
-        'status': WeaveStatus.active.name,
-        'startAt': FieldValue.serverTimestamp(),
-      });
+  static Future<void> start(String activityId) => _col.doc(activityId).update({
+    'status': WeaveStatus.active.name,
+    'startAt': FieldValue.serverTimestamp(),
+  });
 
   /// Cloud Function lắng nghe status = ended để tạo nhật ký.
   static Future<void> end(String activityId) => _col.doc(activityId).update({
@@ -133,8 +130,9 @@ class WeaveService {
   static Future<void> invite(String activityId, List<String> userIds) async {
     if (userIds.isEmpty) return;
     final batch = FirebaseFirestore.instance.batch();
-    batch.update(_col.doc(activityId),
-        {'memberIds': FieldValue.arrayUnion(userIds)});
+    batch.update(_col.doc(activityId), {
+      'memberIds': FieldValue.arrayUnion(userIds),
+    });
     for (final uid in userIds) {
       batch.set(
         _members(activityId).doc(uid),
@@ -155,14 +153,16 @@ class WeaveService {
     final doc = await _col.doc(activityId).get();
     if (!doc.exists) return;
     if (WeaveActivity.fromDoc(doc).hostId == uid) {
-      throw Exception(tr(
-        'Chủ hoạt động không thể rời. Hãy kết thúc hoạt động.',
-        'The host cannot leave. End the activity instead.',
-      ));
+      throw Exception(
+        tr(
+          'Chủ hoạt động không thể rời. Hãy kết thúc hoạt động.',
+          'The host cannot leave. End the activity instead.',
+        ),
+      );
     }
     final batch = FirebaseFirestore.instance.batch();
     batch.update(_col.doc(activityId), {
-      'memberIds': FieldValue.arrayRemove([uid])
+      'memberIds': FieldValue.arrayRemove([uid]),
     });
     batch.delete(_members(activityId).doc(uid));
     await batch.commit();
@@ -188,8 +188,10 @@ class WeaveService {
 
   static Future<UserProfile?> _fetchProfile(String uid) async {
     try {
-      final doc =
-      await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       if (!doc.exists) return null;
       final p = UserProfile.fromMap(uid, doc.data()!);
       _profiles[uid] = p;
@@ -206,28 +208,31 @@ class WeaveService {
       _col.doc(aid).collection('polls');
 
   static CollectionReference<Map<String, dynamic>> _votes(
-      String aid, String pid) =>
-      _polls(aid).doc(pid).collection('votes');
+    String aid,
+    String pid,
+  ) => _polls(aid).doc(pid).collection('votes');
 
   static Future<void> createPoll(
-      String activityId, {
-        required PollKind kind,
-        required String question,
-        required List<WeavePollOption> options,
-        bool multi = false,
-        DateTime? closesAt,
-      }) {
+    String activityId, {
+    required PollKind kind,
+    required String question,
+    required List<WeavePollOption> options,
+    bool multi = false,
+    DateTime? closesAt,
+  }) {
     final ref = _polls(activityId).doc();
-    return ref.set(WeavePoll(
-      id: ref.id,
-      kind: kind,
-      question: question.trim(),
-      options: options,
-      multi: multi,
-      closesAt: closesAt,
-      createdBy: me,
-      createdAt: DateTime.now(),
-    ).toMap());
+    return ref.set(
+      WeavePoll(
+        id: ref.id,
+        kind: kind,
+        question: question.trim(),
+        options: options,
+        multi: multi,
+        closesAt: closesAt,
+        createdBy: me,
+        createdAt: DateTime.now(),
+      ).toMap(),
+    );
   }
 
   static Stream<List<WeavePoll>> watchPolls(String activityId) =>
@@ -238,39 +243,47 @@ class WeaveService {
       });
 
   static Stream<List<WeaveVote>> watchVotes(String activityId, String pollId) =>
-      _votes(activityId, pollId)
-          .snapshots()
-          .map((s) => s.docs.map(WeaveVote.fromDoc).toList());
+      _votes(
+        activityId,
+        pollId,
+      ).snapshots().map((s) => s.docs.map(WeaveVote.fromDoc).toList());
 
   /// Ghi đè phiếu của tôi. Danh sách rỗng = bỏ phiếu.
   static Future<void> vote(
-      String activityId, String pollId, List<String> optionIds) =>
-      _votes(activityId, pollId).doc(me).set({
-        'optionIds': optionIds,
-        'at': FieldValue.serverTimestamp(),
-      });
+    String activityId,
+    String pollId,
+    List<String> optionIds,
+  ) => _votes(
+    activityId,
+    pollId,
+  ).doc(me).set({'optionIds': optionIds, 'at': FieldValue.serverTimestamp()});
 
   /// Chủ hoạt động chốt poll: lưu người thắng và khóa địa điểm/ngày cho hoạt động.
   static Future<void> closePoll(String activityId, WeavePoll poll) async {
     final snap = await _votes(activityId, poll.id).get();
-    final winner =
-    weaveLeader(poll, snap.docs.map(WeaveVote.fromDoc).toList());
+    final winner = weaveLeader(poll, snap.docs.map(WeaveVote.fromDoc).toList());
 
     final batch = FirebaseFirestore.instance.batch();
-    batch.update(_polls(activityId).doc(poll.id),
-        {'closed': true, 'winnerOptionId': winner});
+    batch.update(_polls(activityId).doc(poll.id), {
+      'closed': true,
+      'winnerOptionId': winner,
+    });
 
     if (winner != null) {
       final o = poll.options.firstWhere((o) => o.id == winner);
       if (poll.kind == PollKind.place) {
         batch.update(_col.doc(activityId), {
           'lockedPlace': WeavePlace(
-              name: o.label, address: o.address, lat: o.lat, lng: o.lng)
-              .toMap(),
+            name: o.label,
+            address: o.address,
+            lat: o.lat,
+            lng: o.lng,
+          ).toMap(),
         });
       } else if (o.date != null) {
-        batch.update(_col.doc(activityId),
-            {'lockedDate': Timestamp.fromDate(o.date!)});
+        batch.update(_col.doc(activityId), {
+          'lockedDate': Timestamp.fromDate(o.date!),
+        });
       }
     }
     await batch.commit();

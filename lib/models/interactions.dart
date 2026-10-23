@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../services/l10n.dart';
 
 class ReactionOption {
@@ -163,8 +164,8 @@ class AppNotification {
   });
 
   factory AppNotification.fromDoc(
-      QueryDocumentSnapshot<Map<String, dynamic>> doc,
-      ) {
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final d = doc.data();
     return AppNotification(
       id: doc.id,

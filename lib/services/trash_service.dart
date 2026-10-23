@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 
 /// Một bài viết trong thùng rác.
@@ -19,10 +20,8 @@ class TrashItem {
   bool get expired => !expiresAt.isAfter(DateTime.now());
 
   /// Số ngày còn lại trước khi bị xóa vĩnh viễn (làm tròn lên).
-  int get daysLeft => math.max(
-    0,
-    (expiresAt.difference(DateTime.now()).inHours / 24).ceil(),
-  );
+  int get daysLeft =>
+      math.max(0, (expiresAt.difference(DateTime.now()).inHours / 24).ceil());
 
   String get spaceId => (data['spaceId'] as String?) ?? '';
 
@@ -66,7 +65,12 @@ class TrashService {
     final ts = data.remove('deletedAt');
     final col = (data.remove('originalCollection') as String?) ?? 'posts';
     // deletedAt có thể tạm null ngay sau khi ghi (chờ máy chủ): coi là vừa xóa
-    return TrashItem(d.id, col, data, ts is Timestamp ? ts.toDate() : DateTime.now());
+    return TrashItem(
+      d.id,
+      col,
+      data,
+      ts is Timestamp ? ts.toDate() : DateTime.now(),
+    );
   }
 
   /// Chuyển bài vào thùng rác: sao chép sang `trash` rồi xóa bài gốc
@@ -94,10 +98,11 @@ class TrashService {
     final uid = _uid;
     if (uid == null) return Stream.value(const <TrashItem>[]);
     return _trash.where('authorId', isEqualTo: uid).snapshots().map((s) {
-      final items = [for (final d in s.docs) _fromDoc(d)]
-          .where((i) => !i.expired)
-          .toList()
-        ..sort((a, b) => b.deletedAt.compareTo(a.deletedAt));
+      final items =
+          [for (final d in s.docs) _fromDoc(d)]
+              .where((i) => !i.expired)
+              .toList()
+            ..sort((a, b) => b.deletedAt.compareTo(a.deletedAt));
       return items;
     });
   }

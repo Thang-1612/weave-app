@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/user_profile.dart';
 import '../services/l10n.dart';
 import '../services/user_service.dart';
@@ -71,10 +72,16 @@ class _InterestsScreenState extends State<InterestsScreen> {
       return;
     }
     if (list.length >= _maxTags) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr('Tối đa $_maxTags thẻ mỗi mục.',
-            'Up to $_maxTags tags per section.')),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            tr(
+              'Tối đa $_maxTags thẻ mỗi mục.',
+              'Up to $_maxTags tags per section.',
+            ),
+          ),
+        ),
+      );
       return;
     }
     setState(() => list.add(t));
@@ -89,10 +96,16 @@ class _InterestsScreenState extends State<InterestsScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr('Không lưu được. Thử lại nhé.',
-            'Could not save. Please try again.')),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            tr(
+              'Không lưu được. Thử lại nhé.',
+              'Could not save. Please try again.',
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -136,8 +149,10 @@ class _InterestsScreenState extends State<InterestsScreen> {
         ),
         if (showPresets && presets.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text(tr('Gợi ý', 'Suggestions'),
-              style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            tr('Gợi ý', 'Suggestions'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: 4),
           Wrap(
             spacing: 8,
@@ -170,38 +185,40 @@ class _InterestsScreenState extends State<InterestsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              _section(
-                title: tr('Sở thích', 'Interests'),
-                hint: tr('Ví dụ: âm nhạc', 'e.g. music'),
-                list: _interests,
-                ctrl: _interestCtrl,
-                showPresets: true,
-              ),
-              const SizedBox(height: 24),
-              _section(
-                title: tr('Mục tiêu / dự án đang làm',
-                    'Goals / current projects'),
-                hint: tr('Ví dụ: học tiếng Nhật', 'e.g. learn Japanese'),
-                list: _goals,
-                ctrl: _goalCtrl,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                tr(
-                  'Các thẻ này giúp tìm bạn cùng sở thích và hiện điểm chung trên bản đồ quan hệ.',
-                  'These tags help find people with shared interests and show common ground on the map.',
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _section(
+                      title: tr('Sở thích', 'Interests'),
+                      hint: tr('Ví dụ: âm nhạc', 'e.g. music'),
+                      list: _interests,
+                      ctrl: _interestCtrl,
+                      showPresets: true,
+                    ),
+                    const SizedBox(height: 24),
+                    _section(
+                      title: tr(
+                        'Mục tiêu / dự án đang làm',
+                        'Goals / current projects',
+                      ),
+                      hint: tr('Ví dụ: học tiếng Nhật', 'e.g. learn Japanese'),
+                      list: _goals,
+                      ctrl: _goalCtrl,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      tr(
+                        'Các thẻ này giúp tìm bạn cùng sở thích và hiện điểm chung trên bản đồ quan hệ.',
+                        'These tags help find people with shared interests and show common ground on the map.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
-                style: Theme.of(context).textTheme.bodySmall,
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

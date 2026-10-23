@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../models/post.dart';
 import '../services/feedback_service.dart';
 import '../services/l10n.dart';
@@ -72,13 +73,17 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       );
       _ctrl.clear();
       if (root != null) _cancelReply();
-      messenger.showSnackBar(SnackBar(
-        content: Text(root != null
-            ? tr('Đã gửi trả lời', 'Reply sent')
-            : (isPublic
-            ? tr('Đã đăng góp ý công khai', 'Public feedback posted')
-            : tr('Đã lưu góp ý riêng tư', 'Private feedback saved'))),
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            root != null
+                ? tr('Đã gửi trả lời', 'Reply sent')
+                : (isPublic
+                      ? tr('Đã đăng góp ý công khai', 'Public feedback posted')
+                      : tr('Đã lưu góp ý riêng tư', 'Private feedback saved')),
+          ),
+        ),
+      );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('$e')));
     } finally {
@@ -94,8 +99,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         final scheme = Theme.of(ctx).colorScheme;
         return AlertDialog(
           title: Text(tr('Xóa góp ý này?', 'Delete this feedback?')),
-          content: Text(tr('Góp ý sẽ bị xóa và không thể khôi phục.',
-              'This feedback will be deleted and cannot be restored.')),
+          content: Text(
+            tr(
+              'Góp ý sẽ bị xóa và không thể khôi phục.',
+              'This feedback will be deleted and cannot be restored.',
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
@@ -145,30 +154,39 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 child: Text(
                   f.authorName.isEmpty ? '?' : f.authorName[0].toUpperCase(),
                   style: const TextStyle(
-                      color: AppColors.brand, fontWeight: FontWeight.bold),
+                    color: AppColors.brand,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(f.authorName,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                child: Text(
+                  f.authorName,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
               Text(
                 f.isPublic
                     ? '🌐 ${tr('Công khai', 'Public')}'
                     : (byPostAuthor
-                    ? '🔒 ${tr('Chỉ tác giả thấy', 'Author only')}'
-                    : '🔒 ${tr('Riêng tư', 'Private')}'),
+                          ? '🔒 ${tr('Chỉ tác giả thấy', 'Author only')}'
+                          : '🔒 ${tr('Riêng tư', 'Private')}'),
                 style: const TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary),
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
               if (canDelete)
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   tooltip: tr('Xóa', 'Delete'),
-                  icon: Icon(Icons.delete_outline,
-                      size: 18, color: scheme.error),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: scheme.error,
+                  ),
                   onPressed: () => _confirmDelete(f),
                 ),
             ],
@@ -190,17 +208,23 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           const SizedBox(height: 4),
           Row(
             children: [
-              Text(_ago(f.createdAt),
-                  style: const TextStyle(
-                      fontSize: 11.5, color: AppColors.textSecondary)),
+              Text(
+                _ago(f.createdAt),
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: AppColors.textSecondary,
+                ),
+              ),
               if (me != null) ...[
                 const SizedBox(width: 12),
                 InkWell(
                   borderRadius: BorderRadius.circular(6),
                   onTap: () => _startReply(root, f),
                   child: Padding(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
                     child: Text(
                       tr('Trả lời', 'Reply'),
                       style: const TextStyle(
@@ -271,8 +295,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       return Center(
                         child: Text(
                           tr('Chưa có góp ý nào', 'No feedback yet'),
-                          style:
-                          const TextStyle(color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       );
                     }
@@ -290,23 +315,27 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                     decoration: BoxDecoration(
                       color: scheme.surface,
-                      border:
-                      const Border(top: BorderSide(color: AppColors.border)),
+                      border: const Border(
+                        top: BorderSide(color: AppColors.border),
+                      ),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (root != null)
-                        // Đang trả lời: chế độ theo góp ý gốc, không chọn lại
+                          // Đang trả lời: chế độ theo góp ý gốc, không chọn lại
                           Row(
                             children: [
-                              const Icon(Icons.reply,
-                                  size: 16, color: AppColors.brand),
+                              const Icon(
+                                Icons.reply,
+                                size: 16,
+                                color: AppColors.brand,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
                                   '${tr('Đang trả lời', 'Replying to')} $_replyToName'
-                                      ' · ${root.isPublic ? tr('công khai', 'public') : tr('riêng tư', 'private')}',
+                                  ' · ${root.isPublic ? tr('công khai', 'public') : tr('riêng tư', 'private')}',
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontSize: 12.5,
@@ -347,16 +376,23 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                             alignment: Alignment.centerLeft,
                             child: Text(
                               _public
-                                  ? tr('Mọi người đều thấy góp ý này',
-                                  'Everyone can see this')
+                                  ? tr(
+                                      'Mọi người đều thấy góp ý này',
+                                      'Everyone can see this',
+                                    )
                                   : isOwner
-                                  ? tr('Chỉ mình bạn thấy',
-                                  'Only you can see this')
-                                  : tr('Chỉ tác giả bài và bạn thấy',
-                                  'Only the author and you can see this'),
+                                  ? tr(
+                                      'Chỉ mình bạn thấy',
+                                      'Only you can see this',
+                                    )
+                                  : tr(
+                                      'Chỉ tác giả bài và bạn thấy',
+                                      'Only the author and you can see this',
+                                    ),
                               style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary),
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ),
                         ],
@@ -371,10 +407,14 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                                 maxLines: 4,
                                 decoration: InputDecoration(
                                   hintText: root != null
-                                      ? tr('Viết câu trả lời...',
-                                      'Write your reply...')
-                                      : tr('Viết góp ý của bạn...',
-                                      'Write your feedback...'),
+                                      ? tr(
+                                          'Viết câu trả lời...',
+                                          'Write your reply...',
+                                        )
+                                      : tr(
+                                          'Viết góp ý của bạn...',
+                                          'Write your feedback...',
+                                        ),
                                   counterText: '',
                                   // Theme đã có viền cho mọi ô nhập, nên ô này
                                   // phải tắt rõ từng trạng thái.
@@ -390,12 +430,16 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               tooltip: tr('Gửi', 'Send'),
                               icon: _sending
                                   ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2))
-                                  : const Icon(Icons.send,
-                                  color: AppColors.brand),
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.send,
+                                      color: AppColors.brand,
+                                    ),
                               onPressed: _sending ? null : _send,
                             ),
                           ],

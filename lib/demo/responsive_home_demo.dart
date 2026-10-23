@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 import '../widgets/weave_responsive_shell.dart';
 
@@ -93,9 +94,8 @@ class _DemoHomeContent extends StatelessWidget {
           const SizedBox(height: WeaveSpacing.sm),
           Text(
             'Nơi những khoảnh khắc nhỏ trở thành ký ức chung.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: WeaveSpacing.xl),
           _CreatePrompt(),
@@ -132,10 +132,7 @@ class _CreatePrompt extends StatelessWidget {
             ),
             // Hành động chính nổi bật đã nằm ở nút "Tạo khoảnh khắc"/FAB,
             // nên nút này dùng kiểu viền để màn hình chỉ có một nút tím.
-            OutlinedButton(
-              onPressed: () {},
-              child: const Text('Tạo bài'),
-            ),
+            OutlinedButton(onPressed: () {}, child: const Text('Tạo bài')),
           ],
         ),
       ),
@@ -155,7 +152,7 @@ class _FeedColumn extends StatelessWidget {
           label: 'HÀNH TRÌNH',
           title: 'Một ngày cuối tuần cùng bạn bè',
           description:
-          'Tập hợp ảnh, khoảnh khắc và câu chuyện vào cùng một nơi.',
+              'Tập hợp ảnh, khoảnh khắc và câu chuyện vào cùng một nơi.',
           color: AppColors.teal,
         ),
         SizedBox(height: WeaveSpacing.lg),
@@ -163,8 +160,7 @@ class _FeedColumn extends StatelessWidget {
           icon: Icons.auto_awesome_rounded,
           label: 'KÝ ỨC',
           title: 'Những điều đáng nhớ',
-          description:
-          'Xem lại những khoảnh khắc và câu chuyện bạn đã lưu.',
+          description: 'Xem lại những khoảnh khắc và câu chuyện bạn đã lưu.',
           color: AppColors.brand,
         ),
       ],
@@ -303,11 +299,23 @@ class _FeedCard extends StatelessWidget {
             const SizedBox(height: WeaveSpacing.lg),
             const Row(
               children: [
-                Icon(Icons.favorite_border, size: 20, color: AppColors.textSecondary),
+                Icon(
+                  Icons.favorite_border,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
                 SizedBox(width: WeaveSpacing.lg),
-                Icon(Icons.mode_comment_outlined, size: 20, color: AppColors.textSecondary),
+                Icon(
+                  Icons.mode_comment_outlined,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
                 SizedBox(width: WeaveSpacing.lg),
-                Icon(Icons.share_outlined, size: 20, color: AppColors.textSecondary),
+                Icon(
+                  Icons.share_outlined,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
               ],
             ),
           ],

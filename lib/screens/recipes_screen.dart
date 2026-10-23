@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/space.dart';
 import '../services/feed_recipe_service.dart';
 import '../services/l10n.dart';
@@ -60,9 +61,15 @@ class _RecipesScreenState extends State<RecipesScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('Xóa công thức "${r.name}"?', 'Delete recipe "${r.name}"?')),
-        content: Text(tr('Công thức sẽ bị xóa và không thể khôi phục.',
-            'The recipe will be deleted and cannot be restored.')),
+        title: Text(
+          tr('Xóa công thức "${r.name}"?', 'Delete recipe "${r.name}"?'),
+        ),
+        content: Text(
+          tr(
+            'Công thức sẽ bị xóa và không thể khôi phục.',
+            'The recipe will be deleted and cannot be restored.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -77,19 +84,23 @@ class _RecipesScreenState extends State<RecipesScreen> {
       ),
     );
     if (ok != true || !mounted) return;
-    await _persist(FeedRecipeState(
-      cur.items.where((e) => e.id != r.id).toList(),
-      cur.activeId == r.id ? null : cur.activeId,
-    ));
+    await _persist(
+      FeedRecipeState(
+        cur.items.where((e) => e.id != r.id).toList(),
+        cur.activeId == r.id ? null : cur.activeId,
+      ),
+    );
   }
 
   String _describe(FeedRecipe r) {
     final parts = <String>[];
     if (r.spaceIds.isNotEmpty) {
-      parts.add(r.spaceIds
-          .map((id) => findSpace(id)?.emoji ?? '')
-          .where((e) => e.isNotEmpty)
-          .join(' '));
+      parts.add(
+        r.spaceIds
+            .map((id) => findSpace(id)?.emoji ?? '')
+            .where((e) => e.isNotEmpty)
+            .join(' '),
+      );
     } else {
       parts.add(tr('Mọi chủ đề', 'All topics'));
     }
@@ -100,7 +111,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
     if (r.withImages) parts.add(tr('có ảnh', 'with images'));
     if (r.maxAgeDays > 0) {
       parts.add(
-          tr('trong ${r.maxAgeDays} ngày', 'within ${r.maxAgeDays} days'));
+        tr('trong ${r.maxAgeDays} ngày', 'within ${r.maxAgeDays} days'),
+      );
     }
     return parts.join(' · ');
   }
@@ -109,9 +121,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
   Widget build(BuildContext context) {
     final s = _s;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Công thức bảng tin', 'Feed recipes')),
-      ),
+      appBar: AppBar(title: Text(tr('Công thức bảng tin', 'Feed recipes'))),
       // Màu và bo góc của FAB lấy từ floatingActionButtonTheme.
       floatingActionButton: FloatingActionButton.extended(
         onPressed: s == null ? null : () => _edit(),
@@ -123,84 +133,91 @@ class _RecipesScreenState extends State<RecipesScreen> {
           : s == null
           ? const Center(child: CircularProgressIndicator())
           : Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  tr(
-                    'Tự đặt luật cho bảng tin "Tất cả": chọn chủ đề, độ dài bài, chỉ bài sống, chỉ bài có ảnh... Bấm một công thức để dùng, bấm lại để tắt.',
-                    'Write your own rules for the "All" feed: topics, post length, living posts only, images only... Tap a recipe to use it, tap again to turn it off.',
-                  ),
-                  style: const TextStyle(
-                      color: AppColors.textSecondary, height: 1.4),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                        tr(
+                          'Tự đặt luật cho bảng tin "Tất cả": chọn chủ đề, độ dài bài, chỉ bài sống, chỉ bài có ảnh... Bấm một công thức để dùng, bấm lại để tắt.',
+                          'Write your own rules for the "All" feed: topics, post length, living posts only, images only... Tap a recipe to use it, tap again to turn it off.',
+                        ),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                    for (final r in s.items)
+                      Card(
+                        // Công thức đang dùng: nền soft và viền Brand.
+                        color: s.activeId == r.id ? AppColors.soft : null,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(WeaveRadius.card),
+                          side: BorderSide(
+                            color: s.activeId == r.id
+                                ? AppColors.brand
+                                : AppColors.border,
+                          ),
+                        ),
+                        child: ListTile(
+                          leading: Icon(
+                            s.activeId == r.id
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                            color: AppColors.brand,
+                          ),
+                          title: Text(
+                            r.name,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          subtitle: Text(_describe(r)),
+                          onTap: () => _persist(
+                            FeedRecipeState(
+                              s.items,
+                              s.activeId == r.id ? null : r.id,
+                            ),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: tr('Sửa', 'Edit'),
+                                icon: const Icon(Icons.edit_outlined, size: 20),
+                                onPressed: () => _edit(r),
+                              ),
+                              IconButton(
+                                tooltip: tr('Xóa', 'Delete'),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: AppColors.danger,
+                                ),
+                                onPressed: () => _delete(r),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (s.items.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          tr('Chưa có công thức nào.', 'No recipes yet.'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              for (final r in s.items)
-                Card(
-                  // Công thức đang dùng: nền soft và viền Brand.
-                  color: s.activeId == r.id ? AppColors.soft : null,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(WeaveRadius.card),
-                    side: BorderSide(
-                      color: s.activeId == r.id
-                          ? AppColors.brand
-                          : AppColors.border,
-                    ),
-                  ),
-                  child: ListTile(
-                    leading: Icon(
-                      s.activeId == r.id
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                      color: AppColors.brand,
-                    ),
-                    title: Text(r.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700)),
-                    subtitle: Text(_describe(r)),
-                    onTap: () => _persist(FeedRecipeState(
-                      s.items,
-                      s.activeId == r.id ? null : r.id,
-                    )),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: tr('Sửa', 'Edit'),
-                          icon: const Icon(Icons.edit_outlined,
-                              size: 20),
-                          onPressed: () => _edit(r),
-                        ),
-                        IconButton(
-                          tooltip: tr('Xóa', 'Delete'),
-                          icon: const Icon(Icons.delete_outline,
-                              size: 20, color: AppColors.danger),
-                          onPressed: () => _delete(r),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              if (s.items.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    tr('Chưa có công thức nào.', 'No recipes yet.'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: AppColors.textSecondary),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
@@ -214,8 +231,9 @@ class _RecipeDialog extends StatefulWidget {
 }
 
 class _RecipeDialogState extends State<_RecipeDialog> {
-  late final TextEditingController _name =
-  TextEditingController(text: widget.initial?.name ?? '');
+  late final TextEditingController _name = TextEditingController(
+    text: widget.initial?.name ?? '',
+  );
   late List<String> _spaces = [...?widget.initial?.spaceIds];
   late int _minBlocks = widget.initial?.minBlocks ?? 0;
   late bool _withUpdates = widget.initial?.withUpdates ?? false;
@@ -261,9 +279,11 @@ class _RecipeDialogState extends State<_RecipeDialog> {
   Widget build(BuildContext context) {
     final canSave = _name.text.trim().isNotEmpty;
     return AlertDialog(
-      title: Text(widget.initial == null
-          ? tr('Công thức mới', 'New recipe')
-          : tr('Sửa công thức', 'Edit recipe')),
+      title: Text(
+        widget.initial == null
+            ? tr('Công thức mới', 'New recipe')
+            : tr('Sửa công thức', 'Edit recipe'),
+      ),
       content: SizedBox(
         width: 400,
         child: SingleChildScrollView(
@@ -278,8 +298,12 @@ class _RecipeDialogState extends State<_RecipeDialog> {
                   labelText: tr('Tên công thức', 'Recipe name'),
                 ),
               ),
-              Text(tr('Chủ đề (để trống = mọi chủ đề)',
-                  'Topics (empty = all topics)')),
+              Text(
+                tr(
+                  'Chủ đề (để trống = mọi chủ đề)',
+                  'Topics (empty = all topics)',
+                ),
+              ),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 6,
@@ -290,8 +314,9 @@ class _RecipeDialogState extends State<_RecipeDialog> {
                       label: Text(
                         '${findSpace(id)?.emoji ?? ''} ${tr(findSpace(id)?.name ?? id, findSpace(id)?.nameEn ?? findSpace(id)?.name ?? id)}',
                       ),
-                      onDeleted: () => setState(() =>
-                      _spaces = _spaces.where((e) => e != id).toList()),
+                      onDeleted: () => setState(
+                        () => _spaces = _spaces.where((e) => e != id).toList(),
+                      ),
                     ),
                   ActionChip(
                     avatar: const Icon(Icons.add, size: 16),
@@ -322,9 +347,11 @@ class _RecipeDialogState extends State<_RecipeDialog> {
                     for (final v in const [0, 1, 7, 30])
                       DropdownMenuItem(
                         value: v,
-                        child: Text(v == 0
-                            ? tr('Bất kỳ lúc nào', 'Any time')
-                            : tr('$v ngày', '$v days')),
+                        child: Text(
+                          v == 0
+                              ? tr('Bất kỳ lúc nào', 'Any time')
+                              : tr('$v ngày', '$v days'),
+                        ),
                       ),
                   ],
                   onChanged: (v) => setState(() => _maxAge = v ?? 0),
@@ -332,8 +359,12 @@ class _RecipeDialogState extends State<_RecipeDialog> {
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(tr('Chỉ bài sống (có cập nhật)',
-                    'Living posts only (with updates)')),
+                title: Text(
+                  tr(
+                    'Chỉ bài sống (có cập nhật)',
+                    'Living posts only (with updates)',
+                  ),
+                ),
                 value: _withUpdates,
                 onChanged: (v) => setState(() => _withUpdates = v),
               ),
@@ -354,16 +385,19 @@ class _RecipeDialogState extends State<_RecipeDialog> {
         ),
         FilledButton(
           onPressed: canSave
-              ? () => Navigator.of(context).pop(FeedRecipe(
-            id: widget.initial?.id ??
-                DateTime.now().millisecondsSinceEpoch.toString(),
-            name: _name.text.trim(),
-            spaceIds: _spaces,
-            minBlocks: _minBlocks,
-            withUpdates: _withUpdates,
-            withImages: _withImages,
-            maxAgeDays: _maxAge,
-          ))
+              ? () => Navigator.of(context).pop(
+                  FeedRecipe(
+                    id:
+                        widget.initial?.id ??
+                        DateTime.now().millisecondsSinceEpoch.toString(),
+                    name: _name.text.trim(),
+                    spaceIds: _spaces,
+                    minBlocks: _minBlocks,
+                    withUpdates: _withUpdates,
+                    withImages: _withImages,
+                    maxAgeDays: _maxAge,
+                  ),
+                )
               : null,
           child: Text(tr('Lưu', 'Save')),
         ),

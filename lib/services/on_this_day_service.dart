@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 
 /// Các bài của mình đăng vào cùng ngày, cách đây [yearsAgo] năm.
@@ -26,26 +27,25 @@ class OnThisDayService {
   static final _db = FirebaseFirestore.instance;
 
   static Future<List<Post>> _postsOnDay(
-      String collection,
-      String uid,
-      DateTime start,
-      DateTime end,
-      ) async {
+    String collection,
+    String uid,
+    DateTime start,
+    DateTime end,
+  ) async {
     final snap = await _db
         .collection(collection)
         .where('authorId', isEqualTo: uid)
-        .where('createdAt',
-        isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .where('createdAt', isLessThan: Timestamp.fromDate(end))
         .get();
     return snap.docs.map(Post.fromDoc).toList();
   }
 
   static Future<OnThisDayGroup?> _year(
-      String uid,
-      DateTime today,
-      int yearsAgo,
-      ) async {
+    String uid,
+    DateTime today,
+    int yearsAgo,
+  ) async {
     final year = today.year - yearsAgo;
     final start = DateTime(year, today.month, today.day);
     // 29/2 không có ở năm thường: DateTime tự nhảy sang tháng sau, bỏ qua
@@ -71,9 +71,6 @@ class OnThisDayService {
     final results = await Future.wait([
       for (var n = 1; n <= maxYears; n++) _year(me.uid, now, n),
     ]);
-    return [
-      for (final g in results)
-        ?g,
-    ];
+    return [for (final g in results) ?g];
   }
 }

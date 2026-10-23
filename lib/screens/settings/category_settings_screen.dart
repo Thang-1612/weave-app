@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../models/space.dart';
 import '../../services/l10n.dart';
 import '../../services/user_prefs.dart';
@@ -38,8 +39,7 @@ class CategorySettingsScreen extends StatelessWidget {
       await UserPrefs.instance.resetInterests();
       messenger.showSnackBar(
         SnackBar(
-          content:
-          Text(tr('Đã xóa dữ liệu sở thích', 'Interest data cleared')),
+          content: Text(tr('Đã xóa dữ liệu sở thích', 'Interest data cleared')),
         ),
       );
     } catch (e) {
@@ -52,14 +52,9 @@ class CategorySettingsScreen extends StatelessWidget {
     final total = g.children.length;
     final visible = g.children.where((s) => !prefs.isRestricted(s.id)).length;
 
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: 10),
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(WeaveRadius.card),
-        border: Border.all(color: AppColors.border),
-      ),
       child: Theme(
         // Bỏ đường kẻ mặc định của ExpansionTile
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -75,8 +70,9 @@ class CategorySettingsScreen extends StatelessWidget {
             tr('$visible/$total đang hiện', '$visible/$total visible'),
             style: TextStyle(
               fontSize: 12.5,
-              color:
-              visible == total ? AppColors.textSecondary : AppColors.brand,
+              color: visible == total
+                  ? AppColors.textSecondary
+                  : AppColors.brand,
             ),
           ),
           children: [
@@ -123,7 +119,9 @@ class CategorySettingsScreen extends StatelessWidget {
                   'Turned-off topics do not appear in All posts, the topic menu or recommendations. Your posts in those topics are still saved normally.',
                 ),
                 style: const TextStyle(
-                    color: AppColors.textSecondary, height: 1.4),
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
               ),
             ),
             SectionLabel(tr('Chủ đề được hiện', 'Visible topics')),

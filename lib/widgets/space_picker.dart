@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+
 import '../models/space.dart';
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
@@ -30,13 +31,13 @@ String _fold(String input) {
 /// [current] là chủ đề đang dùng. Trả về mã chủ đề, hoặc null nếu đóng bảng.
 /// [isHidden] (tùy chọn): trả về true để ẩn chủ đề đó khỏi bảng.
 Future<String?> showSpacePicker(
-    BuildContext context, {
-      String? suggested,
-      String? current,
-      String? title,
-      String? subtitle,
-      bool Function(String spaceId)? isHidden,
-    }) {
+  BuildContext context, {
+  String? suggested,
+  String? current,
+  String? title,
+  String? subtitle,
+  bool Function(String spaceId)? isHidden,
+}) {
   return showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
@@ -97,14 +98,14 @@ class _SpacePickerSheetState extends State<_SpacePickerSheet> {
       trailing: isCurrent
           ? const Icon(Icons.check_circle, color: AppColors.brand)
           : (isSuggested
-          ? Text(
-        tr('✨ Gợi ý', '✨ Suggested'),
-        style: const TextStyle(
-          color: AppColors.brand,
-          fontWeight: FontWeight.w700,
-        ),
-      )
-          : null),
+                ? Text(
+                    tr('✨ Gợi ý', '✨ Suggested'),
+                    style: const TextStyle(
+                      color: AppColors.brand,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  )
+                : null),
       onTap: () => Navigator.of(context).pop(s.id),
     );
   }
@@ -118,7 +119,8 @@ class _SpacePickerSheetState extends State<_SpacePickerSheet> {
           _fold(g.name).contains(q) || _fold(g.nameEn ?? '').contains(q);
       for (final s in g.children) {
         if (!_visible(s)) continue;
-        final match = groupMatch ||
+        final match =
+            groupMatch ||
             _fold(s.name).contains(q) ||
             _fold(s.nameEn ?? '').contains(q);
         if (match) results.add(_tile(s, groupName: groupName));
@@ -214,12 +216,12 @@ class _SpacePickerSheetState extends State<_SpacePickerSheet> {
                   suffixIcon: _query.isEmpty
                       ? null
                       : IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      _controller.clear();
-                      setState(() => _query = '');
-                    },
-                  ),
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            _controller.clear();
+                            setState(() => _query = '');
+                          },
+                        ),
                   isDense: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),

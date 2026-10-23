@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/post.dart';
 import 'l10n.dart';
 import 'post_service.dart';
@@ -50,17 +51,23 @@ class ProposalService {
     if (originalId == null ||
         fork.authorId != me.uid ||
         fork.collection != 'posts') {
-      throw Exception(tr('Không gửi được đề xuất cho bài này',
-          'Cannot send a proposal for this post'));
+      throw Exception(
+        tr(
+          'Không gửi được đề xuất cho bài này',
+          'Cannot send a proposal for this post',
+        ),
+      );
     }
     final original = await PostService.getPost(originalId);
     if (original == null) {
       throw Exception(
-          tr('Bài gốc không còn tồn tại', 'The original post is gone'));
+        tr('Bài gốc không còn tồn tại', 'The original post is gone'),
+      );
     }
     if (original.authorId == me.uid) {
       throw Exception(
-          tr('Bài gốc là của chính bạn', 'The original is your own post'));
+        tr('Bài gốc là của chính bạn', 'The original is your own post'),
+      );
     }
     await _inbox(original.authorId).doc(fork.id).set({
       'fromUserId': me.uid,
@@ -88,23 +95,29 @@ class ProposalService {
     final original = await PostService.getPost(originalId);
     if (original == null) {
       throw Exception(
-          tr('Bài gốc không còn tồn tại', 'The original post is gone'));
+        tr('Bài gốc không còn tồn tại', 'The original post is gone'),
+      );
     }
     if (original.authorId != me.uid) {
-      throw Exception(tr('Bài gốc không phải của bạn',
-          'The original is not your post'));
+      throw Exception(
+        tr('Bài gốc không phải của bạn', 'The original is not your post'),
+      );
     }
     await VersionService.snapshot(
       original,
-      tr('Trước khi gộp một nhánh của chính bạn',
-          'Before merging one of your own forks'),
+      tr(
+        'Trước khi gộp một nhánh của chính bạn',
+        'Before merging one of your own forks',
+      ),
     );
     await original.ref.update({'blocks': fork.blocks, 'text': fork.text});
     // Mục tự sinh: chỉ tác giả thấy
     await LivePostService.addSystemUpdate(
       original,
-      tr('Nội dung được cập nhật từ một nhánh của tác giả',
-          'Content updated from one of the author\'s own forks'),
+      tr(
+        'Nội dung được cập nhật từ một nhánh của tác giả',
+        'Content updated from one of the author\'s own forks',
+      ),
       'merge',
     );
   }
@@ -162,19 +175,29 @@ class ProposalService {
     final fork = await PostService.getPost(p.forkId);
     final original = await PostService.getPost(p.originalId);
     if (fork == null || original == null) {
-      throw Exception(tr('Bài nhánh hoặc bài gốc không còn tồn tại',
-          'The fork or the original post no longer exists'));
+      throw Exception(
+        tr(
+          'Bài nhánh hoặc bài gốc không còn tồn tại',
+          'The fork or the original post no longer exists',
+        ),
+      );
     }
     if (original.authorId != me.uid) {
-      throw Exception(tr('Chỉ tác giả bài gốc mới nhận được đề xuất',
-          'Only the original author can accept a proposal'));
+      throw Exception(
+        tr(
+          'Chỉ tác giả bài gốc mới nhận được đề xuất',
+          'Only the original author can accept a proposal',
+        ),
+      );
     }
 
     // Giữ lại bản trước khi bị ghi đè để có thể khôi phục
     await VersionService.snapshot(
       original,
-      tr('Trước khi nhận đề xuất của ${p.fromName}',
-          'Before accepting the proposal from ${p.fromName}'),
+      tr(
+        'Trước khi nhận đề xuất của ${p.fromName}',
+        'Before accepting the proposal from ${p.fromName}',
+      ),
     );
 
     await original.ref.update({
@@ -185,8 +208,10 @@ class ProposalService {
     });
     await LivePostService.addSystemUpdate(
       original,
-      tr('Nội dung được cập nhật theo đề xuất của ${p.fromName}',
-          'Content updated from a proposal by ${p.fromName}'),
+      tr(
+        'Nội dung được cập nhật theo đề xuất của ${p.fromName}',
+        'Content updated from a proposal by ${p.fromName}',
+      ),
       'proposal',
     );
     await _writeResult(p, 'accepted');

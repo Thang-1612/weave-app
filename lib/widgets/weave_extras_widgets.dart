@@ -28,7 +28,10 @@ class WeavePollCard extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
 
   Future<void> _toggle(
-      BuildContext context, String optionId, List<String> mine) async {
+    BuildContext context,
+    String optionId,
+    List<String> mine,
+  ) async {
     final List<String> next;
     if (poll.multi) {
       next = mine.contains(optionId)
@@ -49,18 +52,26 @@ class WeavePollCard extends StatelessWidget {
       context: context,
       builder: (c) => AlertDialog(
         title: Text(tr('Chốt kết quả?', 'Close this poll?')),
-        content: Text(poll.kind == PollKind.place
-            ? tr('Lựa chọn nhiều phiếu nhất sẽ thành địa điểm của hoạt động.',
-            'The top choice becomes the activity place.')
-            : tr('Lựa chọn nhiều phiếu nhất sẽ thành ngày của hoạt động.',
-            'The top choice becomes the activity date.')),
+        content: Text(
+          poll.kind == PollKind.place
+              ? tr(
+                  'Lựa chọn nhiều phiếu nhất sẽ thành địa điểm của hoạt động.',
+                  'The top choice becomes the activity place.',
+                )
+              : tr(
+                  'Lựa chọn nhiều phiếu nhất sẽ thành ngày của hoạt động.',
+                  'The top choice becomes the activity date.',
+                ),
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(c, false),
-              child: Text(tr('Hủy', 'Cancel'))),
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(tr('Hủy', 'Cancel')),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(c, true),
-              child: Text(tr('Chốt', 'Close'))),
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(tr('Chốt', 'Close')),
+          ),
         ],
       ),
     );
@@ -105,15 +116,15 @@ class WeavePollCard extends StatelessWidget {
   }
 
   Widget _option(
-      BuildContext context,
-      WeavePollOption o, {
-        required int n,
-        required int total,
-        required bool selected,
-        required bool winner,
-        required List<String> voters,
-        required List<String> mine,
-      }) {
+    BuildContext context,
+    WeavePollOption o, {
+    required int n,
+    required int total,
+    required bool selected,
+    required bool winner,
+    required List<String> voters,
+    required List<String> mine,
+  }) {
     final pct = total == 0 ? 0.0 : n / total;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -137,12 +148,15 @@ class WeavePollCard extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     widthFactor: pct,
                     child: Container(
-                        color: AppColors.brand.withValues(alpha: 0.12)),
+                      color: AppColors.brand.withValues(alpha: 0.12),
+                    ),
                   ),
                 ),
                 Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       Icon(
@@ -161,14 +175,20 @@ class WeavePollCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(o.label,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600)),
+                            Text(
+                              o.label,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             if ((o.address ?? '').isNotEmpty)
-                              Text(o.address!,
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textSecondary)),
+                              Text(
+                                o.address!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -178,18 +198,22 @@ class WeavePollCard extends StatelessWidget {
                           tooltip: tr('Mở Google Maps', 'Open in Google Maps'),
                           icon: const Icon(Icons.map_outlined, size: 20),
                           onPressed: () => openInGoogleMaps(
-                              context,
-                              WeavePlace(
-                                  name: o.label,
-                                  address: o.address,
-                                  lat: o.lat,
-                                  lng: o.lng)),
+                            context,
+                            WeavePlace(
+                              name: o.label,
+                              address: o.address,
+                              lat: o.lat,
+                              lng: o.lng,
+                            ),
+                          ),
                         ),
                       if (voters.isNotEmpty)
                         WeaveAvatarStack(uids: voters, max: 3),
                       const SizedBox(width: 8),
-                      Text('$n',
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                      Text(
+                        '$n',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ],
                   ),
                 ),
@@ -225,15 +249,18 @@ class WeavePollCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                        poll.kind == PollKind.place
-                            ? Icons.place
-                            : Icons.event,
-                        color: AppColors.brand),
+                      poll.kind == PollKind.place ? Icons.place : Icons.event,
+                      color: AppColors.brand,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(poll.question,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 15)),
+                      child: Text(
+                        poll.question,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     _statusChip(),
@@ -248,7 +275,9 @@ class WeavePollCard extends StatelessWidget {
                       '${tr('hạn', 'ends')} ${weaveDate(poll.closesAt!)}',
                   ].join(' · '),
                   style: const TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary),
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 for (final o in poll.options)
@@ -261,7 +290,7 @@ class WeavePollCard extends StatelessWidget {
                     winner: poll.closed && poll.winnerOptionId == o.id,
                     voters: [
                       for (final v in votes)
-                        if (v.optionIds.contains(o.id)) v.userId
+                        if (v.optionIds.contains(o.id)) v.userId,
                     ],
                     mine: mine,
                   ),
@@ -289,18 +318,18 @@ class WeavePollCard extends StatelessWidget {
 }
 
 Future<void> showWeaveCreatePollSheet(
-    BuildContext context, String activityId) =>
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      constraints: const BoxConstraints(maxWidth: 560),
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-        BorderRadius.vertical(top: Radius.circular(WeaveRadius.card)),
-      ),
-      builder: (_) => _CreatePollSheet(activityId: activityId),
-    );
+  BuildContext context,
+  String activityId,
+) => showModalBottomSheet(
+  context: context,
+  isScrollControlled: true,
+  showDragHandle: true,
+  constraints: const BoxConstraints(maxWidth: 560),
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(WeaveRadius.card)),
+  ),
+  builder: (_) => _CreatePollSheet(activityId: activityId),
+);
 
 class _CreatePollSheet extends StatefulWidget {
   final String activityId;
@@ -330,8 +359,11 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
 
   Future<void> _pin(int i) async {
     final c = _places[i];
-    final p = await pickWeavePlace(context,
-        initial: _pins[c], initialName: c.text.trim());
+    final p = await pickWeavePlace(
+      context,
+      initial: _pins[c],
+      initialName: c.text.trim(),
+    );
     if (p == null || !mounted) return;
     setState(() {
       _pins[c] = p;
@@ -364,13 +396,15 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
         final t = c.text.trim();
         if (t.isEmpty || !seen.add(t)) continue;
         final pin = _pins[c];
-        opts.add(WeavePollOption(
-          id: 'o${opts.length}',
-          label: t,
-          address: pin?.address,
-          lat: pin?.lat,
-          lng: pin?.lng,
-        ));
+        opts.add(
+          WeavePollOption(
+            id: 'o${opts.length}',
+            label: t,
+            address: pin?.address,
+            lat: pin?.lat,
+            lng: pin?.lng,
+          ),
+        );
       }
       options = opts;
     } else {
@@ -381,8 +415,11 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
       ];
     }
     if (options.length < 2) {
-      messenger.showSnackBar(SnackBar(
-          content: Text(tr('Cần ít nhất 2 lựa chọn', 'Add at least 2 options'))));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(tr('Cần ít nhất 2 lựa chọn', 'Add at least 2 options')),
+        ),
+      );
       return;
     }
 
@@ -391,8 +428,9 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
       await WeaveService.createPoll(
         widget.activityId,
         kind: _kind,
-        question:
-        _question.text.trim().isEmpty ? _defaultQuestion : _question.text,
+        question: _question.text.trim().isEmpty
+            ? _defaultQuestion
+            : _question.text,
         options: options,
         multi: _multi,
         closesAt: _closeHours == null
@@ -419,18 +457,22 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
   Widget build(BuildContext context) {
     // Viền, bo góc và màu focus của mọi ô nhập lấy từ theme
     return Padding(
-      padding:
-      EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(tr('Tạo bình chọn', 'New poll'),
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: AppColors.textPrimary)),
+            Text(
+              tr('Tạo bình chọn', 'New poll'),
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: AppColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: 12),
             SegmentedButton<PollKind>(
               showSelectedIcon: false,
@@ -443,13 +485,15 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
               ),
               segments: [
                 ButtonSegment(
-                    value: PollKind.place,
-                    icon: const Icon(Icons.place),
-                    label: Text(tr('Địa điểm', 'Place'))),
+                  value: PollKind.place,
+                  icon: const Icon(Icons.place),
+                  label: Text(tr('Địa điểm', 'Place')),
+                ),
                 ButtonSegment(
-                    value: PollKind.date,
-                    icon: const Icon(Icons.event),
-                    label: Text(tr('Ngày', 'Date'))),
+                  value: PollKind.date,
+                  icon: const Icon(Icons.event),
+                  label: Text(tr('Ngày', 'Date')),
+                ),
               ],
               selected: {_kind},
               onSelectionChanged: (s) => setState(() => _kind = s.first),
@@ -534,7 +578,9 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
             ],
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(tr('Cho chọn nhiều đáp án', 'Allow multiple choices')),
+              title: Text(
+                tr('Cho chọn nhiều đáp án', 'Allow multiple choices'),
+              ),
               value: _multi,
               onChanged: (v) => setState(() => _multi = v),
             ),
@@ -546,14 +592,21 @@ class _CreatePollSheetState extends State<_CreatePollSheet> {
               ),
               items: [
                 DropdownMenuItem(
-                    value: null,
-                    child: Text(tr('Không giới hạn', 'No deadline'))),
+                  value: null,
+                  child: Text(tr('Không giới hạn', 'No deadline')),
+                ),
                 DropdownMenuItem(
-                    value: 24, child: Text(tr('24 giờ', '24 hours'))),
+                  value: 24,
+                  child: Text(tr('24 giờ', '24 hours')),
+                ),
                 DropdownMenuItem(
-                    value: 72, child: Text(tr('3 ngày', '3 days'))),
+                  value: 72,
+                  child: Text(tr('3 ngày', '3 days')),
+                ),
                 DropdownMenuItem(
-                    value: 168, child: Text(tr('7 ngày', '7 days'))),
+                  value: 168,
+                  child: Text(tr('7 ngày', '7 days')),
+                ),
               ],
               onChanged: (v) => setState(() => _closeHours = v),
             ),

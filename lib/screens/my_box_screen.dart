@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/space.dart';
 import '../services/auto_category.dart';
 import '../services/l10n.dart';
@@ -87,8 +88,12 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(tr('Xóa ghi chú này?', 'Delete this note?')),
-        content: Text(tr('Ghi chú sẽ bị xóa và không thể khôi phục.',
-            'The note will be deleted and cannot be restored.')),
+        content: Text(
+          tr(
+            'Ghi chú sẽ bị xóa và không thể khôi phục.',
+            'The note will be deleted and cannot be restored.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -179,19 +184,25 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
                     Text(
                       extrasAgo(n.createdAt),
                       style: const TextStyle(
-                          fontSize: 11.5, color: AppColors.textSecondary),
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     if (n.pinned)
                       Text(
                         '📌 ${tr('Đã ghim', 'Pinned')}',
                         style: const TextStyle(
-                            fontSize: 11.5, color: AppColors.brand),
+                          fontSize: 11.5,
+                          color: AppColors.brand,
+                        ),
                       ),
                     if (n.posted)
                       Text(
                         '✅ ${tr('Đã đăng', 'Posted')}',
                         style: const TextStyle(
-                            fontSize: 11.5, color: AppColors.brand),
+                          fontSize: 11.5,
+                          color: AppColors.brand,
+                        ),
                       ),
                   ],
                 ),
@@ -218,14 +229,13 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
               ),
               PopupMenuItem(
                 value: 'pin',
-                child: Text(n.pinned
-                    ? tr('Bỏ ghim', 'Unpin')
-                    : tr('Ghim lên đầu', 'Pin to top')),
+                child: Text(
+                  n.pinned
+                      ? tr('Bỏ ghim', 'Unpin')
+                      : tr('Ghim lên đầu', 'Pin to top'),
+                ),
               ),
-              PopupMenuItem(
-                value: 'edit',
-                child: Text(tr('Sửa', 'Edit')),
-              ),
+              PopupMenuItem(value: 'edit', child: Text(tr('Sửa', 'Edit'))),
               PopupMenuItem(
                 value: 'delete',
                 child: Text(
@@ -243,9 +253,7 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Hộp thư của tôi', 'My box')),
-      ),
+      appBar: AppBar(title: Text(tr('Hộp thư của tôi', 'My box'))),
       body: Column(
         children: [
           Expanded(
@@ -275,7 +283,9 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
                         ),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                            color: AppColors.textSecondary, height: 1.4),
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
                       ),
                     ),
                   );
@@ -312,8 +322,10 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
                           minLines: 1,
                           maxLines: 5,
                           decoration: InputDecoration(
-                            hintText: tr('Ghi nhanh cho riêng bạn...',
-                                'Jot something down for yourself...'),
+                            hintText: tr(
+                              'Ghi nhanh cho riêng bạn...',
+                              'Jot something down for yourself...',
+                            ),
                             counterText: '',
                             // Theme đã có viền cho mọi ô nhập: tắt rõ từng trạng thái.
                             filled: false,
@@ -328,11 +340,12 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
                         tooltip: tr('Lưu ghi chú', 'Save note'),
                         icon: _sending
                             ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child:
-                          CircularProgressIndicator(strokeWidth: 2),
-                        )
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Icon(Icons.send, color: AppColors.brand),
                         onPressed: _sending ? null : _add,
                       ),
@@ -386,17 +399,22 @@ class _PostDialogState extends State<_PostDialog> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  tr('Chủ đề được gợi ý tự động, bạn có thể đổi.',
-                      'Topic suggested automatically, you can change it.'),
+                  tr(
+                    'Chủ đề được gợi ý tự động, bạn có thể đổi.',
+                    'Topic suggested automatically, you can change it.',
+                  ),
                   style: const TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary),
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             DropdownButtonFormField<SpaceGroup>(
               initialValue: _group,
               isExpanded: true,
-              decoration:
-              InputDecoration(labelText: tr('Nhóm chủ đề', 'Topic group')),
+              decoration: InputDecoration(
+                labelText: tr('Nhóm chủ đề', 'Topic group'),
+              ),
               items: [
                 for (final g in spaceGroups)
                   DropdownMenuItem(
@@ -439,8 +457,9 @@ class _PostDialogState extends State<_PostDialog> {
             DropdownButtonFormField<String>(
               initialValue: _visibility,
               isExpanded: true,
-              decoration:
-              InputDecoration(labelText: tr('Ai xem được', 'Audience')),
+              decoration: InputDecoration(
+                labelText: tr('Ai xem được', 'Audience'),
+              ),
               items: [
                 DropdownMenuItem(
                   value: 'public',

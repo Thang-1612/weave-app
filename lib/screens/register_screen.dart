@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../services/account_service.dart';
 import '../services/l10n.dart';
 import '../services/user_prefs.dart';
@@ -60,7 +61,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _message(String code) {
     switch (code) {
       case 'email-already-in-use':
-        return tr('Email này đã được đăng ký', 'This email is already registered');
+        return tr(
+          'Email này đã được đăng ký',
+          'This email is already registered',
+        );
       case 'invalid-email':
         return tr('Email không hợp lệ', 'Invalid email address');
       case 'weak-password':
@@ -167,12 +171,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       TextFormField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
-                        decoration:
-                        authInputDecoration('Email', Icons.email_outlined),
+                        decoration: authInputDecoration(
+                          'Email',
+                          Icons.email_outlined,
+                        ),
                         validator: (v) {
                           final value = v?.trim() ?? '';
                           if (value.isEmpty) {
-                            return tr('Vui lòng nhập email', 'Please enter your email');
+                            return tr(
+                              'Vui lòng nhập email',
+                              'Please enter your email',
+                            );
                           }
                           if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                               .hasMatch(value)) {
@@ -243,7 +252,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       if (_loading)
                         const Center(child: CircularProgressIndicator())
                       else
-                      // Nút chính duy nhất của màn hình: kiểu nút theo theme
+                        // Nút chính duy nhất của màn hình: kiểu nút theo theme
                         FilledButton(
                           onPressed: _register,
                           child: Text(tr('Tạo tài khoản', 'Create account')),

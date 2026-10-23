@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../services/l10n.dart';
 import '../../services/user_prefs.dart';
 import '../../theme/app_theme.dart';
@@ -23,7 +24,10 @@ class LanguageScreen extends StatelessWidget {
               subtitle: sub,
               trailing: selected
                   ? const Icon(Icons.check_circle, color: AppColors.brand)
-                  : const Icon(Icons.radio_button_unchecked, color: AppColors.textSecondary),
+                  : const Icon(
+                      Icons.radio_button_unchecked,
+                      color: AppColors.textSecondary,
+                    ),
               onTap: () => prefs.setLanguage(code),
             );
           }
@@ -42,7 +46,10 @@ class LanguageScreen extends StatelessWidget {
                   'Ngôn ngữ áp dụng cho phần cài đặt, menu và thanh tiêu đề chính. Các màn hình còn lại sẽ được dịch dần ở các bản cập nhật sau.',
                   'The language applies to settings, the menu and main titles. Other screens will be translated in future updates.',
                 ),
-                style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
               ),
             ),
           ]);
