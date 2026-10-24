@@ -6,6 +6,8 @@ import '../services/post_service.dart';
 import '../services/proposal_service.dart';
 import '../services/social_extras_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 /// Màu nền cho dòng thêm / dòng bỏ trong màn so sánh (lấy từ bảng màu chung).
 final _addedBg = AppColors.teal.withValues(alpha: 0.12);
@@ -42,32 +44,27 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: SelectableText('${snap.error}'),
+            debugPrint('ProposalsScreen load error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được đề xuất.',
+                'Could not load proposals.',
               ),
+              onRetry: () =>
+                  setState(() => _future = ProposalService.loadMine()),
             );
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final items = snap.data!;
           if (items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  tr(
-                    'Chưa có đề xuất nào.\nKhi ai đó rẽ nhánh bài của bạn và gửi đề xuất, nó sẽ hiện ở đây.',
-                    'No proposals yet.\nWhen someone forks your post and sends a proposal, it shows up here.',
-                  ),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
+            return WeaveEmptyView(
+              icon: Icons.call_merge,
+              title: tr('Chưa có đề xuất nào.', 'No proposals yet.'),
+              description: tr(
+                'Khi ai đó rẽ nhánh bài của bạn và gửi đề xuất, nó sẽ hiện ở đây.',
+                'When someone forks your post and sends a proposal, it shows up here.',
               ),
             );
           }
@@ -125,11 +122,14 @@ class _CompareScreen extends StatefulWidget {
 }
 
 class _CompareScreenState extends State<_CompareScreen> {
-  late final Future<List<Post?>> _future = Future.wait([
+  // Không để final: nút Thử lại gán future mới để tải lại thật.
+  late Future<List<Post?>> _future = _load();
+  bool _busy = false;
+
+  Future<List<Post?>> _load() => Future.wait([
     PostService.getPost(widget.proposal.originalId),
     PostService.getPost(widget.proposal.forkId),
   ]);
-  bool _busy = false;
 
   List<String> _lines(Post p) {
     final out = <String>[];
@@ -200,24 +200,26 @@ class _CompareScreenState extends State<_CompareScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(child: SelectableText('${snap.error}'));
+            debugPrint('CompareScreen load error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được bản so sánh.',
+                'Could not load the comparison.',
+              ),
+              onRetry: () => setState(() => _future = _load()),
+            );
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final original = snap.data![0];
           final fork = snap.data![1];
           if (original == null || fork == null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  tr(
-                    'Bài nhánh hoặc bài gốc không còn tồn tại.',
-                    'The fork or the original post no longer exists.',
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+            return WeaveEmptyView(
+              icon: Icons.link_off,
+              title: tr(
+                'Bài nhánh hoặc bài gốc không còn tồn tại.',
+                'The fork or the original post no longer exists.',
               ),
             );
           }
@@ -321,9 +323,9 @@ class _CompareScreenState extends State<_CompareScreen> {
                           onPressed: _busy
                               ? null
                               : () => _run(
-                                  () => ProposalService.decline(p),
-                                  tr('Đã từ chối đề xuất', 'Proposal declined'),
-                                ),
+                                () => ProposalService.decline(p),
+                            tr('Đã từ chối đề xuất', 'Proposal declined'),
+                          ),
                           child: Text(tr('Từ chối', 'Decline')),
                         ),
                       ),
@@ -333,9 +335,9 @@ class _CompareScreenState extends State<_CompareScreen> {
                           onPressed: _busy
                               ? null
                               : () => _run(
-                                  () => ProposalService.accept(p),
-                                  tr('Đã nhận đề xuất', 'Proposal accepted'),
-                                ),
+                                () => ProposalService.accept(p),
+                            tr('Đã nhận đề xuất', 'Proposal accepted'),
+                          ),
                           child: Text(tr('Nhận đề xuất', 'Accept')),
                         ),
                       ),

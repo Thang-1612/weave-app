@@ -5,6 +5,8 @@ import '../services/l10n.dart';
 import '../services/social_extras_service.dart';
 import '../services/version_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 /// Lịch sử phiên bản của một bài: xem và khôi phục (chỉ tác giả).
 class VersionsScreen extends StatefulWidget {
@@ -16,9 +18,8 @@ class VersionsScreen extends StatefulWidget {
 }
 
 class _VersionsScreenState extends State<VersionsScreen> {
-  late final Future<List<PostVersion>> _future = VersionService.load(
-    widget.post,
-  );
+  // Không để final: nút Thử lại gán future mới để tải lại thật.
+  late Future<List<PostVersion>> _future = VersionService.load(widget.post);
   bool _busy = false;
 
   String _preview(PostVersion v) {
@@ -82,32 +83,31 @@ class _VersionsScreenState extends State<VersionsScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: SelectableText('${snap.error}'),
+            debugPrint('VersionsScreen load error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được lịch sử phiên bản.',
+                'Could not load version history.',
+              ),
+              onRetry: () => setState(
+                    () => _future = VersionService.load(widget.post),
               ),
             );
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final items = snap.data!;
           if (items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  tr(
-                    'Chưa có phiên bản nào được lưu.\nBản cũ được lưu mỗi khi bạn nhận một đề xuất sửa bài.',
-                    'No saved versions yet.\nAn old version is saved whenever you accept an edit proposal.',
-                  ),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
+            return WeaveEmptyView(
+              icon: Icons.history,
+              title: tr(
+                'Chưa có phiên bản nào được lưu.',
+                'No saved versions yet.',
+              ),
+              description: tr(
+                'Bản cũ được lưu mỗi khi bạn nhận một đề xuất sửa bài.',
+                'An old version is saved whenever you accept an edit proposal.',
               ),
             );
           }

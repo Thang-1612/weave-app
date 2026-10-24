@@ -6,11 +6,22 @@ import '../services/close_friend_service.dart';
 import '../services/friend_service.dart';
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 /// Chọn ai trong số bạn bè của tôi là "bạn thân".
 /// Chỉ người đã là bạn bè mới hiện ở đây.
-class CloseFriendsScreen extends StatelessWidget {
+class CloseFriendsScreen extends StatefulWidget {
   const CloseFriendsScreen({super.key});
+
+  @override
+  State<CloseFriendsScreen> createState() => _CloseFriendsScreenState();
+}
+
+class _CloseFriendsScreenState extends State<CloseFriendsScreen> {
+  // Tạo stream một lần (không tạo lại mỗi lần build). Nút Thử lại gán stream mới.
+  Stream<List<Friendship>> _friendsStream = FriendService.watchMine();
+  late final Stream<Set<String>> _closeStream = CloseFriendService.watchIds();
 
   @override
   Widget build(BuildContext context) {
@@ -21,35 +32,41 @@ class CloseFriendsScreen extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
           child: StreamBuilder<List<Friendship>>(
-            stream: FriendService.watchMine(),
+            stream: _friendsStream,
             builder: (context, friendsSnap) {
               if (friendsSnap.hasError) {
-                return Center(child: Text('${friendsSnap.error}'));
+                debugPrint(
+                  'CloseFriendsScreen stream error: ${friendsSnap.error}',
+                );
+                return WeaveErrorView(
+                  message: tr(
+                    'Không tải được danh sách bạn bè.',
+                    'Could not load your friends.',
+                  ),
+                  onRetry: () => setState(
+                        () => _friendsStream = FriendService.watchMine(),
+                  ),
+                );
               }
               if (!friendsSnap.hasData) {
-                return const Center(child: CircularProgressIndicator());
+                return const WeaveLoadingView();
               }
               final friendIds = [
                 for (final f in friendsSnap.data!)
                   if (f.accepted && f.otherUid(me).isNotEmpty) f.otherUid(me),
               ];
               if (friendIds.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(
-                    child: Text(
-                      tr(
-                        'Bạn chưa có bạn bè nào. Hãy kết bạn trước, sau đó chọn bạn thân ở đây.',
-                        'You have no friends yet. Add friends first, then choose close friends here.',
-                      ),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary),
-                    ),
+                return WeaveEmptyView(
+                  icon: Icons.people_outline,
+                  title: tr('Bạn chưa có bạn bè nào.', 'You have no friends yet.'),
+                  description: tr(
+                    'Hãy kết bạn trước, sau đó chọn bạn thân ở đây.',
+                    'Add friends first, then choose close friends here.',
                   ),
                 );
               }
               return StreamBuilder<Set<String>>(
-                stream: CloseFriendService.watchIds(),
+                stream: _closeStream,
                 builder: (context, closeSnap) {
                   final close = closeSnap.data ?? <String>{};
                   final count = friendIds.where(close.contains).length;

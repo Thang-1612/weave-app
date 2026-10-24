@@ -6,6 +6,8 @@ import '../models/post.dart';
 import '../services/l10n.dart';
 import '../services/post_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 class _Stats {
   final int posts;
@@ -42,7 +44,8 @@ class ContributionScreen extends StatefulWidget {
 class _ContributionScreenState extends State<ContributionScreen> {
   static const _cap = 100;
 
-  late final Future<_Stats> _future = _load();
+  // Không để final: nút Thử lại gán future mới để tải lại thật.
+  late Future<_Stats> _future = _load();
 
   bool get _isSelf => FirebaseAuth.instance.currentUser?.uid == widget.userId;
 
@@ -150,15 +153,17 @@ class _ContributionScreenState extends State<ContributionScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: SelectableText('${snap.error}'),
+            debugPrint('ContributionScreen load error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được số liệu đóng góp.',
+                'Could not load contribution stats.',
               ),
+              onRetry: () => setState(() => _future = _load()),
             );
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final s = snap.data!;
           final cards = <Widget>[

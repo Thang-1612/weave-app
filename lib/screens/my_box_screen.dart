@@ -7,6 +7,8 @@ import '../services/my_box_service.dart';
 import '../services/post_service.dart';
 import '../services/social_extras_service.dart' show extrasAgo;
 import '../theme/app_theme.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 /// Lựa chọn khi đăng một ghi chú thành bài.
 class _PostChoice {
@@ -25,6 +27,9 @@ class MyBoxScreen extends StatefulWidget {
 class _MyBoxScreenState extends State<MyBoxScreen> {
   final _ctrl = TextEditingController();
   bool _sending = false;
+
+  // Tạo stream một lần (không tạo lại mỗi lần build). Nút Thử lại gán stream mới.
+  Stream<List<BoxNote>> _stream = MyBoxService.watch();
 
   @override
   void dispose() {
@@ -258,35 +263,33 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
         children: [
           Expanded(
             child: StreamBuilder<List<BoxNote>>(
-              stream: MyBoxService.watch(),
+              stream: _stream,
               builder: (context, snap) {
                 if (snap.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: SelectableText('${snap.error}'),
+                  debugPrint('MyBoxScreen stream error: ${snap.error}');
+                  return WeaveErrorView(
+                    message: tr(
+                      'Không tải được hộp thư.',
+                      'Could not load your box.',
                     ),
+                    onRetry: () =>
+                        setState(() => _stream = MyBoxService.watch()),
                   );
                 }
                 if (!snap.hasData) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const WeaveLoadingView();
                 }
                 final items = snap.data!;
                 if (items.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        tr(
-                          'Nơi lưu ý tưởng, liên kết, nháp bài cho riêng bạn.\nChỉ mình bạn thấy; khi ưng ý, bấm ⋮ để đăng thành bài.',
-                          'A private place for ideas, links and drafts.\nOnly you can see it; when ready, tap ⋮ to post it.',
-                        ),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          height: 1.4,
-                        ),
-                      ),
+                  return WeaveEmptyView(
+                    icon: Icons.inbox_outlined,
+                    title: tr(
+                      'Nơi lưu ý tưởng, liên kết, nháp bài cho riêng bạn.',
+                      'A private place for ideas, links and drafts.',
+                    ),
+                    description: tr(
+                      'Chỉ mình bạn thấy; khi ưng ý, bấm ⋮ để đăng thành bài.',
+                      'Only you can see it; when ready, tap ⋮ to post it.',
                     ),
                   );
                 }
@@ -340,12 +343,12 @@ class _MyBoxScreenState extends State<MyBoxScreen> {
                         tooltip: tr('Lưu ghi chú', 'Save note'),
                         icon: _sending
                             ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
                             : const Icon(Icons.send, color: AppColors.brand),
                         onPressed: _sending ? null : _add,
                       ),

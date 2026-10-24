@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/l10n.dart';
 import '../services/social_extras_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 /// Hộp "Lời cảm ơn": những lời cảm ơn riêng tư người khác gửi cho bài của bạn.
 class ThanksInboxScreen extends StatefulWidget {
@@ -28,32 +30,27 @@ class _ThanksInboxScreenState extends State<ThanksInboxScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: SelectableText('${snap.error}'),
+            debugPrint('ThanksInboxScreen load error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được lời cảm ơn.',
+                'Could not load thank-yous.',
               ),
+              onRetry: () =>
+                  setState(() => _future = ThanksService.loadMine()),
             );
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final items = snap.data!;
           if (items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  tr(
-                    'Chưa có lời cảm ơn nào.\nKhi ai đó bấm "Cảm ơn" dưới bài của bạn, lời nhắn sẽ hiện ở đây.',
-                    'No thank-yous yet.\nWhen someone taps "Thank" under your post, it shows up here.',
-                  ),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
+            return WeaveEmptyView(
+              icon: Icons.favorite_border,
+              title: tr('Chưa có lời cảm ơn nào.', 'No thank-yous yet.'),
+              description: tr(
+                'Khi ai đó bấm "Cảm ơn" dưới bài của bạn, lời nhắn sẽ hiện ở đây.',
+                'When someone taps "Thank" under your post, it shows up here.',
               ),
             );
           }

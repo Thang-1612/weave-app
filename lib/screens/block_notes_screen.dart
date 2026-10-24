@@ -8,11 +8,20 @@ import '../services/l10n.dart';
 import '../services/social_extras_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/text_prompt.dart';
+import '../widgets/weave_error_view.dart';
 
 /// Hiện từng khối của bài, mỗi khối có ghi chú riêng của người xem.
-class BlockNotesScreen extends StatelessWidget {
+class BlockNotesScreen extends StatefulWidget {
   final Post post;
   const BlockNotesScreen({super.key, required this.post});
+
+  @override
+  State<BlockNotesScreen> createState() => _BlockNotesScreenState();
+}
+
+class _BlockNotesScreenState extends State<BlockNotesScreen> {
+  // Tạo stream một lần (không tạo lại mỗi lần build). Nút Thử lại gán stream mới.
+  late Stream<List<BlockNote>> _stream = BlockNoteService.watch(widget.post);
 
   Widget _blockView(Map<String, dynamic> b) {
     switch (b['type']) {
@@ -72,7 +81,7 @@ class BlockNotesScreen extends StatelessWidget {
     );
     if (text == null) return;
     try {
-      await BlockNoteService.add(post, index, text);
+      await BlockNoteService.add(widget.post, index, text);
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('$e')));
     }
@@ -80,6 +89,7 @@ class BlockNotesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final post = widget.post;
     final me = FirebaseAuth.instance.currentUser?.uid;
     final isOwner = post.authorId == me;
     final scheme = Theme.of(context).colorScheme;
@@ -87,13 +97,17 @@ class BlockNotesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(tr('Ghi chú theo khối', 'Block notes'))),
       body: StreamBuilder<List<BlockNote>>(
-        stream: BlockNoteService.watch(post),
+        stream: _stream,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: SelectableText('${snap.error}'),
+            debugPrint('BlockNotesScreen stream error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được ghi chú.',
+                'Could not load the notes.',
+              ),
+              onRetry: () => setState(
+                    () => _stream = BlockNoteService.watch(widget.post),
               ),
             );
           }
@@ -132,7 +146,7 @@ class BlockNotesScreen extends StatelessWidget {
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         '${n.authorName} · ${extrasAgo(n.createdAt)}',

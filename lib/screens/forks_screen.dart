@@ -6,6 +6,8 @@ import '../services/post_service.dart';
 import '../services/social_extras_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/post_card.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 class _Node {
   final Post post;
@@ -27,7 +29,8 @@ class _ForksScreenState extends State<ForksScreen> {
   static const _maxDepth = 3;
   static const _maxNodes = 40;
 
-  late final Future<List<_Node>> _future = _loadTree();
+  // Không để final: nút Thử lại gán future mới để tải lại thật.
+  late Future<List<_Node>> _future = _loadTree();
 
   Future<List<_Node>> _loadTree() async {
     final out = <_Node>[];
@@ -115,7 +118,7 @@ class _ForksScreenState extends State<ForksScreen> {
                         Expanded(
                           child: Text(
                             '${p.authorName} · ${extrasAgo(p.createdAt)}'
-                            '${root ? ' · ${tr('đang xem', 'viewing')}' : ''}',
+                                '${root ? ' · ${tr('đang xem', 'viewing')}' : ''}',
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -154,15 +157,17 @@ class _ForksScreenState extends State<ForksScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: SelectableText('${snap.error}'),
+            debugPrint('ForksScreen load error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được cây nhánh.',
+                'Could not load the fork tree.',
               ),
+              onRetry: () => setState(() => _future = _loadTree()),
             );
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final nodes = snap.data!;
           return Center(
