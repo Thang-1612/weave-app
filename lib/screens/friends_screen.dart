@@ -11,6 +11,8 @@ import '../services/user_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/friend_button.dart';
 import '../widgets/suggested_people.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'user_profile_page.dart';
 
 class FriendsScreen extends StatefulWidget {
@@ -24,7 +26,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
   /// Độ rộng tối đa của cột danh sách (canh giữa trên màn rộng).
   static const double _maxContentWidth = 720;
 
-  late final Stream<List<Friendship>> _stream = FriendService.watchMine();
+  // Không để final: nút Thử lại gán stream mới để nạp lại dữ liệu thật.
+  Stream<List<Friendship>> _stream = FriendService.watchMine();
   final _search = TextEditingController();
   Timer? _debounce;
 
@@ -57,6 +60,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         _searchError = null;
       });
     } catch (e) {
+      debugPrint('FriendsScreen search error: $e');
       if (mounted) {
         setState(() {
           _searching = false;
@@ -64,6 +68,16 @@ class _FriendsScreenState extends State<FriendsScreen> {
         });
       }
     }
+  }
+
+  void _retrySearch() {
+    final q = _search.text.trim();
+    if (q.isEmpty) return;
+    setState(() {
+      _searching = true;
+      _searchError = null;
+    });
+    _runSearch(q);
   }
 
   @override
@@ -119,28 +133,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
       padding: _listPadding(width),
       children: [
         if (all.isEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.people_outline,
-                  size: 56,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  tr(
-                    'Bạn chưa có bạn bè nào.\nTìm theo tên ở ô phía trên, hoặc chọn từ gợi ý bên dưới.',
-                    'You have no friends yet.\nSearch by name above, or pick from the suggestions below.',
-                  ),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-              ],
+          WeaveEmptyView(
+            icon: Icons.people_outline,
+            title: tr('Bạn chưa có bạn bè nào.', 'You have no friends yet.'),
+            description: tr(
+              'Tìm theo tên ở ô phía trên, hoặc chọn từ gợi ý bên dưới.',
+              'Search by name above, or pick from the suggestions below.',
             ),
           ),
         if (incoming.isNotEmpty) ...[
@@ -173,26 +171,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Widget _buildSearch(List<Friendship> friendships, double width) {
-    if (_searching) return const Center(child: CircularProgressIndicator());
+    if (_searching) return const WeaveLoadingView();
     if (_searchError != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            '${tr('Không tìm được.', 'Search failed.')}\n$_searchError',
-            textAlign: TextAlign.center,
-          ),
-        ),
+      return WeaveErrorView(
+        message: tr('Không tìm được.', 'Search failed.'),
+        onRetry: _retrySearch,
       );
     }
     if (_results.isEmpty) {
-      return Center(
-        child: Text(
-          tr(
-            'Không tìm thấy "${_search.text.trim()}"',
-            'No results for "${_search.text.trim()}"',
-          ),
-          style: const TextStyle(color: AppColors.textSecondary),
+      return WeaveEmptyView(
+        icon: Icons.search_off,
+        title: tr(
+          'Không tìm thấy "${_search.text.trim()}"',
+          'No results for "${_search.text.trim()}"',
         ),
       );
     }
@@ -243,13 +234,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       suffixIcon: query.isEmpty
                           ? null
                           : IconButton(
-                              tooltip: tr('Xóa', 'Clear'),
-                              icon: const Icon(Icons.close),
-                              onPressed: () {
-                                _search.clear();
-                                _onChanged('');
-                              },
-                            ),
+                        tooltip: tr('Xóa', 'Clear'),
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _search.clear();
+                          _onChanged('');
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -260,14 +251,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 stream: _stream,
                 builder: (context, snap) {
                   if (snap.hasError) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          '${tr('Không tải được danh sách bạn bè.', 'Could not load your friends.')}\n${snap.error}',
-                          textAlign: TextAlign.center,
-                        ),
+                    debugPrint('FriendsScreen stream error: ${snap.error}');
+                    return WeaveErrorView(
+                      message: tr(
+                        'Không tải được danh sách bạn bè.',
+                        'Could not load your friends.',
                       ),
+                      onRetry: () =>
+                          setState(() => _stream = FriendService.watchMine()),
                     );
                   }
                   final friendships = snap.data ?? const <Friendship>[];
@@ -275,7 +266,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     return _buildSearch(friendships, width);
                   }
                   if (!snap.hasData) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const WeaveLoadingView();
                   }
                   return _buildLists(friendships, me, width);
                 },

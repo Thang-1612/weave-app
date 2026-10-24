@@ -19,6 +19,8 @@ class AppColors {
   static const soft = Color(0xFFEEF2FF); // Nền mục được chọn, chip nhẹ
   static const teal = Color(0xFF0F766E); // Thành công, điểm nhấn phụ
   static const danger = Color(0xFFDC2626); // Xóa, lỗi, hành động nguy hiểm
+  /// Màu chữ/icon đặt trên nền brand.
+  static const Color onBrand = Colors.white;
 
   // [MỚI] Token màu trạng thái: bản đậm dùng cho chữ/icon, bản Soft dùng làm nền chip, banner.
   static const warning = Color(0xFFB45309); // Cảnh báo, chờ xử lý

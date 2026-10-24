@@ -3,6 +3,7 @@ import '../theme/breakpoints.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../services/l10n.dart';
 
 /// Ba chế độ bố cục theo chiều rộng khả dụng của khung.
 enum WeaveLayoutMode { mobile, tablet, desktop }
@@ -15,6 +16,9 @@ const double kWeaveDesktopBreakpoint = Breakpoints.desktop;
 /// Từ chiều rộng này trở lên (chỉ ở desktop) panel phụ bên phải mới hiện.
 const double kWeaveSecondaryPanelMinWidth = Breakpoints.widePanel;
 const double kWeaveSidebarWidth = 240;
+
+/// Mobile chỉ hiện tối đa ngần này mục ở thanh điều hướng dưới.
+const int kWeaveMobileMaxDestinations = 5;
 
 WeaveLayoutMode layoutForWidth(double width) {
   if (width < kWeaveTabletBreakpoint) return WeaveLayoutMode.mobile;
@@ -59,7 +63,7 @@ class WeaveLayout extends InheritedWidget {
   @override
   bool updateShouldNotify(WeaveLayout oldWidget) =>
       info.mode != oldWidget.info.mode ||
-      info.secondaryPanelVisible != oldWidget.info.secondaryPanelVisible;
+          info.secondaryPanelVisible != oldWidget.info.secondaryPanelVisible;
 }
 
 class WeaveDestination {
@@ -93,8 +97,11 @@ class WeaveDestination {
 /// chỉ thay đổi cách trình bày điều hướng theo chiều rộng thực tế của khung.
 ///
 /// - mobile (<600): thanh điều hướng dưới, một cột, nút tạo trên AppBar
-/// - tablet (600-999): NavigationRail, FAB tạo mới
+/// - tablet (600-999): NavigationRail (nút tạo ở đầu rail, rail cuộn được)
 /// - desktop (>=1000): sidebar cố định, panel phụ bên phải khi đủ rộng
+///
+/// Quy ước đệm lề: màn hình bên trong tự lo đệm lề thì truyền
+/// `contentPadding: EdgeInsets.zero` cho shell, tránh bị đệm cộng đôi.
 class WeaveResponsiveShell extends StatelessWidget {
   const WeaveResponsiveShell({
     super.key,
@@ -114,8 +121,8 @@ class WeaveResponsiveShell extends StatelessWidget {
     this.floatingActionButton,
     this.maxContentWidth = WeaveSizes.contentMaxWidth,
     this.contentPadding,
-    this.createLabel = 'Tạo mới',
-    this.sidebarCreateLabel = 'Tạo khoảnh khắc',
+    this.createLabel,
+    this.sidebarCreateLabel,
   });
 
   final String title;
@@ -131,9 +138,9 @@ class WeaveResponsiveShell extends StatelessWidget {
   /// Như [appBar] nhưng biết bố cục hiện tại (ví dụ chỉ thêm nút "+" ở mobile).
   /// Được ưu tiên hơn [appBar].
   final PreferredSizeWidget Function(
-    BuildContext context,
-    WeaveLayoutInfo info,
-  )?
+      BuildContext context,
+      WeaveLayoutInfo info,
+      )?
   appBarBuilder;
 
   /// Menu trượt, chỉ dùng ở mobile và tablet. Desktop dùng [sidebarExtra].
@@ -148,14 +155,22 @@ class WeaveResponsiveShell extends StatelessWidget {
   final double secondaryPanelWidth;
 
   final VoidCallback? onCreate;
+
+  /// FAB tùy biến của màn hình (nếu có). Shell không tự thêm FAB nữa:
+  /// tablet đặt nút tạo ở đầu rail để không che mục cuối.
   final Widget? floatingActionButton;
   final double maxContentWidth;
 
   /// null = padding mặc định theo chế độ (16 / 24 / 32). Truyền
   /// `EdgeInsets.zero` khi các màn hình bên trong tự lo phần đệm lề.
   final EdgeInsetsGeometry? contentPadding;
-  final String createLabel;
-  final String sidebarCreateLabel;
+  /// null = dùng chữ mặc định theo ngôn ngữ hiện tại.
+  final String? createLabel;
+  final String? sidebarCreateLabel;
+
+  String get _createText => createLabel ?? tr('Tạo mới', 'Create');
+  String get _sidebarCreateText =>
+      sidebarCreateLabel ?? tr('Tạo khoảnh khắc', 'Create a moment');
 
   @override
   Widget build(BuildContext context) {
@@ -170,8 +185,8 @@ class WeaveResponsiveShell extends StatelessWidget {
         final isDesktop = mode == WeaveLayoutMode.desktop;
         final showPanel =
             isDesktop &&
-            secondaryPanel != null &&
-            width >= kWeaveSecondaryPanelMinWidth;
+                secondaryPanel != null &&
+                width >= kWeaveSecondaryPanelMinWidth;
         final pad = isMobile
             ? WeavePagePadding.mobile
             : isDesktop
@@ -186,7 +201,17 @@ class WeaveResponsiveShell extends StatelessWidget {
         final PreferredSizeWidget resolvedAppBar = builder != null
             ? builder(context, info)
             : (appBar ??
-                  _buildAppBar(isMobile: isMobile, isDesktop: isDesktop));
+            _buildAppBar(isMobile: isMobile, isDesktop: isDesktop));
+
+        // Mobile chỉ có tối đa 5 mục. Nếu mục đang chọn nằm ngoài 5 mục này
+        // (truy cập qua drawer), không chọn mục nào trên thanh dưới thay vì
+        // làm NavigationBar báo lỗi assert.
+        final mobileDests = destinations
+            .take(kWeaveMobileMaxDestinations)
+            .toList();
+        final mobileIndex = selectedIndex < mobileDests.length
+            ? selectedIndex
+            : 0;
 
         return WeaveLayout(
           info: info,
@@ -224,31 +249,24 @@ class WeaveResponsiveShell extends StatelessWidget {
                   ),
               ],
             ),
-            bottomNavigationBar: isMobile
+            bottomNavigationBar: isMobile && mobileDests.length >= 2
                 ? NavigationBar(
-                    selectedIndex: selectedIndex,
-                    onDestinationSelected: onDestinationSelected,
-                    destinations: [
-                      for (final d in destinations.take(5))
-                        NavigationDestination(
-                          icon: d.buildIcon(false),
-                          selectedIcon: d.buildIcon(true),
-                          label: d.label,
-                        ),
-                    ],
-                  )
+              selectedIndex: mobileIndex,
+              onDestinationSelected: onDestinationSelected,
+              destinations: [
+                for (final d in mobileDests)
+                  NavigationDestination(
+                    icon: d.buildIcon(false),
+                    selectedIcon: d.buildIcon(true),
+                    label: d.label,
+                  ),
+              ],
+            )
                 : null,
             // Mỗi chế độ chỉ có một hành động chính nổi bật:
-            // mobile = nút + trên AppBar, tablet = FAB, desktop = nút ở sidebar.
-            floatingActionButton:
-                floatingActionButton ??
-                (isTablet && onCreate != null
-                    ? FloatingActionButton.extended(
-                        onPressed: onCreate,
-                        icon: const Icon(Icons.add),
-                        label: Text(createLabel),
-                      )
-                    : null),
+            // mobile = nút + trên AppBar, tablet = nút ở đầu rail,
+            // desktop = nút ở sidebar. Shell không tự thêm FAB.
+            floatingActionButton: floatingActionButton,
           ),
         );
       },
@@ -284,7 +302,7 @@ class WeaveResponsiveShell extends StatelessWidget {
         ...actions,
         if (isMobile && onCreate != null)
           IconButton(
-            tooltip: createLabel,
+            tooltip: _createText,
             onPressed: onCreate,
             icon: const Icon(Icons.add_circle_outline_rounded),
           ),
@@ -293,23 +311,49 @@ class WeaveResponsiveShell extends StatelessWidget {
     );
   }
 
+  /// Rail tablet: cuộn được khi cửa sổ thấp hoặc nhiều mục; nút tạo nằm ở
+  /// đầu rail (leading) nên không che mục cuối như FAB nổi.
   Widget _buildRail(double shellHeight) {
-    return NavigationRail(
+    return LayoutBuilder(
       key: const ValueKey('weave-rail'),
-      selectedIndex: selectedIndex,
-      onDestinationSelected: onDestinationSelected,
-      // Cửa sổ thấp: bỏ nhãn để rail không tràn theo chiều dọc.
-      labelType: shellHeight < 520
-          ? NavigationRailLabelType.none
-          : NavigationRailLabelType.all,
-      destinations: [
-        for (final d in destinations)
-          NavigationRailDestination(
-            icon: d.buildIcon(false),
-            selectedIcon: d.buildIcon(true),
-            label: Text(d.label),
+      builder: (context, c) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: c.maxHeight),
+            child: IntrinsicHeight(
+              child: NavigationRail(
+                selectedIndex: selectedIndex,
+                onDestinationSelected: onDestinationSelected,
+                // Cửa sổ thấp: bỏ nhãn để rail gọn hơn.
+                labelType: shellHeight < 520
+                    ? NavigationRailLabelType.none
+                    : NavigationRailLabelType.all,
+                leading: onCreate == null
+                    ? null
+                    : Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: WeaveSpacing.md,
+                  ),
+                  child: FloatingActionButton(
+                    elevation: 0,
+                    tooltip: _createText,
+                    onPressed: onCreate,
+                    child: const Icon(Icons.add),
+                  ),
+                ),
+                destinations: [
+                  for (final d in destinations)
+                    NavigationRailDestination(
+                      icon: d.buildIcon(false),
+                      selectedIcon: d.buildIcon(true),
+                      label: Text(d.label),
+                    ),
+                ],
+              ),
+            ),
           ),
-      ],
+        );
+      },
     );
   }
 
@@ -391,7 +435,7 @@ class WeaveResponsiveShell extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: onCreate,
                       icon: const Icon(Icons.add),
-                      label: Text(sidebarCreateLabel),
+                      label: Text(_sidebarCreateText),
                       style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(
                           WeaveSizes.buttonHeight,

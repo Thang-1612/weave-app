@@ -9,6 +9,8 @@ import 'package:image_picker/image_picker.dart';
 import '../models/chat_models.dart';
 import '../services/chat_service.dart';
 import '../widgets/chat_widgets.dart';
+import '../services/l10n.dart';
+import '../widgets/weave_error_view.dart';
 import 'chat_info_screen.dart';
 
 /// Gắn vào nút "Nhắn tin" ở hồ sơ người dùng.
@@ -20,7 +22,7 @@ Future<void> openChatWith(BuildContext context, String uid) async {
         .push(MaterialPageRoute(builder: (_) => ChatRoomScreen(chatId: id)));
   } catch (e) {
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Không mở được chat: $e')));
+        .showSnackBar(SnackBar(content: Text(tr('Không mở được chat: $e', 'Could not open chat: $e'))));
   }
 }
 
@@ -61,7 +63,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       if (!mounted) return;
       final needs =
           (_chat?.typing.isNotEmpty ?? false) ||
-          _cur.any((m) => m.expireAt != null);
+              _cur.any((m) => m.expireAt != null);
       if (needs) setState(() {});
     });
     _scroll.addListener(() {
@@ -86,8 +88,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   void _err(String m) {
-    if (mounted)
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+    }
   }
 
   /// Canh giữa và giới hạn bề ngang cho các thanh cố định (banner, gợi ý, composer).
@@ -102,7 +105,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   bool _otherTyping(Chat c) {
     final now = DateTime.now();
     return c.typing.entries.any(
-      (e) => e.key != svc.me && now.difference(e.value).inSeconds < 6,
+          (e) => e.key != svc.me && now.difference(e.value).inSeconds < 6,
     );
   }
 
@@ -111,13 +114,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final seen = chat.members
         .where(
           (u) =>
-              u != me &&
-              chat.lastRead[u] != null &&
-              !chat.lastRead[u]!.isBefore(m.createdAt),
-        )
+      u != me &&
+          chat.lastRead[u] != null &&
+          !chat.lastRead[u]!.isBefore(m.createdAt),
+    )
         .length;
-    if (chat.isGroup) return seen > 0 ? 'Đã xem bởi $seen' : 'Đã gửi';
-    return seen > 0 ? 'Đã xem' : 'Đã gửi';
+    if (chat.isGroup) return seen > 0 ? tr('Đã xem bởi $seen', 'Seen by $seen') : tr('Đã gửi', 'Sent');
+    return seen > 0 ? tr('Đã xem', 'Seen') : tr('Đã gửi', 'Sent');
   }
 
   Future<void> _submit() async {
@@ -138,7 +141,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         await svc.sendText(chat, t, replyTo: reply);
       }
     } catch (e) {
-      _err('Không gửi được: $e');
+      // Gửi lỗi: trả lại nội dung đã gõ và trạng thái trả lời/sửa để người
+      // dùng bấm gửi lại, không phải gõ lại từ đầu.
+      if (mounted) {
+        setState(() {
+          _reply = reply;
+          _editing = editing;
+        });
+        if (_ctrl.text.isEmpty) {
+          _ctrl.text = t;
+          _ctrl.selection = TextSelection.collapsed(offset: t.length);
+        }
+      }
+      _err(tr('Không gửi được: $e', 'Could not send: $e'));
     }
   }
 
@@ -180,19 +195,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     try {
       final out = await ai(
         'Dưới đây là đoạn hội thoại. Hãy gợi ý 3 câu trả lời ngắn, tự nhiên bằng tiếng Việt cho "Tôi" '
-        'đáp lại tin nhắn cuối. Mỗi câu một dòng, không đánh số, không giải thích.\n\n${_transcript()}',
+            'đáp lại tin nhắn cuối. Mỗi câu một dòng, không đánh số, không giải thích.\n\n${_transcript()}',
       );
       final lines = out
           .split('\n')
           .map(
             (s) => s.replaceFirst(RegExp(r'^[\s\-\*\u2022\d\.\)]+'), '').trim(),
-          )
+      )
           .where((s) => s.isNotEmpty)
           .take(3)
           .toList();
       if (mounted) setState(() => _suggest = lines);
     } catch (e) {
-      _err('AI lỗi: $e');
+      _err(tr('AI lỗi: $e', 'AI error: $e'));
     }
     if (mounted) setState(() => _aiBusy = false);
   }
@@ -211,19 +226,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         'Tóm tắt ngắn gọn cuộc trò chuyện sau bằng tiếng Việt (3-5 gạch đầu dòng):\n\n${_transcript(take: 40)}',
       );
     } catch (e) {
-      res = 'AI lỗi: $e';
+      res = tr('AI lỗi: $e', 'AI error: $e');
     }
     if (!mounted) return;
     Navigator.pop(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Tóm tắt cuộc trò chuyện'),
+        title: Text(tr('Tóm tắt cuộc trò chuyện', 'Conversation summary')),
         content: SingleChildScrollView(child: Text(res)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Đóng'),
+            child: Text(tr('Đóng', 'Close')),
           ),
         ],
       ),
@@ -262,7 +277,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.reply),
-              title: const Text('Trả lời'),
+              title: Text(tr('Trả lời', 'Reply')),
               onTap: () {
                 Navigator.pop(ctx);
                 setState(() {
@@ -274,7 +289,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             if (m.type == 'text')
               ListTile(
                 leading: const Icon(Icons.copy),
-                title: const Text('Sao chép'),
+                title: Text(tr('Sao chép', 'Copy')),
                 onTap: () {
                   Navigator.pop(ctx);
                   Clipboard.setData(ClipboardData(text: m.text));
@@ -283,7 +298,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             if (mine && m.type == 'text')
               ListTile(
                 leading: const Icon(Icons.edit),
-                title: const Text('Sửa'),
+                title: Text(tr('Sửa', 'Edit')),
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() {
@@ -296,8 +311,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             if (mine)
               ListTile(
                 leading: const Icon(Icons.undo, color: AppColors.danger),
-                title: const Text(
-                  'Thu hồi',
+                title: Text(
+                  tr('Thu hồi', 'Recall'),
                   style: TextStyle(color: AppColors.danger),
                 ),
                 onTap: () {
@@ -319,10 +334,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         final chat = cs.data;
         _chat = chat;
         if (cs.hasError) {
+          debugPrint('ChatRoom: open failed: ${cs.error}');
           return Scaffold(
             appBar: AppBar(),
-            body: Center(
-              child: Text('Không mở được cuộc trò chuyện\n${cs.error}'),
+            body: WeaveErrorView(
+              message: tr(
+                'Không mở được cuộc trò chuyện.',
+                'Could not open this conversation.',
+              ),
             ),
           );
         }
@@ -337,9 +356,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         final blocked = chat.blockedBy.isNotEmpty;
         final isRequest =
             !chat.isGroup &&
-            !chat.acceptedBy.contains(me) &&
-            chat.lastSenderId != me &&
-            chat.hasMessages;
+                !chat.acceptedBy.contains(me) &&
+                chat.lastSenderId != me &&
+                chat.hasMessages;
 
         return Scaffold(
           // Bàn phím mở thì thân Scaffold co lại, composer luôn nằm sát phía trên bàn phím
@@ -364,8 +383,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         if (typing || chat.isGroup)
                           Text(
                             typing
-                                ? 'Đang soạn tin…'
-                                : '${chat.members.length} thành viên',
+                                ? tr('Đang soạn tin…', 'Typing…')
+                                : tr('${chat.members.length} thành viên', '${chat.members.length} members'),
                             style: const TextStyle(
                               fontSize: 11,
                               color: AppColors.textSecondary,
@@ -380,17 +399,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             actions: [
               if (ChatConfig.aiComplete != null)
                 PopupMenuButton<String>(
+                  tooltip: tr('Tùy chọn AI', 'AI options'),
                   onSelected: (v) {
                     if (v == 'sum') _summarize();
                   },
-                  itemBuilder: (_) => const [
+                  itemBuilder: (_) => [
                     PopupMenuItem(
                       value: 'sum',
-                      child: Text('✨ Tóm tắt bằng AI'),
+                      child: Text(tr('✨ Tóm tắt bằng AI', '✨ Summarize with AI')),
                     ),
                   ],
                 ),
               IconButton(
+                tooltip: tr('Thông tin cuộc trò chuyện', 'Conversation info'),
                 icon: const Icon(Icons.info_outline),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
@@ -409,26 +430,29 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   Container(
                     width: double.infinity,
                     // Màu vàng nhạt giữ nguyên: màu ngữ nghĩa "cần chú ý"
-                    color: Colors.amber.withValues(alpha: .2),
+                    color: AppColors.warningSoft,
                     padding: const EdgeInsets.all(10),
                     child: Column(
                       children: [
-                        const Text(
-                          'Người này chưa có trong danh sách của bạn. Trả lời hoặc chấp nhận để trò chuyện.',
+                        Text(
+                          tr(
+                            'Người này chưa có trong danh sách của bạn. Trả lời hoặc chấp nhận để trò chuyện.',
+                            'This person is not in your list yet. Reply or accept to chat.',
+                          ),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             TextButton(
                               onPressed: () => svc.accept(chat),
-                              child: const Text('Chấp nhận'),
+                              child: Text(tr('Chấp nhận', 'Accept')),
                             ),
                             TextButton(
                               onPressed: () => svc.setBlocked(chat, true),
                               style: TextButton.styleFrom(
                                 foregroundColor: AppColors.danger,
                               ),
-                              child: const Text('Chặn'),
+                              child: Text(tr('Chặn', 'Block')),
                             ),
                           ],
                         ),
@@ -443,7 +467,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     color: AppColors.soft,
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
-                      '⏱ Tin nhắn tự hủy sau ${disappearLabel(chat.disappearAfterSec)}',
+                      tr(
+                        '⏱ Tin nhắn tự hủy sau ${disappearLabel(chat.disappearAfterSec)}',
+                        '⏱ Messages disappear after ${disappearLabel(chat.disappearAfterSec)}',
+                      ),
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 12),
                     ),
@@ -489,24 +516,26 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       padding: const EdgeInsets.all(12),
       child: chat.blockedBy.contains(me)
           ? Row(
-              children: [
-                const Expanded(child: Text('Bạn đã chặn người này.')),
-                TextButton(
-                  onPressed: () => svc.setBlocked(chat, false),
-                  child: const Text('Bỏ chặn'),
-                ),
-              ],
-            )
-          : const Text(
-              'Bạn không thể nhắn tin cho người này.',
-              textAlign: TextAlign.center,
-            ),
+        children: [
+          Expanded(child: Text(tr('Bạn đã chặn người này.', 'You blocked this person.'))),
+          TextButton(
+            onPressed: () => svc.setBlocked(chat, false),
+            child: Text(tr('Bỏ chặn', 'Unblock')),
+          ),
+        ],
+      )
+          : Text(
+        tr('Bạn không thể nhắn tin cho người này.', 'You cannot message this person.'),
+        textAlign: TextAlign.center,
+      ),
     ),
   );
 
   // Màn chào khi cuộc trò chuyện còn trống
   Widget _emptyState(Chat chat) {
-    final greeting = chat.isGroup ? 'Chào mọi người 👋' : 'Chào bạn 👋';
+    final greeting = chat.isGroup
+        ? tr('Chào mọi người 👋', 'Hello everyone 👋')
+        : tr('Chào bạn 👋', 'Hello 👋');
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -520,9 +549,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Hãy gửi lời chào đầu tiên',
-              style: TextStyle(color: AppColors.textSecondary),
+            Text(
+              tr('Hãy gửi lời chào đầu tiên', 'Send the first hello'),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             ActionChip(
@@ -565,7 +594,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         if (msgs.isEmpty) return _emptyState(chat);
 
         final myLast = msgs.indexWhere(
-          (m) => m.senderId == me && !m.pending && m.type != 'system',
+              (m) => m.senderId == me && !m.pending && m.type != 'system',
         );
         return LayoutBuilder(
           builder: (context, box) => ListView.builder(
@@ -587,27 +616,27 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   older == null || !sameDay(older.createdAt, m.createdAt);
               final dayChip = newDay
                   ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.border,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            dayLabel(m.createdAt),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      dayLabel(m.createdAt),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
                       ),
-                    )
+                    ),
+                  ),
+                ),
+              )
                   : null;
 
               if (m.type == 'system') {
@@ -635,8 +664,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               final mine = m.senderId == me;
               final showName =
                   chat.isGroup &&
-                  !mine &&
-                  (older == null || older.senderId != m.senderId || newDay);
+                      !mine &&
+                      (older == null || older.senderId != m.senderId || newDay);
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -682,7 +711,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Widget _composer(Chat chat) {
     final bar = _editing != null || _reply != null;
-    final dark = Theme.of(context).brightness == Brightness.dark;
     final canSend = _ctrl.text.trim().isNotEmpty;
     final wide = MediaQuery.of(context).size.width >= 900;
 
@@ -692,20 +720,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       maxLines: 5,
       maxLength: 4000,
       buildCounter: (
-        _, {
-        required currentLength,
-        required isFocused,
-        maxLength,
-      }) => null,
+          _, {
+            required currentLength,
+            required isFocused,
+            maxLength,
+          }) => null,
       onChanged: (_) {
         if (ChatConfig.enableTyping) svc.typing(chat.id);
         setState(() {});
       },
       decoration: InputDecoration(
-        hintText: 'Nhắn tin…',
+        hintText: tr('Nhắn tin…', 'Message…'),
         isDense: true,
         filled: true,
-        fillColor: dark ? Colors.grey.shade800 : AppColors.surface,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 11,
@@ -754,14 +782,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   Expanded(
                     child: Text(
                       _editing != null
-                          ? 'Đang sửa tin nhắn'
-                          : 'Trả lời: ${_reply!.type == 'image' ? '📷 Ảnh' : (_reply!.type == 'post' ? '🔗 ${_reply!.postTitle ?? ''}' : _reply!.text)}',
+                          ? tr('Đang sửa tin nhắn', 'Editing message')
+                          : '${tr('Trả lời', 'Replying to')}: ${_reply!.type == 'image' ? '📷 ${tr('Ảnh', 'Photo')}' : (_reply!.type == 'post' ? '🔗 ${_reply!.postTitle ?? ''}' : _reply!.text)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
                   IconButton(
+                    tooltip: tr('Hủy', 'Cancel'),
                     icon: const Icon(Icons.close, size: 18),
                     onPressed: () => setState(() {
                       if (_editing != null) _ctrl.clear();
@@ -778,34 +807,34 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 IconButton(
-                  tooltip: 'Gửi ảnh',
+                  tooltip: tr('Gửi ảnh', 'Send photo'),
                   onPressed: _pickImage,
                   icon: const Icon(Icons.image_outlined),
                 ),
                 if (ChatConfig.aiComplete != null)
                   IconButton(
-                    tooltip: 'Gợi ý trả lời bằng AI',
+                    tooltip: tr('Gợi ý trả lời bằng AI', 'AI reply suggestions'),
                     onPressed: _aiBusy ? null : _suggestReplies,
                     icon: _aiBusy
                         ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                         : const Icon(Icons.auto_awesome),
                   ),
                 // Máy tính: Enter để gửi, Shift+Enter để xuống dòng
                 Expanded(
                   child: wide
                       ? CallbackShortcuts(
-                          bindings: {
-                            const SingleActivator(
-                              LogicalKeyboardKey.enter,
-                            ): () =>
-                                _submit(),
-                          },
-                          child: field,
-                        )
+                    bindings: {
+                      const SingleActivator(
+                        LogicalKeyboardKey.enter,
+                      ): () =>
+                          _submit(),
+                    },
+                    child: field,
+                  )
                       : field,
                 ),
                 const SizedBox(width: 8),
@@ -825,7 +854,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           _editing != null
                               ? Icons.check_rounded
                               : Icons.send_rounded,
-                          color: Colors.white,
+                          color: AppColors.onBrand,
                           size: 20,
                         ),
                       ),

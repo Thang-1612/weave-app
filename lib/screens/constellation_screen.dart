@@ -8,6 +8,7 @@ import '../services/constellation_service.dart';
 import '../services/friend_service.dart';
 import '../services/l10n.dart';
 import '../services/user_service.dart';
+import '../widgets/weave_error_view.dart';
 import 'interests_screen.dart';
 import 'user_profile_page.dart';
 
@@ -58,7 +59,9 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
       // Tự chữa: đồng bộ danh sách cạnh công khai của chính mình.
       try {
         await FriendService.syncPublicEdges();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Constellation: syncPublicEdges failed: $e');
+      }
 
       final me = await UserService.watchProfile(uid).first;
       if (me == null) throw Exception('profile');
@@ -71,7 +74,9 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
         _nodes = nodes;
         _loading = false;
       });
-    } catch (_) {
+    } catch (e, st) {
+      // Ghi log chi tiết để gỡ lỗi; người dùng chỉ thấy thông điệp ngắn.
+      debugPrint('Constellation: load failed: $e\n$st');
       if (!mounted) return;
       setState(() {
         _error = tr(
@@ -231,12 +236,12 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
               n.sharedTags.isEmpty
                   ? Text(tr('Chưa có thẻ nào trùng.', 'No shared tags yet.'))
                   : Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        for (final t in n.sharedTags) Chip(label: Text(t)),
-                      ],
-                    ),
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final t in n.sharedTags) Chip(label: Text(t)),
+                ],
+              ),
               if (n.depth == 1) ...[
                 const Divider(height: 28),
                 SwitchListTile(
@@ -250,29 +255,30 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                   subtitle: Text(
                     mePublic && !otherPublic
                         ? tr(
-                            'Bạn đã bật. Chỉ hiện khi người kia cũng bật.',
-                            'You turned it on. It shows only once they do too.',
-                          )
+                      'Bạn đã bật. Chỉ hiện khi người kia cũng bật.',
+                      'You turned it on. It shows only once they do too.',
+                    )
                         : tr(
-                            'Chỉ hiện khi cả hai cùng bật.',
-                            'Shown only when both of you turn it on.',
-                          ),
+                      'Chỉ hiện khi cả hai cùng bật.',
+                      'Shown only when both of you turn it on.',
+                    ),
                   ),
                   value: mePublic,
                   onChanged: f == null
                       ? null
                       : (v) async {
-                          setSheet(() => mePublic = v);
-                          try {
-                            await FriendService.setVisibility(
-                              other,
-                              v ? EdgeVisibility.public : EdgeVisibility.hidden,
-                            );
-                            changed = true;
-                          } catch (_) {
-                            setSheet(() => mePublic = !v);
-                          }
-                        },
+                    setSheet(() => mePublic = v);
+                    try {
+                      await FriendService.setVisibility(
+                        other,
+                        v ? EdgeVisibility.public : EdgeVisibility.hidden,
+                      );
+                      changed = true;
+                    } catch (e) {
+                      debugPrint('Constellation: setVisibility failed: $e');
+                      setSheet(() => mePublic = !v);
+                    }
+                  },
                 ),
               ],
               const SizedBox(height: 8),
@@ -333,21 +339,9 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
   Widget _body() {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_error!, textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: () => _load(force: true),
-                child: Text(tr('Thử lại', 'Retry')),
-              ),
-            ],
-          ),
-        ),
+      return WeaveErrorView(
+        message: _error!,
+        onRetry: () => _load(force: true),
       );
     }
     final me = _me!;
@@ -459,25 +453,24 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
     );
   }
 
+  /// Lưu ý: KHÔNG bọc _bubble bằng Opacity ở đây, vì _bubble trả về
+  /// Positioned và Positioned phải là con trực tiếp của Stack.
+  /// Độ mờ được truyền vào _bubble và áp dụng bên trong Positioned.
   Widget _nodeWidget(ConstellationNode n, Offset? pos, ColorScheme scheme) {
     if (pos == null) return const SizedBox.shrink();
     final matches = _filter == null || n.sharedTags.contains(_filter);
     final first = n.depth == 1;
-    return Opacity(
-      opacity: matches ? (first && n.hiddenByMe ? 0.75 : 1) : 0.2,
-      child: _bubble(
-        pos: pos,
-        radius: first ? 26 : 20,
-        label: n.profile.shortName,
-        letter: _initial(n.profile),
-        color: first
-            ? scheme.secondaryContainer
-            : scheme.surfaceContainerHighest,
-        onColor: first ? scheme.onSecondaryContainer : scheme.onSurface,
-        locked: first && n.hiddenByMe,
-        badge: n.sharedTags.length,
-        onTap: () => _showNode(n),
-      ),
+    return _bubble(
+      pos: pos,
+      opacity: matches ? (first && n.hiddenByMe ? 0.75 : 1.0) : 0.2,
+      radius: first ? 26 : 20,
+      label: n.profile.shortName,
+      letter: _initial(n.profile),
+      color: first ? scheme.secondaryContainer : scheme.surfaceContainerHighest,
+      onColor: first ? scheme.onSecondaryContainer : scheme.onSurface,
+      locked: first && n.hiddenByMe,
+      badge: n.sharedTags.length,
+      onTap: () => _showNode(n),
     );
   }
 
@@ -488,6 +481,7 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
     required String letter,
     required Color color,
     required Color onColor,
+    double opacity = 1.0,
     bool locked = false,
     int badge = 0,
     VoidCallback? onTap,
@@ -498,65 +492,68 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
       left: pos.dx - w / 2,
       top: pos.dy - radius,
       width: w,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                CircleAvatar(
-                  radius: radius,
-                  backgroundColor: color,
-                  child: Text(
-                    letter,
-                    style: TextStyle(
-                      color: onColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: radius * 0.8,
-                    ),
-                  ),
-                ),
-                if (badge > 0)
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: CircleAvatar(
-                      radius: 9,
-                      backgroundColor: scheme.tertiary,
-                      child: Text(
-                        '$badge',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: scheme.onTertiary,
-                        ),
+      child: Opacity(
+        opacity: opacity,
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  CircleAvatar(
+                    radius: radius,
+                    backgroundColor: color,
+                    child: Text(
+                      letter,
+                      style: TextStyle(
+                        color: onColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: radius * 0.8,
                       ),
                     ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (locked)
-                  const Padding(
-                    padding: EdgeInsets.only(right: 2),
-                    child: Icon(Icons.lock_outline, size: 12),
+                  if (badge > 0)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: CircleAvatar(
+                        radius: 9,
+                        backgroundColor: scheme.tertiary,
+                        child: Text(
+                          '$badge',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: scheme.onTertiary,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (locked)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 2),
+                      child: Icon(Icons.lock_outline, size: 12),
+                    ),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -567,10 +564,10 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
     _centered = true;
     final s = math
         .min(
-          1.0,
-          math.min(view.width / l.size.width, view.height / l.size.height) *
-              1.6,
-        )
+      1.0,
+      math.min(view.width / l.size.width, view.height / l.size.height) *
+          1.6,
+    )
         .clamp(0.45, 1.0)
         .toDouble();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -581,7 +578,7 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
             view.height / 2 - s * l.center.dy,
             0,
           ) *
-          Matrix4.diagonal3Values(s, s, 1);
+              Matrix4.diagonal3Values(s, s, 1);
     });
   }
 }
@@ -684,8 +681,8 @@ class _EdgePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _EdgePainter old) =>
       old.filter != filter ||
-      old.nodes != nodes ||
-      old.pos != pos ||
-      old.strong != strong ||
-      old.soft != soft;
+          old.nodes != nodes ||
+          old.pos != pos ||
+          old.strong != strong ||
+          old.soft != soft;
 }

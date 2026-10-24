@@ -49,8 +49,9 @@ class _NewChatScreenState extends State<NewChatScreen> {
   }
 
   void _err(String m) {
-    if (mounted)
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+    }
   }
 
   void _onQuery(String v) {

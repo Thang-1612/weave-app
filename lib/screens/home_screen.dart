@@ -26,14 +26,18 @@ import '../services/trash_service.dart';
 import 'settings/trash_screen.dart';
 import 'capsules_screen.dart';
 import 'thanks_inbox_screen.dart';
-import 'recipes_screen.dart';
 import 'proposals_screen.dart';
 import 'contribution_screen.dart';
 import 'chat_list_screen.dart';
 import '../widgets/chat_widgets.dart' show ChatUnreadBadge;
 import 'my_box_screen.dart';
 import 'weave_list_screen.dart';
+import 'weave_create_screen.dart';
 import 'story_list_screen.dart';
+
+// Lưu ý: "Công thức bảng tin" (RecipesScreen) đã được gỡ khỏi menu chính.
+// Vẫn truy cập được từ nút "Công thức" trên thanh công cụ của bảng tin
+// (FeedScreen) hoặc có thể đặt thêm vào Cài đặt nâng cao.
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -106,7 +110,14 @@ class _HomeScreenState extends State<HomeScreen> {
         MaterialPageRoute(builder: (_) => CommentsScreen(post: post)),
       );
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('$e')));
+      debugPrint('Home: open deep link failed: $e');
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            tr('Không mở được bài viết', 'Could not open this post'),
+          ),
+        ),
+      );
     }
   }
 
@@ -137,8 +148,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openSettings() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const SettingsHubScreen()));
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const SettingsHubScreen()));
   }
 
   // Menu chủ đề dùng chung cho Drawer (mobile, tablet) và sidebar (desktop).
@@ -202,6 +214,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // AppBar phẳng theo theme. Mobile có thêm nút "+" tạo bài vì thanh dưới
   // không còn nút giữa; tablet có nút nổi, desktop có nút ở sidebar.
+  // Nút tìm kiếm giả ("Tìm kiếm sắp có") đã được gỡ khỏi bản beta; khi có
+  // tính năng tìm kiếm thật, thêm lại IconButton Icons.search ở đây.
   PreferredSizeWidget _buildAppBar(BuildContext context, WeaveLayoutInfo info) {
     final createAction = IconButton(
       tooltip: tr('Tạo bài', 'Create post'),
@@ -213,16 +227,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return AppBar(
         title: Text(_homeTitle()),
         actions: [
-          IconButton(
-            tooltip: tr('Tìm kiếm', 'Search'),
-            icon: const Icon(Icons.search),
-            // Tìm kiếm chưa được làm: báo rõ cho người dùng thay vì im lặng.
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(tr('Tìm kiếm sắp có', 'Search is coming soon')),
-              ),
-            ),
-          ),
           IconButton(
             tooltip: tr('Tin nhắn', 'Messages'),
             icon: ChatUnreadBadge(child: const Icon(Icons.chat_bubble_outline)),
@@ -286,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.onBrand,
                 child: Text(
                   initialOf(name ?? (email.isEmpty ? '?' : email)),
                   style: const TextStyle(
@@ -302,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.onBrand,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
@@ -312,8 +316,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   email,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color.fromRGBO(255, 255, 255, 0.85),
+                  style: TextStyle(
+                    color: AppColors.onBrand.withValues(alpha: 0.85),
                   ),
                 ),
             ],
@@ -323,29 +327,38 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Các mục của menu chủ đề. Dùng trong Drawer (inDrawer = true)
-  /// và trong sidebar desktop (inDrawer = false): một nguồn, không nhân đôi.
+  /// Tiêu đề nhóm trong menu (CHỦ ĐỀ, KẾT NỐI, CÙNG NHAU...).
+  Widget _menuHeader(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        WeaveSpacing.lg,
+        WeaveSpacing.lg,
+        WeaveSpacing.lg,
+        WeaveSpacing.xs,
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1,
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  /// Các mục của menu. Dùng trong Drawer (inDrawer = true) và trong sidebar
+  /// desktop (inDrawer = false): một nguồn, không nhân đôi.
+  ///
+  /// Nhóm theo kiến trúc trải nghiệm của Weave:
+  /// Chủ đề | Kết nối | Cùng nhau | Kỷ niệm | Sáng tạo | Thư viện | Cộng tác.
   List<Widget> _menuItems({required bool inDrawer}) {
     final prefs = UserPrefs.instance;
 
     return [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(
-          WeaveSpacing.lg,
-          WeaveSpacing.lg,
-          WeaveSpacing.lg,
-          WeaveSpacing.xs,
-        ),
-        child: Text(
-          tr('CHỦ ĐỀ', 'TOPICS'),
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ),
+      // ── Chủ đề ──
+      _menuHeader(tr('CHỦ ĐỀ', 'TOPICS')),
       ListTile(
         leading: const Icon(Icons.dashboard_outlined),
         title: Text(tr('Tất cả', 'All')),
@@ -358,16 +371,6 @@ class _HomeScreenState extends State<HomeScreen> {
         selected: _favorites,
         onTap: () => _selectFavorites(inDrawer),
       ),
-      ListTile(
-        leading: const Icon(Icons.delete_outline),
-        title: Text(tr('Thùng rác', 'Trash')),
-        onTap: () => _openFromMenu(const TrashScreen(), inDrawer),
-      ),
-      ListTile(
-        leading: const Icon(Icons.chat_bubble_outline),
-        title: Text(tr('Tin nhắn', 'Messages')),
-        onTap: () => _openFromMenu(const ChatListScreen(), inDrawer),
-      ),
       const Divider(),
       SpaceMenu(
         selectedSpaceId: _space?.id,
@@ -376,35 +379,45 @@ class _HomeScreenState extends State<HomeScreen> {
         onSpaceSelected: (s) => _selectSpace(s, inDrawer),
       ),
       const Divider(),
+
+      // ── Kết nối ──
+      _menuHeader(tr('KẾT NỐI', 'CONNECT')),
       ListTile(
-        leading: const Icon(Icons.bookmark_border),
-        title: Text(tr('Đã lưu', 'Saved')),
-        onTap: () => _openFromMenu(const SavedScreen(), inDrawer),
+        leading: const Icon(Icons.chat_bubble_outline),
+        title: Text(tr('Tin nhắn', 'Messages')),
+        onTap: () => _openFromMenu(const ChatListScreen(), inDrawer),
       ),
+
+      // ── Cùng nhau ──
+      _menuHeader(tr('CÙNG NHAU', 'TOGETHER')),
       ListTile(
-        leading: const Icon(Icons.settings_outlined),
-        title: Text(tr('Cài đặt và hoạt động', 'Settings and activity')),
-        onTap: () => _openFromMenu(const SettingsHubScreen(), inDrawer),
+        leading: const Icon(Icons.groups),
+        title: const Text('Weave Together'),
+        onTap: () => _openFromMenu(const WeaveListScreen(), inDrawer),
       ),
-      ListTile(
-        leading: const Icon(Icons.mail_outline),
-        title: Text(tr('Lời cảm ơn', 'Thank-yous')),
-        onTap: () => _openFromMenu(const ThanksInboxScreen(), inDrawer),
-      ),
+
+      // ── Kỷ niệm ──
+      _menuHeader(tr('KỶ NIỆM', 'MEMORIES')),
       ListTile(
         leading: const Icon(Icons.hourglass_bottom),
         title: Text(tr('Hộp thời gian', 'Time capsules')),
         onTap: () => _openFromMenu(const CapsulesScreen(), inDrawer),
       ),
+
+      // ── Sáng tạo ──
+      _menuHeader(tr('SÁNG TẠO', 'CREATE')),
       ListTile(
-        leading: const Icon(Icons.call_merge),
-        title: Text(tr('Đề xuất sửa bài', 'Edit proposals')),
-        onTap: () => _openFromMenu(const ProposalsScreen(), inDrawer),
+        leading: const Icon(Icons.auto_awesome),
+        title: const Text('Weave Storymaker'),
+        onTap: () => _openFromMenu(const StoryListScreen(), inDrawer),
       ),
+
+      // ── Thư viện ──
+      _menuHeader(tr('THƯ VIỆN', 'LIBRARY')),
       ListTile(
-        leading: const Icon(Icons.tune),
-        title: Text(tr('Công thức bảng tin', 'Feed recipes')),
-        onTap: () => _openFromMenu(const RecipesScreen(), inDrawer),
+        leading: const Icon(Icons.bookmark_border),
+        title: Text(tr('Đã lưu', 'Saved')),
+        onTap: () => _openFromMenu(const SavedScreen(), inDrawer),
       ),
       ListTile(
         leading: const Icon(Icons.inbox_outlined),
@@ -412,9 +425,22 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () => _openFromMenu(const MyBoxScreen(), inDrawer),
       ),
       ListTile(
-        leading: const Icon(Icons.groups),
-        title: const Text('Weave Together'),
-        onTap: () => _openFromMenu(const WeaveListScreen(), inDrawer),
+        leading: const Icon(Icons.delete_outline),
+        title: Text(tr('Thùng rác', 'Trash')),
+        onTap: () => _openFromMenu(const TrashScreen(), inDrawer),
+      ),
+
+      // ── Cộng tác ──
+      _menuHeader(tr('CỘNG TÁC', 'COLLABORATION')),
+      ListTile(
+        leading: const Icon(Icons.call_merge),
+        title: Text(tr('Đề xuất sửa bài', 'Edit proposals')),
+        onTap: () => _openFromMenu(const ProposalsScreen(), inDrawer),
+      ),
+      ListTile(
+        leading: const Icon(Icons.mail_outline),
+        title: Text(tr('Lời cảm ơn', 'Thank-yous')),
+        onTap: () => _openFromMenu(const ThanksInboxScreen(), inDrawer),
       ),
       ListTile(
         leading: const Icon(Icons.emoji_events_outlined),
@@ -430,6 +456,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
+      ),
+
+      // ── Cài đặt ──
+      const Divider(),
+      ListTile(
+        leading: const Icon(Icons.settings_outlined),
+        title: Text(tr('Cài đặt và hoạt động', 'Settings and activity')),
+        onTap: () => _openFromMenu(const SettingsHubScreen(), inDrawer),
       ),
     ];
   }
@@ -455,17 +489,47 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(children: _menuItems(inDrawer: false));
   }
 
-  // Cột phải (desktop rộng từ 1200 px). "Sắp diễn ra" chưa có dữ liệu thật
-  // nên hiện trạng thái trống, không dùng dữ liệu giả.
+  // Cột phải (desktop rộng, ngưỡng định nghĩa ở Breakpoints.widePanel).
+  // "Sắp diễn ra" chưa nối dữ liệu thật nên hiện trạng thái trống hữu ích:
+  // dẫn người dùng tới tạo hoặc xem hoạt động, không dùng dữ liệu giả.
   Widget _buildSidePanel() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _PanelCard(
           title: tr('Sắp diễn ra', 'Upcoming'),
-          child: Text(
-            tr('Chưa có sự kiện nào.', 'Nothing scheduled yet.'),
-            style: const TextStyle(color: AppColors.textSecondary),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tr(
+                  'Chưa có hoạt động nào được lên lịch. Tạo một hoạt động để cùng bạn bè lên kế hoạch.',
+                  'Nothing scheduled yet. Create an activity to plan with friends.',
+                ),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: WeaveSpacing.md),
+              Wrap(
+                spacing: WeaveSpacing.sm,
+                runSpacing: WeaveSpacing.sm,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () =>
+                        _openFromMenu(const WeaveCreateScreen(), false),
+                    icon: const Icon(Icons.add),
+                    label: Text(tr('Tạo hoạt động', 'New activity')),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        _openFromMenu(const WeaveListScreen(), false),
+                    child: Text(tr('Xem tất cả', 'View all')),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: WeaveSpacing.lg),
@@ -559,7 +623,8 @@ class _PanelCard extends StatelessWidget {
       padding: const EdgeInsets.all(WeaveSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(WeaveRadius.control),
+        // Cùng bán kính với Card trong theme (16)
+        borderRadius: BorderRadius.circular(WeaveRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(

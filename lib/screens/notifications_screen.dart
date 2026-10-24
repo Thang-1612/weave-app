@@ -9,6 +9,8 @@ import '../services/post_service.dart';
 import '../services/user_prefs.dart';
 import '../theme/app_theme.dart';
 import '../widgets/friend_button.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'comments_screen.dart';
 import 'feedback_screen.dart';
 import 'user_profile_page.dart';
@@ -26,7 +28,7 @@ class UnreadBadge extends StatefulWidget {
 class _UnreadBadgeState extends State<UnreadBadge> {
   // Chỉ đếm các loại thông báo đang được bật trong Cài đặt
   late final Stream<int> _stream = NotificationService.watchMine().map(
-    (list) => list
+        (list) => list
         .where((n) => !n.read && UserPrefs.instance.notifEnabled(n.type))
         .length,
   );
@@ -57,10 +59,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   static final _milestoneTile = AppColors.teal.withValues(alpha: 0.10);
   static final _milestoneAvatar = AppColors.teal.withValues(alpha: 0.20);
 
-  late final Stream<List<AppNotification>> _stream =
-      NotificationService.watchMine();
+  // Không để final: nút Thử lại gán stream mới để nạp lại dữ liệu thật.
+  Stream<List<AppNotification>> _stream = NotificationService.watchMine();
   late final Stream<List<Friendship>> _friendsStream =
-      FriendService.watchMine();
+  FriendService.watchMine();
 
   Future<void> _open(AppNotification n) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -131,46 +133,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       stream: _stream,
       builder: (context, snap) {
         if (snap.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                '${tr('Không tải được thông báo.', 'Could not load notifications.')}\n${snap.error}',
-                textAlign: TextAlign.center,
-              ),
+          debugPrint('NotificationsScreen stream error: ${snap.error}');
+          return WeaveErrorView(
+            message: tr(
+              'Không tải được thông báo.',
+              'Could not load notifications.',
             ),
+            onRetry: () =>
+                setState(() => _stream = NotificationService.watchMine()),
           );
         }
         if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const WeaveLoadingView();
         }
 
         final items = snap.data!
             .where((n) => UserPrefs.instance.notifEnabled(n.type))
             .toList();
         if (items.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.mail_outline,
-                    size: 64,
-                    color: AppColors.textSecondary,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    tr(
-                      'Chưa có thông báo nào.\nKhi có người tương tác với bạn, thông báo sẽ hiện ở đây.',
-                      'No notifications yet.\nWhen someone interacts with you, it will show up here.',
-                    ),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
+          return WeaveEmptyView(
+            icon: Icons.mail_outline,
+            title: tr('Chưa có thông báo nào.', 'No notifications yet.'),
+            description: tr(
+              'Khi có người tương tác với bạn, thông báo sẽ hiện ở đây.',
+              'When someone interacts with you, it will show up here.',
             ),
           );
         }

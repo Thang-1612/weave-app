@@ -5,6 +5,8 @@ import '../services/l10n.dart';
 import '../services/weave_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/weave_activity_widgets.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'weave_create_screen.dart';
 import 'weave_detail_screen.dart';
 
@@ -12,10 +14,22 @@ import 'weave_detail_screen.dart';
 const double _kWeaveListTwoColumnBreakpoint = 760;
 
 /// Danh sách hoạt động. Truyền [groupId] để chỉ xem một nhóm; bỏ trống = tất cả.
-class WeaveListScreen extends StatelessWidget {
+class WeaveListScreen extends StatefulWidget {
   final String? groupId;
   final String? groupName;
   const WeaveListScreen({super.key, this.groupId, this.groupName});
+
+  @override
+  State<WeaveListScreen> createState() => _WeaveListScreenState();
+}
+
+class _WeaveListScreenState extends State<WeaveListScreen> {
+  // Tạo stream một lần (không tạo lại mỗi lần build). Nút Thử lại gán stream mới.
+  late Stream<List<WeaveActivity>> _stream = _buildStream();
+
+  Stream<List<WeaveActivity>> _buildStream() => widget.groupId == null
+      ? WeaveService.watchMine()
+      : WeaveService.watchGroup(widget.groupId!);
 
   void _open(BuildContext context, WeaveActivity a) {
     Navigator.of(context).push(
@@ -25,11 +39,11 @@ class WeaveListScreen extends StatelessWidget {
 
   /// [contentWidth]: bề ngang vùng danh sách, để chia cột khi màn rộng.
   Widget _section(
-    BuildContext context,
-    String title,
-    List<WeaveActivity> items,
-    double contentWidth,
-  ) {
+      BuildContext context,
+      String title,
+      List<WeaveActivity> items,
+      double contentWidth,
+      ) {
     if (items.isEmpty) return const SizedBox.shrink();
     final twoColumns = contentWidth >= _kWeaveListTwoColumnBreakpoint;
     const gap = WeaveSpacing.md;
@@ -71,7 +85,9 @@ class WeaveListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(groupName ?? tr('Hoạt động nhóm', 'Group activities')),
+        title: Text(
+          widget.groupName ?? tr('Hoạt động nhóm', 'Group activities'),
+        ),
       ),
       // Màu nút lấy từ theme (Brand Indigo): chỉ một hành động chính mỗi màn hình
       floatingActionButton: FloatingActionButton.extended(
@@ -79,42 +95,34 @@ class WeaveListScreen extends StatelessWidget {
         label: Text(tr('Tạo hoạt động', 'New activity')),
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => WeaveCreateScreen(groupId: groupId),
+            builder: (_) => WeaveCreateScreen(groupId: widget.groupId),
           ),
         ),
       ),
       body: StreamBuilder<List<WeaveActivity>>(
-        stream: groupId == null
-            ? WeaveService.watchMine()
-            : WeaveService.watchGroup(groupId!),
+        stream: _stream,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: SelectableText('${snap.error}'),
+            debugPrint('WeaveListScreen stream error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được danh sách hoạt động.',
+                'Could not load activities.',
               ),
+              onRetry: () => setState(() => _stream = _buildStream()),
             );
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final items = snap.data!;
           if (items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  tr(
-                    'Chưa có hoạt động nào.\nTạo một hoạt động để cùng bạn bè chọn nơi đi, chốt lịch và ghi lại kỷ niệm.',
-                    'No activities yet.\nCreate one to plan with friends, pick a place and keep the memories.',
-                  ),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
+            return WeaveEmptyView(
+              icon: Icons.event_outlined,
+              title: tr('Chưa có hoạt động nào.', 'No activities yet.'),
+              description: tr(
+                'Tạo một hoạt động để cùng bạn bè chọn nơi đi, chốt lịch và ghi lại kỷ niệm.',
+                'Create one to plan with friends, pick a place and keep the memories.',
               ),
             );
           }
@@ -124,13 +132,13 @@ class WeaveListScreen extends StatelessWidget {
             builder: (context, constraints) {
               // Hẹp: một cột tối đa 600. Rộng: tối đa 1040, thẻ chia 2 cột.
               final maxW =
-                  constraints.maxWidth >= _kWeaveListTwoColumnBreakpoint + 24
+              constraints.maxWidth >= _kWeaveListTwoColumnBreakpoint + 24
                   ? 1040.0
                   : 600.0;
               const padH = 12.0;
               final contentWidth =
                   (constraints.maxWidth < maxW ? constraints.maxWidth : maxW) -
-                  padH * 2;
+                      padH * 2;
               // ListView chiếm toàn bộ chiều rộng (lăn chuột và thanh cuộn
               // hoạt động ở hai bên lề); cột nội dung được giới hạn bằng đệm.
               final side = ((constraints.maxWidth - maxW) / 2)

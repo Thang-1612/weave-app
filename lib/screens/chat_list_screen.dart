@@ -6,6 +6,8 @@ import '../models/chat_models.dart';
 import '../services/chat_service.dart';
 import '../widgets/chat_widgets.dart';
 import '../widgets/chat_friends.dart';
+import '../widgets/weave_error_view.dart';
+import '../services/l10n.dart';
 import 'chat_room_screen.dart';
 import 'new_chat_screen.dart';
 
@@ -94,9 +96,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        _wide =
+        final wide =
             constraints.maxWidth.isFinite &&
-            constraints.maxWidth >= _wideBreakpoint;
+                constraints.maxWidth >= _wideBreakpoint;
+        // Đổi bố cục (thu/nới cửa sổ): ô tìm kiếm của hai bố cục là hai widget
+        // khác nhau nên phải xóa từ khóa cũ, nếu không danh sách bị lọc ngầm
+        // trong khi ô nhập hiện trống.
+        if (wide != _wide) {
+          _q = '';
+          _searching = false;
+        }
+        _wide = wide;
         final me = svc.me;
         return StreamBuilder<List<Chat>>(
           stream: _stream,
@@ -107,10 +117,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
             final requests = all
                 .where(
                   (c) =>
-                      !c.isGroup &&
-                      !c.acceptedBy.contains(me) &&
-                      c.lastSenderId != me,
-                )
+              !c.isGroup &&
+                  !c.acceptedBy.contains(me) &&
+                  c.lastSenderId != me,
+            )
                 .toList();
             final main = _sort(
               all.where((c) => !requests.contains(c)).toList(),
@@ -128,13 +138,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
   // Lỗi / đang tải dùng chung cho cả hai bố cục
   Widget _state(AsyncSnapshot<List<Chat>> snap, Widget Function() child) {
     if (snap.hasError) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'Không tải được danh sách chat.\nCó thể thiếu chỉ mục Firestore – mở log để lấy liên kết tạo chỉ mục.\n${snap.error}',
-            textAlign: TextAlign.center,
-          ),
+      // Chi tiết (gồm liên kết tạo chỉ mục Firestore nếu thiếu) chỉ ghi vào log.
+      debugPrint('ChatList: load failed: ${snap.error}');
+      return WeaveErrorView(
+        message: tr(
+          'Không tải được danh sách chat. Thử lại sau nhé.',
+          'Could not load chats. Please try again later.',
         ),
       );
     }
@@ -165,36 +174,36 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   // ───────────── Điện thoại ─────────────
   Widget _mobile(
-    AsyncSnapshot<List<Chat>> snap,
-    List<Chat> main,
-    List<Chat> requests,
-  ) {
+      AsyncSnapshot<List<Chat>> snap,
+      List<Chat> main,
+      List<Chat> requests,
+      ) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: _searching
               ? TextField(
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: 'Tìm cuộc trò chuyện…',
-                    // Ô tìm trong AppBar: không nền, không viền (theme mặc định có viền)
-                    filled: false,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                  ),
-                  onChanged: (v) => setState(() => _q = v),
-                )
-              : const Text('Tin nhắn'),
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: tr('Tìm cuộc trò chuyện…', 'Search chats…'),
+              // Ô tìm trong AppBar: không nền, không viền (theme mặc định có viền)
+              filled: false,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+            ),
+            onChanged: (v) => setState(() => _q = v),
+          )
+              : Text(tr('Tin nhắn', 'Messages')),
           actions: [
             IconButton(
-              tooltip: 'Tạo nhóm',
+              tooltip: tr('Tạo nhóm', 'New group'),
               icon: const Icon(Icons.group_add_outlined),
               onPressed: () => _newChat(group: true),
             ),
             IconButton(
-              tooltip: _searching ? 'Đóng tìm kiếm' : 'Tìm kiếm',
+              tooltip: _searching ? tr('Đóng tìm kiếm', 'Close search') : tr('Tìm kiếm', 'Search'),
               icon: Icon(_searching ? Icons.close : Icons.search),
               onPressed: () => setState(() {
                 _searching = !_searching;
@@ -209,18 +218,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
             indicatorColor: AppColors.brand,
             tabs: [
               // "Tất cả" (giống desktop), tránh trùng với tiêu đề "Tin nhắn"
-              const Tab(text: 'Tất cả'),
+              Tab(text: tr('Tất cả', 'All')),
               Tab(
                 text: requests.isEmpty
-                    ? 'Tin chờ'
-                    : 'Tin chờ (${requests.length})',
+                    ? tr('Tin chờ', 'Requests')
+                    : tr('Tin chờ (${requests.length})', 'Requests (${requests.length})'),
               ),
             ],
           ),
         ),
         body: _state(
           snap,
-          () => TabBarView(
+              () => TabBarView(
             children: [
               Column(
                 children: [
@@ -229,17 +238,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   Expanded(
                     child: _list(
                       main,
-                      'Chưa có cuộc trò chuyện.\nBấm nút + để bắt đầu.',
+                      tr('Chưa có cuộc trò chuyện.\nBấm nút + để bắt đầu.', 'No conversations yet.\nTap + to start.'),
                     ),
                   ),
                 ],
               ),
-              _list(requests, 'Không có tin nhắn chờ.'),
+              _list(requests, tr('Không có tin nhắn chờ.', 'No pending messages.')),
             ],
           ),
         ),
         floatingActionButton: FloatingActionButton(
-          tooltip: 'Tạo cuộc trò chuyện',
+          tooltip: tr('Tạo cuộc trò chuyện', 'New chat'),
           onPressed: () => _newChat(),
           child: const Icon(Icons.edit),
         ),
@@ -249,10 +258,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   // ───────────── Máy tính: 2 cột (danh sách | phòng chat) ─────────────
   Widget _desktop(
-    AsyncSnapshot<List<Chat>> snap,
-    List<Chat> main,
-    List<Chat> requests,
-  ) {
+      AsyncSnapshot<List<Chat>> snap,
+      List<Chat> main,
+      List<Chat> requests,
+      ) {
     final list = _tab == 0 ? main : requests;
     // Chỉ hiện nút Quay lại khi màn này thật sự được đẩy lên từ một màn khác;
     // nếu nó là một mục gốc của khung điều hướng thì không có gì để quay về.
@@ -290,7 +299,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             children: [
                               if (canGoBack)
                                 IconButton(
-                                  tooltip: 'Quay lại',
+                                  tooltip: tr('Quay lại', 'Back'),
                                   icon: const Icon(Icons.arrow_back),
                                   onPressed: () =>
                                       Navigator.of(context).maybePop(),
@@ -298,7 +307,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               Expanded(
                                 child: TextField(
                                   decoration: InputDecoration(
-                                    hintText: 'Tìm kiếm',
+                                    hintText: tr('Tìm kiếm', 'Search'),
                                     prefixIcon: const Icon(
                                       Icons.search,
                                       size: 20,
@@ -334,12 +343,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 ),
                               ),
                               IconButton(
-                                tooltip: 'Tạo cuộc trò chuyện',
+                                tooltip: tr('Tạo cuộc trò chuyện', 'New chat'),
                                 icon: const Icon(Icons.edit_outlined),
                                 onPressed: () => _newChat(),
                               ),
                               IconButton(
-                                tooltip: 'Tạo nhóm',
+                                tooltip: tr('Tạo nhóm', 'New group'),
                                 icon: const Icon(Icons.group_add_outlined),
                                 onPressed: () => _newChat(group: true),
                               ),
@@ -355,7 +364,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       Row(
                         children: [
                           ChoiceChip(
-                            label: const Text('Tất cả'),
+                            label: Text(tr('Tất cả', 'All')),
                             selected: _tab == 0,
                             onSelected: (_) => setState(() => _tab = 0),
                           ),
@@ -363,8 +372,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           ChoiceChip(
                             label: Text(
                               requests.isEmpty
-                                  ? 'Tin chờ'
-                                  : 'Tin chờ (${requests.length})',
+                                  ? tr('Tin chờ', 'Requests')
+                                  : tr('Tin chờ (${requests.length})', 'Requests (${requests.length})'),
                             ),
                             selected: _tab == 1,
                             onSelected: (_) => setState(() => _tab = 1),
@@ -378,11 +387,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   Expanded(
                     child: _state(
                       snap,
-                      () => _list(
+                          () => _list(
                         list,
                         _tab == 0
-                            ? 'Chưa có cuộc trò chuyện.\nChọn một người bạn ở trên để bắt đầu.'
-                            : 'Không có tin nhắn chờ.',
+                            ? tr('Chưa có cuộc trò chuyện.\nChọn một người bạn ở trên để bắt đầu.', 'No conversations yet.\nPick a friend above to start.')
+                            : tr('Không có tin nhắn chờ.', 'No pending messages.'),
                       ),
                     ),
                   ),
@@ -403,7 +412,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Icon(
               Icons.chat_bubble_outline,
               size: 72,
@@ -411,7 +420,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             SizedBox(height: 16),
             Text(
-              'Chào mừng đến với Tin nhắn',
+              tr('Chào mừng đến với Tin nhắn', 'Welcome to Messages'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -420,7 +429,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             SizedBox(height: 6),
             Text(
-              'Chọn một cuộc trò chuyện bên trái để bắt đầu',
+              tr('Chọn một cuộc trò chuyện bên trái để bắt đầu', 'Pick a conversation on the left to start'),
               style: TextStyle(color: AppColors.textSecondary),
             ),
           ],
@@ -442,12 +451,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final shown = q.isEmpty
         ? l
         : l.where((c) {
-            final n = svc.chatNameSync(c);
-            return n == null || n.toLowerCase().contains(q);
-          }).toList();
+      final n = svc.chatNameSync(c);
+      return n == null || n.toLowerCase().contains(q);
+    }).toList();
 
     if (shown.isEmpty) {
-      final msg = q.isEmpty ? empty : 'Không tìm thấy "${_q.trim()}".';
+      final msg = q.isEmpty ? empty : tr('Không tìm thấy "${_q.trim()}".', 'No results for "${_q.trim()}".');
       return Align(
         alignment: Alignment.topCenter,
         child: Padding(
@@ -507,8 +516,8 @@ class _ChatTile extends StatelessWidget {
     final muted = chat.mutedBy.contains(me);
     final pinned = chat.pinnedBy.contains(me);
     final preview =
-        (chat.lastSenderId == me && chat.lastType != 'system' ? 'Bạn: ' : '') +
-        chat.lastText;
+        (chat.lastSenderId == me && chat.lastType != 'system' ? tr('Bạn: ', 'You: ') : '') +
+            chat.lastText;
 
     return ListTile(
       // Màu mục đang chọn lấy từ listTileTheme (Soft Indigo + chữ Brand Indigo)
@@ -570,7 +579,7 @@ class _ChatTile extends StatelessWidget {
                   ),
                   child: Text(
                     unread > 99 ? '99+' : '$unread',
-                    style: const TextStyle(color: Colors.white, fontSize: 11),
+                    style: const TextStyle(color: AppColors.onBrand, fontSize: 11),
                   ),
                 ),
             ],
@@ -588,7 +597,7 @@ class _ChatTile extends StatelessWidget {
                 leading: Icon(
                   pinned ? Icons.push_pin_outlined : Icons.push_pin,
                 ),
-                title: Text(pinned ? 'Bỏ ghim' : 'Ghim lên đầu'),
+                title: Text(pinned ? tr('Bỏ ghim', 'Unpin') : tr('Ghim lên đầu', 'Pin to top')),
                 onTap: () {
                   Navigator.pop(ctx);
                   svc.setPinned(chat, !pinned);
@@ -598,7 +607,7 @@ class _ChatTile extends StatelessWidget {
                 leading: Icon(
                   muted ? Icons.notifications : Icons.notifications_off,
                 ),
-                title: Text(muted ? 'Bật thông báo' : 'Tắt thông báo'),
+                title: Text(muted ? tr('Bật thông báo', 'Turn on notifications') : tr('Tắt thông báo', 'Mute')),
                 onTap: () {
                   Navigator.pop(ctx);
                   svc.setMuted(chat, !muted);

@@ -269,8 +269,9 @@ class ChatInfoScreen extends StatelessWidget {
                         if (ok) {
                           try {
                             await svc.leave(chat);
-                            if (context.mounted)
+                            if (context.mounted) {
                               Navigator.of(context).popUntil((r) => r.isFirst);
+                            }
                           } catch (e) {
                             if (context.mounted) _snack(context, '$e');
                           }

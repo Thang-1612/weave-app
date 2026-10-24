@@ -74,8 +74,9 @@ class FriendPostSync {
     var count = 0;
 
     for (final doc in snap.docs) {
-      if (doc.data()['visibility'] == 'me')
+      if (doc.data()['visibility'] == 'me') {
         continue; // chỉ mình tôi: không có người xem
+      }
       final current = {
         for (final v in (doc.data()['audience'] as List? ?? const []))
           if (v is String) v,

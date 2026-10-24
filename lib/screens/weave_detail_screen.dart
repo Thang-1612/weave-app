@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../widgets/weave_activity_widgets.dart';
 import '../widgets/weave_extras_widgets.dart';
 import '../widgets/weave_moments_tab.dart';
+import '../widgets/weave_error_view.dart';
 import '../widgets/place_picker_screen.dart';
 import '../services/maps_launcher.dart';
 
@@ -17,6 +18,9 @@ import '../services/maps_launcher.dart';
 /// 960 = 400 cho Tổng quan + tối thiểu 560 cho các tab.
 const double _kWeaveDetailWideBreakpoint = 960;
 const double _kWeaveOverviewWidth = 400;
+
+// Tab "Nhiệm vụ" đã được tạm ẩn khỏi bản beta (đưa vào backlog).
+// Khi hoàn thiện: thêm lại Tab + nội dung ở cả hai bố cục và tăng length.
 
 class WeaveDetailScreen extends StatelessWidget {
   final String activityId;
@@ -30,7 +34,12 @@ class WeaveDetailScreen extends StatelessWidget {
       stream: WeaveService.watchOne(activityId),
       builder: (context, snap) {
         if (snap.hasError) {
-          return _plain(Center(child: SelectableText('${snap.error}')));
+          debugPrint('WeaveDetail: load failed: ${snap.error}');
+          return _plain(
+            WeaveErrorView(
+              message: tr('Không tải được hoạt động.', 'Could not load this activity.'),
+            ),
+          );
         }
         if (snap.connectionState == ConnectionState.waiting) {
           return _plain(const Center(child: CircularProgressIndicator()));
@@ -51,7 +60,7 @@ class WeaveDetailScreen extends StatelessWidget {
 
         return LayoutBuilder(
           builder: (context, constraints) =>
-              constraints.maxWidth >= _kWeaveDetailWideBreakpoint
+          constraints.maxWidth >= _kWeaveDetailWideBreakpoint
               ? _wide(a)
               : _narrow(a),
         );
@@ -59,19 +68,10 @@ class WeaveDetailScreen extends StatelessWidget {
     );
   }
 
-  // Tab "Nhiệm vụ" chưa có nội dung, dùng chung cho hai bố cục.
-  Widget _challengesTab() => _ComingSoon(
-    icon: Icons.flag_outlined,
-    text: tr(
-      'Nhiệm vụ nhỏ sẽ có ở bước sau.',
-      'Small challenges come in a later step.',
-    ),
-  );
-
-  // ───────────── Hẹp (điện thoại): 4 tab ─────────────
+  // ───────────── Hẹp (điện thoại): 3 tab ─────────────
   Widget _narrow(WeaveActivity a) {
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text(a.title, overflow: TextOverflow.ellipsis),
@@ -85,7 +85,6 @@ class WeaveDetailScreen extends StatelessWidget {
               Tab(text: tr('Tổng quan', 'Overview')),
               Tab(text: tr('Bình chọn', 'Polls')),
               Tab(text: tr('Khoảnh khắc', 'Moments')),
-              Tab(text: tr('Nhiệm vụ', 'Challenges')),
             ],
           ),
         ),
@@ -94,17 +93,16 @@ class WeaveDetailScreen extends StatelessWidget {
             _OverviewTab(activity: a),
             _PollsTab(activity: a),
             WeaveMomentsTab(activity: a),
-            _challengesTab(),
           ],
         ),
       ),
     );
   }
 
-  // ───────────── Rộng (desktop): Tổng quan | Bình chọn, Khoảnh khắc, Nhiệm vụ ─────────────
+  // ───────────── Rộng (desktop): Tổng quan | Bình chọn, Khoảnh khắc ─────────────
   Widget _wide(WeaveActivity a) {
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         appBar: AppBar(title: Text(a.title, overflow: TextOverflow.ellipsis)),
         body: Row(
@@ -140,7 +138,6 @@ class WeaveDetailScreen extends StatelessWidget {
                           tabs: [
                             Tab(text: tr('Bình chọn', 'Polls')),
                             Tab(text: tr('Khoảnh khắc', 'Moments')),
-                            Tab(text: tr('Nhiệm vụ', 'Challenges')),
                           ],
                         ),
                       ),
@@ -151,41 +148,10 @@ class WeaveDetailScreen extends StatelessWidget {
                       children: [
                         _PollsTab(activity: a),
                         WeaveMomentsTab(activity: a),
-                        _challengesTab(),
                       ],
                     ),
                   ),
                 ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ComingSoon extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _ComingSoon({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 48, color: AppColors.textSecondary),
-            const SizedBox(height: 12),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                height: 1.4,
               ),
             ),
           ],
@@ -210,10 +176,10 @@ class _OverviewTabState extends State<_OverviewTab> {
   bool get _isHost => a.hostId == WeaveService.me;
 
   Future<void> _run(
-    Future<void> Function() action, {
-    String? doneMsg,
-    bool popAfter = false,
-  }) async {
+      Future<void> Function() action, {
+        String? doneMsg,
+        bool popAfter = false,
+      }) async {
     final messenger = ScaffoldMessenger.of(context);
     final nav = Navigator.of(context);
     setState(() => _busy = true);
@@ -235,11 +201,11 @@ class _OverviewTabState extends State<_OverviewTab> {
   /// [danger] = true: nút xác nhận màu đỏ (hành động nguy hiểm, như rời hoạt động).
   /// [confirmLabel]: nhãn nút xác nhận, nên nêu rõ hành động thay vì "Đồng ý".
   Future<bool> _confirm(
-    String title,
-    String body, {
-    bool danger = false,
-    String? confirmLabel,
-  }) async {
+      String title,
+      String body, {
+        bool danger = false,
+        String? confirmLabel,
+      }) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
@@ -371,16 +337,16 @@ class _OverviewTabState extends State<_OverviewTab> {
                       onPressed: _busy
                           ? null
                           : () async {
-                              final p = await pickWeavePlace(
-                                context,
-                                initial: a.lockedPlace,
-                              );
-                              if (p == null || !mounted) return;
-                              await _run(
-                                () => WeaveService.lockPlace(a.id, p),
-                                doneMsg: tr('Đã chọn địa điểm', 'Place saved'),
-                              );
-                            },
+                        final p = await pickWeavePlace(
+                          context,
+                          initial: a.lockedPlace,
+                        );
+                        if (p == null || !mounted) return;
+                        await _run(
+                              () => WeaveService.lockPlace(a.id, p),
+                          doneMsg: tr('Đã chọn địa điểm', 'Place saved'),
+                        );
+                      },
                       icon: const Icon(Icons.edit_location_alt_outlined),
                       label: Text(
                         a.lockedPlace == null
@@ -423,12 +389,12 @@ class _OverviewTabState extends State<_OverviewTab> {
                   onPressed: _busy
                       ? null
                       : () => _run(
-                          () => WeaveService.start(a.id),
-                          doneMsg: tr(
-                            'Hoạt động đã bắt đầu',
-                            'Activity started',
-                          ),
-                        ),
+                        () => WeaveService.start(a.id),
+                    doneMsg: tr(
+                      'Hoạt động đã bắt đầu',
+                      'Activity started',
+                    ),
+                  ),
                   icon: const Icon(Icons.play_arrow),
                   label: Text(tr('Bắt đầu hoạt động', 'Start activity')),
                 ),
@@ -437,24 +403,27 @@ class _OverviewTabState extends State<_OverviewTab> {
                   onPressed: _busy
                       ? null
                       : () async {
-                          final ok = await _confirm(
-                            tr('Kết thúc hoạt động?', 'End activity?'),
-                            tr(
-                              'Sau khi kết thúc, nhật ký nhóm sẽ được tạo từ ảnh và nhiệm vụ của mọi người.',
-                              'Once ended, a group journal is built from everyone’s photos and challenges.',
-                            ),
-                            confirmLabel: tr('Kết thúc', 'End'),
-                          );
-                          if (ok) {
-                            _run(
-                              () => WeaveService.end(a.id),
-                              doneMsg: tr(
-                                'Đã kết thúc hoạt động',
-                                'Activity ended',
-                              ),
-                            );
-                          }
-                        },
+                    // Đã bỏ nhắc tới "nhiệm vụ" vì tab này tạm ẩn khỏi beta.
+                    // Nếu WeaveService.end vẫn dùng dữ liệu nhiệm vụ để dựng
+                    // nhật ký thì hãy kiểm tra lại câu chữ này.
+                    final ok = await _confirm(
+                      tr('Kết thúc hoạt động?', 'End activity?'),
+                      tr(
+                        'Sau khi kết thúc, nhật ký nhóm sẽ được tạo từ ảnh và khoảnh khắc của mọi người.',
+                        'Once ended, a group journal is built from everyone’s photos and moments.',
+                      ),
+                      confirmLabel: tr('Kết thúc', 'End'),
+                    );
+                    if (ok) {
+                      _run(
+                            () => WeaveService.end(a.id),
+                        doneMsg: tr(
+                          'Đã kết thúc hoạt động',
+                          'Activity ended',
+                        ),
+                      );
+                    }
+                  },
                   icon: const Icon(Icons.flag),
                   label: Text(tr('Kết thúc hoạt động', 'End activity')),
                 ),
@@ -468,22 +437,22 @@ class _OverviewTabState extends State<_OverviewTab> {
                   onPressed: _busy
                       ? null
                       : () async {
-                          final ok = await _confirm(
-                            tr('Rời hoạt động?', 'Leave activity?'),
-                            tr(
-                              'Bạn sẽ không còn thấy hoạt động này.',
-                              'You will no longer see this activity.',
-                            ),
-                            danger: true,
-                            confirmLabel: tr('Rời', 'Leave'),
-                          );
-                          if (ok) {
-                            _run(
-                              () => WeaveService.leave(a.id),
-                              popAfter: true,
-                            );
-                          }
-                        },
+                    final ok = await _confirm(
+                      tr('Rời hoạt động?', 'Leave activity?'),
+                      tr(
+                        'Bạn sẽ không còn thấy hoạt động này.',
+                        'You will no longer see this activity.',
+                      ),
+                      danger: true,
+                      confirmLabel: tr('Rời', 'Leave'),
+                    );
+                    if (ok) {
+                      _run(
+                            () => WeaveService.leave(a.id),
+                        popAfter: true,
+                      );
+                    }
+                  },
                   child: Text(tr('Rời hoạt động', 'Leave activity')),
                 ),
             ],
@@ -505,7 +474,10 @@ class _PollsTab extends StatelessWidget {
       stream: WeaveService.watchPolls(activity.id),
       builder: (context, snap) {
         if (snap.hasError) {
-          return Center(child: SelectableText('${snap.error}'));
+          debugPrint('WeaveDetail polls: load failed: ${snap.error}');
+          return WeaveErrorView(
+            message: tr('Không tải được bình chọn.', 'Could not load polls.'),
+          );
         }
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator());

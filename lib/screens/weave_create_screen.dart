@@ -6,11 +6,14 @@ import '../services/weave_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/group_create_sheet.dart';
 import '../widgets/weave_activity_widgets.dart';
+import '../widgets/weave_error_view.dart';
 import 'weave_detail_screen.dart';
 
 /// Từ chiều rộng này trở lên, form chia hai cột: thông tin hoạt động bên trái,
 /// mời thành viên bên phải. Dưới mức này: một cột.
 const double _kWeaveCreateTwoColumnBreakpoint = 900;
+const double _kWeaveCreateWideMaxWidth = 1040;
+const double _kWeaveCreateNarrowMaxWidth = 600;
 
 class WeaveCreateScreen extends StatefulWidget {
   /// Nếu có, nhóm được chọn sẵn và không cho đổi.
@@ -195,9 +198,9 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
         label: Text(
           _range == null
               ? tr(
-                  'Chọn khoảng ngày (có thể bỏ qua)',
-                  'Pick date range (optional)',
-                )
+            'Chọn khoảng ngày (có thể bỏ qua)',
+            'Pick date range (optional)',
+          )
               : weaveRange(_range!.start, _range!.end),
         ),
       ),
@@ -242,13 +245,13 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
       onPressed: _busy ? null : _submit,
       child: _busy
           ? const SizedBox(
-              height: 18,
-              width: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
+        height: 18,
+        width: 18,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: AppColors.onBrand,
+        ),
+      )
           : Text(tr('Tạo hoạt động', 'Create activity')),
     );
   }
@@ -261,7 +264,13 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
         future: _groups,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(child: SelectableText('${snap.error}'));
+            debugPrint('WeaveCreate: load groups failed: ${snap.error}');
+            return WeaveErrorView(
+              message: tr('Không tải được danh sách nhóm.', 'Could not load your groups.'),
+              onRetry: () => setState(() {
+                _groups = _loadGroups();
+              }),
+            );
           }
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -299,91 +308,92 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
               final twoColumns =
                   constraints.maxWidth >= _kWeaveCreateTwoColumnBreakpoint;
 
+              // ListView chiếm full chiều rộng (lăn chuột ở hai lề vẫn cuộn);
+              // nội dung được canh giữa bằng padding, giống các màn khác.
               if (twoColumns) {
                 // Rộng: thông tin bên trái, mời thành viên (card) bên phải.
-                return Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1040),
-                    child: ListView(
-                      padding: const EdgeInsets.all(WeaveSpacing.xl),
+                return ListView(
+                  padding: weaveCenteredPadding(
+                    constraints.maxWidth,
+                    maxWidth: _kWeaveCreateWideMaxWidth,
+                    h: WeaveSpacing.xl,
+                    top: WeaveSpacing.xl,
+                    bottom: WeaveSpacing.xl,
+                  ),
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              ..._basicFields(groups),
+                              const SizedBox(height: 24),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: _submitButton(),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: WeaveSpacing.xl),
+                        SizedBox(
+                          width: 340,
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                WeaveSpacing.lg,
+                                0,
+                                WeaveSpacing.lg,
+                                WeaveSpacing.lg,
+                              ),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  ..._basicFields(groups),
-                                  const SizedBox(height: 24),
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: _submitButton(),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: _group == null
+                                    ? [
+                                  _label(
+                                    tr(
+                                      'Mời thành viên',
+                                      'Invite members',
+                                    ),
                                   ),
-                                ],
+                                  Text(
+                                    tr(
+                                      'Chọn nhóm để mời thành viên.',
+                                      'Pick a group to invite members.',
+                                    ),
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ]
+                                    : _inviteeFields(),
                               ),
                             ),
-                            const SizedBox(width: WeaveSpacing.xl),
-                            SizedBox(
-                              width: 340,
-                              child: Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    WeaveSpacing.lg,
-                                    0,
-                                    WeaveSpacing.lg,
-                                    WeaveSpacing.lg,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: _group == null
-                                        ? [
-                                            _label(
-                                              tr(
-                                                'Mời thành viên',
-                                                'Invite members',
-                                              ),
-                                            ),
-                                            Text(
-                                              tr(
-                                                'Chọn nhóm để mời thành viên.',
-                                                'Pick a group to invite members.',
-                                              ),
-                                              style: const TextStyle(
-                                                color: AppColors.textSecondary,
-                                              ),
-                                            ),
-                                          ]
-                                        : _inviteeFields(),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 );
               }
 
               // Hẹp: một cột như cũ.
-              return Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      ..._basicFields(groups),
-                      ..._inviteeFields(),
-                      const SizedBox(height: 24),
-                      _submitButton(),
-                    ],
-                  ),
+              return ListView(
+                padding: weaveCenteredPadding(
+                  constraints.maxWidth,
+                  maxWidth: _kWeaveCreateNarrowMaxWidth,
+                  h: 16,
+                  top: 16,
+                  bottom: 16,
                 ),
+                children: [
+                  ..._basicFields(groups),
+                  ..._inviteeFields(),
+                  const SizedBox(height: 24),
+                  _submitButton(),
+                ],
               );
             },
           );

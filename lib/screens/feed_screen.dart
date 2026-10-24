@@ -14,6 +14,8 @@ import '../services/post_service.dart';
 import '../services/user_prefs.dart';
 import '../theme/app_theme.dart';
 import '../widgets/post_card.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'recipes_screen.dart';
 
 class FeedScreen extends StatefulWidget {
@@ -237,12 +239,12 @@ class _FeedScreenState extends State<FeedScreen> {
               avatar: m == 0
                   ? null
                   : Icon(
-                      Icons.timer_outlined,
-                      size: 16,
-                      color: _budgetMin == m
-                          ? AppColors.brand
-                          : AppColors.textSecondary,
-                    ),
+                Icons.timer_outlined,
+                size: 16,
+                color: _budgetMin == m
+                    ? AppColors.brand
+                    : AppColors.textSecondary,
+              ),
               label: Text(
                 m == 0 ? tr('Thoải mái', 'Relaxed') : tr('$m phút', '$m min'),
               ),
@@ -458,7 +460,7 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget _buildFeed() {
     final stream = _stream;
     if (stream == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const WeaveLoadingView();
     }
     final prefs = UserPrefs.instance;
     final me = FirebaseAuth.instance.currentUser?.uid;
@@ -467,18 +469,14 @@ class _FeedScreenState extends State<FeedScreen> {
       stream: stream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                '${tr('Không tải được bài viết.', 'Could not load posts.')}\n${snapshot.error}',
-                textAlign: TextAlign.center,
-              ),
-            ),
+          debugPrint('FeedScreen stream error: ${snapshot.error}');
+          return WeaveErrorView(
+            message: tr('Không tải được bài viết.', 'Could not load posts.'),
+            onRetry: () => _setup(sync: false),
           );
         }
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const WeaveLoadingView();
         }
 
         final result = snapshot.data!;
@@ -496,13 +494,13 @@ class _FeedScreenState extends State<FeedScreen> {
                 // Bài công khai
                 var posts = widget.favorites
                     ? prefs
-                          .filterPosts(result.posts, applyRestrictions: false)
-                          .where((p) => prefs.isFavoriteUser(p.authorId))
-                          .toList()
+                    .filterPosts(result.posts, applyRestrictions: false)
+                    .where((p) => prefs.isFavoriteUser(p.authorId))
+                    .toList()
                     : prefs.filterPosts(
-                        result.posts,
-                        applyRestrictions: space == null,
-                      );
+                  result.posts,
+                  applyRestrictions: space == null,
+                );
 
                 // Bài chỉ-bạn-bè + hộp thời gian đã mở (bỏ qua lỗi)
                 var friendPosts = prefs.filterPosts([
@@ -565,29 +563,39 @@ class _FeedScreenState extends State<FeedScreen> {
                 }
 
                 if (posts.isEmpty) {
-                  final String message;
+                  final String title;
+                  String? description;
                   if (widget.favorites) {
-                    message = tr(
-                      'Chưa có bài viết nào từ người yêu thích.\nThêm người yêu thích ở Cài đặt và hoạt động, hoặc từ menu ba chấm trên bài viết.',
-                      'No posts from favorite people yet.\nAdd favorites in Settings and activity, or from the ⋯ menu on a post.',
+                    title = tr(
+                      'Chưa có bài viết nào từ người yêu thích.',
+                      'No posts from favorite people yet.',
+                    );
+                    description = tr(
+                      'Thêm người yêu thích ở Cài đặt và hoạt động, hoặc từ menu ba chấm trên bài viết.',
+                      'Add favorites in Settings and activity, or from the ⋯ menu on a post.',
                     );
                   } else if (group != null) {
-                    message = tr(
+                    title = tr(
                       'Chưa có bài viết trong ${group.name}.',
                       'No posts in ${group.nameEn ?? group.name} yet.',
                     );
                   } else if (space == null && rec != null) {
-                    message = tr(
-                      'Không có bài nào khớp công thức "${rec.name}".\nBấm nút Công thức phía trên để đổi hoặc tắt.',
-                      'No posts match the recipe "${rec.name}".\nTap the Recipe button above to change or turn it off.',
+                    title = tr(
+                      'Không có bài nào khớp công thức "${rec.name}".',
+                      'No posts match the recipe "${rec.name}".',
+                    );
+                    description = tr(
+                      'Bấm nút Công thức phía trên để đổi hoặc tắt.',
+                      'Tap the Recipe button above to change or turn it off.',
                     );
                   } else if (space == null) {
-                    message = tr(
-                      'Chưa có bài viết nào.\nBấm nút + để đăng bài đầu tiên!',
-                      'No posts yet.\nTap + to publish the first one!',
+                    title = tr('Chưa có bài viết nào.', 'No posts yet.');
+                    description = tr(
+                      'Bấm nút + để đăng bài đầu tiên!',
+                      'Tap + to publish the first one!',
                     );
                   } else {
-                    message = tr(
+                    title = tr(
                       'Chưa có bài viết trong ${space.name}.',
                       'No posts in ${space.nameEn ?? space.name} yet.',
                     );
@@ -597,28 +605,22 @@ class _FeedScreenState extends State<FeedScreen> {
                       _toolbar(),
                       Expanded(
                         child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  message,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    height: 1.4,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              WeaveEmptyView(
+                                icon: Icons.article_outlined,
+                                title: title,
+                                description: description,
+                              ),
+                              if (showSeed)
+                                TextButton(
+                                  onPressed: () => _seed(space),
+                                  child: const Text(
+                                    '[Dev] Tạo 25 bài mẫu cho chủ đề này',
                                   ),
                                 ),
-                                if (showSeed)
-                                  TextButton(
-                                    onPressed: () => _seed(space),
-                                    child: const Text(
-                                      '[Dev] Tạo 25 bài mẫu cho chủ đề này',
-                                    ),
-                                  ),
-                              ],
-                            ),
+                            ],
                           ),
                         ),
                       ),
