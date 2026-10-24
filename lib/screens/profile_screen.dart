@@ -13,6 +13,8 @@ import '../services/user_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/friend_button.dart';
 import '../widgets/post_card.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'edit_profile_screen.dart';
 
 /// Từ chiều rộng này trở lên, hồ sơ chia hai cột: giới thiệu bên trái,
@@ -65,9 +67,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final Stream<UserProfile?> _profileStream = UserService.watchProfile(
     _uid,
   );
-  late final Stream<List<Post>> _postsStream = PostService.watchUserPosts(_uid);
+  // Không để final: nút Thử lại gán stream mới để tải lại thật.
+  late Stream<List<Post>> _postsStream = PostService.watchUserPosts(_uid);
   late final Stream<List<Friendship>> _friendsStream =
-      FriendService.watchMine();
+  FriendService.watchMine();
 
   StreamSubscription<User?>? _sub;
   String? _synced;
@@ -108,15 +111,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Dùng chung cho cả hai bố cục.
   // ---------------------------------------------------------------------
   Widget _buildIntro(
-    BuildContext context, {
-    required UserProfile? profile,
-    required String title,
-    required String name,
-    required String email,
-    required String bio,
-    required int postCount,
-    required int interactions,
-  }) {
+      BuildContext context, {
+        required UserProfile? profile,
+        required String title,
+        required String name,
+        required String email,
+        required String bio,
+        required int postCount,
+        required int interactions,
+      }) {
     return Column(
       children: [
         // Avatar gradient là điểm nhấn của trang hồ sơ.
@@ -141,8 +144,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall
-              ?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         if (name.isNotEmpty && email.isNotEmpty)
           Padding(
@@ -199,21 +203,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: _isMe
                       ? SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => EditProfileScreen(
-                                    profile: profile,
-                                    fallbackName: name,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text(tr('Chỉnh sửa hồ sơ', 'Edit profile')),
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => EditProfileScreen(
+                              profile: profile,
+                              fallbackName: name,
+                            ),
                           ),
-                        )
+                        );
+                      },
+                      child: Text(tr('Chỉnh sửa hồ sơ', 'Edit profile')),
+                    ),
+                  )
                       : FriendActionButton(uid: _uid, friendships: friendships),
                 ),
               ],
@@ -226,38 +230,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Nội dung phần bài viết (trạng thái tải / lỗi / rỗng / danh sách).
   List<Widget> _buildPostWidgets(
-    AsyncSnapshot<List<Post>> postsSnap,
-    List<Post> posts,
-  ) {
+      AsyncSnapshot<List<Post>> postsSnap,
+      List<Post> posts,
+      ) {
     if (postsSnap.hasError) {
+      debugPrint('ProfileScreen posts error: ${postsSnap.error}');
       return [
-        Padding(
-          padding: const EdgeInsets.all(WeaveSpacing.xl),
-          child: Text(
-            '${tr('Không tải được bài viết.', 'Could not load posts.')}\n${postsSnap.error}',
-            textAlign: TextAlign.center,
-          ),
+        WeaveErrorView(
+          message: tr('Không tải được bài viết.', 'Could not load posts.'),
+          onRetry: () =>
+              setState(() => _postsStream = PostService.watchUserPosts(_uid)),
         ),
       ];
     }
     if (!postsSnap.hasData) {
-      return const [
-        Padding(
-          padding: EdgeInsets.all(WeaveSpacing.xl),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      ];
+      return const [WeaveLoadingView()];
     }
     if (posts.isEmpty) {
       return [
-        Padding(
-          padding: const EdgeInsets.all(WeaveSpacing.xl),
-          child: Center(
-            child: Text(
-              tr('Chưa có bài viết nào', 'No posts yet'),
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
+        WeaveEmptyView(
+          icon: Icons.article_outlined,
+          title: tr('Chưa có bài viết nào', 'No posts yet'),
         ),
       ];
     }
@@ -310,7 +303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             final bio = profile?.bio ?? '';
             final interactions = posts.fold<int>(
               0,
-              (sum, p) => sum + p.reactions + p.comments,
+                  (sum, p) => sum + p.reactions + p.comments,
             );
 
             Widget intro() => _buildIntro(

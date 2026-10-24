@@ -4,6 +4,8 @@ import '../services/l10n.dart';
 import '../services/on_this_day_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/post_card.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 String _two(int n) => n.toString().padLeft(2, '0');
 
@@ -53,64 +55,11 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
     yearsAgo == 1 ? '1 year ago' : '$yearsAgo years ago',
   );
 
-  /// Trạng thái trống. [width] là bề rộng khung chứa, để căn giữa nội dung
-  /// mà ListView vẫn full chiều rộng (lăn chuột ở lề vẫn hoạt động).
-  Widget _empty(double width) {
+  /// Bọc trạng thái lỗi / trống trong ListView để vẫn kéo xuống làm mới được.
+  Widget _scrollableState(double height, Widget child) {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: weaveCenteredPadding(width, h: 32, top: 32, bottom: 32),
-      children: [
-        const SizedBox(height: 60),
-        const Icon(Icons.history, size: 56, color: AppColors.textSecondary),
-        const SizedBox(height: 16),
-        Text(
-          tr('Chưa có kỷ niệm nào vào ngày này', 'No memories on this day yet'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          tr(
-            'Những bài bạn đăng hôm nay sẽ xuất hiện ở đây vào những năm sau.',
-            'What you post today will show up here in the years to come.',
-          ),
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
-      ],
-    );
-  }
-
-  Widget _error(Object error, double width) {
-    final detail = '$error';
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: weaveCenteredPadding(width, h: 32, top: 32, bottom: 32),
-      children: [
-        const SizedBox(height: 60),
-        Text(
-          tr('Không tải được kỷ niệm', 'Could not load your memories'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          detail.length > 200 ? '${detail.substring(0, 200)}...' : detail,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: 12),
-        Center(
-          child: TextButton(
-            onPressed: _refresh,
-            child: Text(tr('Thử lại', 'Retry')),
-          ),
-        ),
-      ],
+      children: [SizedBox(height: height, child: child)],
     );
   }
 
@@ -215,8 +164,9 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
       height: 52,
       // Màu và viền đã có trong chipTheme chung; chỉ giữ dạng viên thuốc, không tick.
       child: ChipTheme(
-        data: ChipTheme.of(context)
-            .copyWith(shape: const StadiumBorder(), showCheckmark: false),
+        data: ChipTheme.of(
+          context,
+        ).copyWith(shape: const StadiumBorder(), showCheckmark: false),
         child: ListView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -328,14 +278,23 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           // Trạng thái lỗi / trống: vẫn kéo để làm mới được.
           if (snap.hasError) {
             return LayoutBuilder(
               builder: (context, c) => RefreshIndicator(
                 onRefresh: _refresh,
-                child: _error(snap.error!, c.maxWidth),
+                child: _scrollableState(
+                  c.maxHeight,
+                  WeaveErrorView(
+                    message: tr(
+                      'Không tải được kỷ niệm',
+                      'Could not load your memories',
+                    ),
+                    onRetry: _refresh,
+                  ),
+                ),
               ),
             );
           }
@@ -344,7 +303,20 @@ class _OnThisDayScreenState extends State<OnThisDayScreen> {
             return LayoutBuilder(
               builder: (context, c) => RefreshIndicator(
                 onRefresh: _refresh,
-                child: _empty(c.maxWidth),
+                child: _scrollableState(
+                  c.maxHeight,
+                  WeaveEmptyView(
+                    icon: Icons.history,
+                    title: tr(
+                      'Chưa có kỷ niệm nào vào ngày này',
+                      'No memories on this day yet',
+                    ),
+                    description: tr(
+                      'Những bài bạn đăng hôm nay sẽ xuất hiện ở đây vào những năm sau.',
+                      'What you post today will show up here in the years to come.',
+                    ),
+                  ),
+                ),
               ),
             );
           }
@@ -366,8 +338,9 @@ class OnThisDayTile extends StatelessWidget {
       leading: const Icon(Icons.history),
       title: Text(tr('Ngày này năm xưa', 'On this day')),
       onTap: () {
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const OnThisDayScreen()));
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const OnThisDayScreen()));
       },
     );
   }

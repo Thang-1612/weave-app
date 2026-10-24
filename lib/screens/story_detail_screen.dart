@@ -8,6 +8,8 @@ import '../theme/app_theme.dart';
 import '../widgets/audience_picker.dart';
 import '../widgets/story_status_chip.dart';
 import '../widgets/story_widgets.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'comments_screen.dart';
 
 /// Từ chiều rộng này trở lên: 3 cột (các đoạn | chỉnh sửa | xem trước).
@@ -25,7 +27,8 @@ class StoryDetailScreen extends StatefulWidget {
 }
 
 class _StoryDetailScreenState extends State<StoryDetailScreen> {
-  late final _story = StoryService.story(widget.storyId);
+  // Không để final: nút Thử lại gán stream mới để tải lại thật.
+  late Stream<Story?> _story = StoryService.story(widget.storyId);
   late final _blocks = StoryService.blocks(widget.storyId);
   late final _sources = StoryService.sources(widget.storyId);
 
@@ -52,9 +55,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
           content: Text(
             r.skippedImages > 0
                 ? tr(
-                    'Đã đăng. ${r.skippedImages} ảnh không đưa vào bài vì giới hạn dung lượng.',
-                    'Posted. ${r.skippedImages} photos were left out because of the size limit.',
-                  )
+              'Đã đăng. ${r.skippedImages} ảnh không đưa vào bài vì giới hạn dung lượng.',
+              'Posted. ${r.skippedImages} photos were left out because of the size limit.',
+            )
                 : tr('Đã đăng lên bảng tin', 'Posted to your feed'),
           ),
         ),
@@ -290,11 +293,11 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   // ---------------------------------------------------------------------
 
   List<Widget> _previewChildren(
-    Story story,
-    List<StoryBlock> blocks,
-    Map<String, StorySource> sources,
-    String me,
-  ) {
+      Story story,
+      List<StoryBlock> blocks,
+      Map<String, StorySource> sources,
+      String me,
+      ) {
     return [
       Text(story.title, style: Theme.of(context).textTheme.headlineSmall),
       const SizedBox(height: WeaveSpacing.sm),
@@ -430,13 +433,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         onPressed: _publishing ? null : () => _choosePublish(story),
         icon: _publishing
             ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.white,
+          ),
+        )
             : const Icon(Icons.publish, size: 18),
         label: Text(tr('Xuất bản', 'Publish')),
       );
@@ -540,13 +543,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   // Bố cục hẹp: một cột như cũ
   // ---------------------------------------------------------------------
   Widget _narrowBody(
-    Story story,
-    List<StoryBlock> blocks,
-    Map<String, StorySource> sources,
-    bool canEdit,
-    String me,
-    int lastOrder,
-  ) {
+      Story story,
+      List<StoryBlock> blocks,
+      Map<String, StorySource> sources,
+      bool canEdit,
+      String me,
+      int lastOrder,
+      ) {
     // ListView full chiều rộng để lăn chuột ở hai lề vẫn hoạt động;
     // nội dung được căn giữa bằng padding.
     return LayoutBuilder(
@@ -587,13 +590,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   // Bố cục rộng: các đoạn | chỉnh sửa | xem trước
   // ---------------------------------------------------------------------
   Widget _wideBody(
-    Story story,
-    List<StoryBlock> blocks,
-    Map<String, StorySource> sources,
-    bool canEdit,
-    String me,
-    int lastOrder,
-  ) {
+      Story story,
+      List<StoryBlock> blocks,
+      Map<String, StorySource> sources,
+      bool canEdit,
+      String me,
+      int lastOrder,
+      ) {
     StoryBlock? selected;
     for (final b in blocks) {
       if (b.id == _selectedBlockId) selected = b;
@@ -689,29 +692,27 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         Expanded(
           flex: 3,
           child: selected == null
-              ? Center(
-                  child: Text(
-                    tr(
-                      'Chưa có đoạn nào để chỉnh sửa.',
-                      'No parts to edit yet.',
-                    ),
-                    style: const TextStyle(color: AppColors.textSecondary),
-                  ),
-                )
+              ? WeaveEmptyView(
+            icon: Icons.edit_note,
+            title: tr(
+              'Chưa có đoạn nào để chỉnh sửa.',
+              'No parts to edit yet.',
+            ),
+          )
               : _BlockEditor(
-                  key: ValueKey(selected.id),
-                  block: selected,
-                  index: selectedIndex,
-                  canEdit: canEdit,
-                  onSave: (text) => StoryService.updateBlockText(
-                    widget.storyId,
-                    selected!.id,
-                    text,
-                  ),
-                  onDelete: () => _delete(selected!),
-                  // Chỉ là cờ, không cần setState
-                  onDirtyChanged: (v) => _editorDirty = v,
-                ),
+            key: ValueKey(selected.id),
+            block: selected,
+            index: selectedIndex,
+            canEdit: canEdit,
+            onSave: (text) => StoryService.updateBlockText(
+              widget.storyId,
+              selected!.id,
+              text,
+            ),
+            onDelete: () => _delete(selected!),
+            // Chỉ là cờ, không cần setState
+            onDirtyChanged: (v) => _editorDirty = v,
+          ),
         ),
         const VerticalDivider(width: 1),
         // Cột 3: xem trước (chỉ đọc)
@@ -756,27 +757,32 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
       stream: _story,
       builder: (context, storySnap) {
         if (storySnap.hasError) {
+          debugPrint('StoryDetailScreen stream error: ${storySnap.error}');
           return Scaffold(
             appBar: AppBar(),
-            body: Center(child: Text('${storySnap.error}')),
+            body: WeaveErrorView(
+              message: tr(
+                'Không tải được câu chuyện.',
+                'Could not load the story.',
+              ),
+              onRetry: () => setState(
+                    () => _story = StoryService.story(widget.storyId),
+              ),
+            ),
           );
         }
         if (!storySnap.hasData) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: const Center(child: CircularProgressIndicator()),
-          );
+          return Scaffold(appBar: AppBar(), body: const WeaveLoadingView());
         }
         final story = storySnap.data;
         if (story == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: Center(
-              child: Text(
-                tr(
-                  'Câu chuyện không còn tồn tại',
-                  'This story no longer exists',
-                ),
+            body: WeaveEmptyView(
+              icon: Icons.auto_stories_outlined,
+              title: tr(
+                'Câu chuyện không còn tồn tại',
+                'This story no longer exists',
               ),
             ),
           );
@@ -802,21 +808,21 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                   final lastOrder = blocks.isEmpty ? 0 : blocks.last.order;
                   return wide
                       ? _wideBody(
-                          story,
-                          blocks,
-                          sources,
-                          canEdit,
-                          me,
-                          lastOrder,
-                        )
+                    story,
+                    blocks,
+                    sources,
+                    canEdit,
+                    me,
+                    lastOrder,
+                  )
                       : _narrowBody(
-                          story,
-                          blocks,
-                          sources,
-                          canEdit,
-                          me,
-                          lastOrder,
-                        );
+                    story,
+                    blocks,
+                    sources,
+                    canEdit,
+                    me,
+                    lastOrder,
+                  );
                 },
               );
             },
@@ -955,13 +961,13 @@ class _BlockEditorState extends State<_BlockEditor> {
                       onPressed: _canSave ? _save : null,
                       child: _saving
                           ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                           : Text(tr('Lưu', 'Save')),
                     ),
                   ],
