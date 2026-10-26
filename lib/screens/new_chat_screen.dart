@@ -1,11 +1,12 @@
-import '../theme/app_theme.dart';
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import '../services/chat_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/chat_widgets.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 /// Màn tạo cuộc trò chuyện: tab "Nhắn tin" (1-1) và tab "Tạo nhóm".
 /// Khi xong sẽ `Navigator.pop(context, chatId)` để nơi gọi mở chat đó.
@@ -35,7 +36,8 @@ class _NewChatScreenState extends State<NewChatScreen> {
   final _name = TextEditingController();
   final Set<String> _picked = {};
   late final Set<String> _ex = widget.exclude.toSet();
-  late final Stream<List<String>> _friends = svc.friendIds();
+  // Không để final: nút Thử lại gán stream mới để tải lại thật.
+  late Stream<List<String>> _friends = svc.friendIds();
   Timer? _deb;
   List<ChatUser>? _results; // null = chưa tìm, hiện danh sách bạn bè
   bool _busy = false;
@@ -147,9 +149,9 @@ class _NewChatScreenState extends State<NewChatScreen> {
         ),
         trailing: multi
             ? Checkbox(
-                value: _picked.contains(uid),
-                onChanged: (_) => _toggle(uid),
-              )
+          value: _picked.contains(uid),
+          onChanged: (_) => _toggle(uid),
+        )
             : null,
         onTap: multi ? () => _toggle(uid) : () => _startDirect(uid),
       ),
@@ -160,11 +162,9 @@ class _NewChatScreenState extends State<NewChatScreen> {
     final res = _results?.where((u) => !_ex.contains(u.uid)).toList();
     if (res != null) {
       if (res.isEmpty) {
-        return const Center(
-          child: Text(
-            'Không tìm thấy ai',
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
+        return const WeaveEmptyView(
+          icon: Icons.search_off,
+          title: 'Không tìm thấy ai',
         );
       }
       return ListView(children: [for (final u in res) _row(u.uid, multi)]);
@@ -172,19 +172,22 @@ class _NewChatScreenState extends State<NewChatScreen> {
     return StreamBuilder<List<String>>(
       stream: _friends,
       builder: (c, s) {
-        final ids = (s.data ?? const <String>[])
-            .where((u) => !_ex.contains(u))
-            .toList();
+        if (s.hasError) {
+          debugPrint('NewChatScreen friends error: ${s.error}');
+          return WeaveErrorView(
+            message: 'Không tải được danh sách bạn bè.',
+            onRetry: () => setState(() => _friends = svc.friendIds()),
+          );
+        }
+        if (!s.hasData) {
+          return const WeaveLoadingView();
+        }
+        final ids = s.data!.where((u) => !_ex.contains(u)).toList();
         if (ids.isEmpty) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Chưa có bạn bè.\nHãy gõ tên ở ô trên để tìm người.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-            ),
+          return const WeaveEmptyView(
+            icon: Icons.people_outline,
+            title: 'Chưa có bạn bè.',
+            description: 'Hãy gõ tên ở ô trên để tìm người.',
           );
         }
         return ListView(
@@ -256,18 +259,18 @@ class _NewChatScreenState extends State<NewChatScreen> {
                 onPressed: _canCreate ? _create : null,
                 child: _busy
                     ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
                     : Text(
-                        _picked.length < 2
-                            ? 'Chọn ít nhất 2 người'
-                            : 'Tạo nhóm (${_picked.length})',
-                      ),
+                  _picked.length < 2
+                      ? 'Chọn ít nhất 2 người'
+                      : 'Tạo nhóm (${_picked.length})',
+                ),
               ),
             ),
           ),

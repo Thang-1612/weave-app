@@ -10,6 +10,8 @@ import '../theme/app_theme.dart';
 import '../widgets/audience_picker.dart';
 import '../widgets/layer_audience_picker.dart';
 import '../widgets/layer_tab_bar.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'close_friend_screen.dart';
 
 /// Màn hình của tác giả: thêm, đổi tên, đổi quyền xem, bật/tắt bình luận,
@@ -24,12 +26,11 @@ class LayerManagerScreen extends StatefulWidget {
 }
 
 class _LayerManagerScreenState extends State<LayerManagerScreen> {
-  late final Stream<QuerySnapshot<Map<String, dynamic>>> _stream = widget
-      .post
-      .ref
-      .collection('layers')
-      .orderBy('order')
-      .snapshots();
+  // Không để final: nút Thử lại gán stream mới để tải lại thật.
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _stream = _watchLayers();
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _watchLayers() =>
+      widget.post.ref.collection('layers').orderBy('order').snapshots();
 
   @override
   void initState() {
@@ -37,8 +38,8 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
     // Nạp tên nhóm để hiện đúng tên thay vì "Nhóm riêng"
     GroupService.listMine()
         .then((_) {
-          if (mounted) setState(() {});
-        })
+      if (mounted) setState(() {});
+    })
         .catchError((_) {});
   }
 
@@ -61,7 +62,7 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
     );
     if (r == null || !mounted) return;
     await _run(
-      () => LayerService.addLayer(
+          () => LayerService.addLayer(
         widget.post.ref,
         authorId: widget.post.authorId,
         name: r.name.isEmpty ? layerAudienceLabel(r.audience.type) : r.name,
@@ -69,8 +70,8 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
         blocks: r.text.isEmpty
             ? <Map<String, dynamic>>[]
             : [
-                {'type': 'text', 'text': r.text},
-              ],
+          {'type': 'text', 'text': r.text},
+        ],
       ),
     );
     if (mounted) setState(() {}); // cập nhật tên nhóm vừa tạo
@@ -187,13 +188,13 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
           child: Text(
             empty
                 ? tr(
-                    'Chưa có lớp nào. Bấm "Thêm lớp" để chia sẻ thêm nội dung cho bạn thân hoặc một nhóm riêng.',
-                    'No layers yet. Tap "Add layer" to share more with close friends or a private group.',
-                  )
+              'Chưa có lớp nào. Bấm "Thêm lớp" để chia sẻ thêm nội dung cho bạn thân hoặc một nhóm riêng.',
+              'No layers yet. Tap "Add layer" to share more with close friends or a private group.',
+            )
                 : tr(
-                    'Kéo ⠿ để sắp xếp thứ tự các lớp',
-                    'Drag ⠿ to reorder layers',
-                  ),
+              'Kéo ⠿ để sắp xếp thứ tự các lớp',
+              'Drag ⠿ to reorder layers',
+            ),
             style: const TextStyle(
               fontSize: 12.5,
               color: AppColors.textSecondary,
@@ -304,7 +305,7 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
                 Switch(
                   value: l.commentsEnabled,
                   onChanged: (v) => _run(
-                    () => LayerService.setCommentsEnabled(
+                        () => LayerService.setCommentsEnabled(
                       widget.post.ref,
                       l.id,
                       v,
@@ -347,10 +348,17 @@ class _LayerManagerScreenState extends State<LayerManagerScreen> {
             stream: _stream,
             builder: (context, snap) {
               if (snap.hasError) {
-                return Center(child: Text('${snap.error}'));
+                debugPrint('LayerManagerScreen stream error: ${snap.error}');
+                return WeaveErrorView(
+                  message: tr(
+                    'Không tải được danh sách lớp.',
+                    'Could not load the layers.',
+                  ),
+                  onRetry: () => setState(() => _stream = _watchLayers()),
+                );
               }
               if (!snap.hasData) {
-                return const Center(child: CircularProgressIndicator());
+                return const WeaveLoadingView();
               }
               final layers = snap.data!.docs.map(WeaveLayer.fromDoc).toList();
               return ReorderableListView.builder(

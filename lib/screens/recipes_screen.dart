@@ -5,6 +5,8 @@ import '../services/feed_recipe_service.dart';
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
 import '../widgets/space_picker.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 /// Quản lý công thức bảng tin: người dùng tự đặt luật cho bảng tin của mình.
 class RecipesScreen extends StatefulWidget {
@@ -16,7 +18,7 @@ class RecipesScreen extends StatefulWidget {
 
 class _RecipesScreenState extends State<RecipesScreen> {
   FeedRecipeState? _s;
-  String? _error;
+  bool _failed = false;
 
   @override
   void initState() {
@@ -27,10 +29,21 @@ class _RecipesScreenState extends State<RecipesScreen> {
   Future<void> _load() async {
     try {
       final s = await FeedRecipeService.load();
-      if (mounted) setState(() => _s = s);
+      if (mounted) {
+        setState(() {
+          _s = s;
+          _failed = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = '$e');
+      debugPrint('RecipesScreen load error: $e');
+      if (mounted) setState(() => _failed = true);
     }
+  }
+
+  void _retry() {
+    setState(() => _failed = false);
+    _load();
   }
 
   Future<void> _persist(FeedRecipeState n) async {
@@ -128,96 +141,96 @@ class _RecipesScreenState extends State<RecipesScreen> {
         icon: const Icon(Icons.add),
         label: Text(tr('Công thức mới', 'New recipe')),
       ),
-      body: _error != null
-          ? Center(child: SelectableText(_error!))
+      body: _failed
+          ? WeaveErrorView(
+        message: tr(
+          'Không tải được công thức.',
+          'Could not load your recipes.',
+        ),
+        onRetry: _retry,
+      )
           : s == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const WeaveLoadingView()
           : Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Text(
-                        tr(
-                          'Tự đặt luật cho bảng tin "Tất cả": chọn chủ đề, độ dài bài, chỉ bài sống, chỉ bài có ảnh... Bấm một công thức để dùng, bấm lại để tắt.',
-                          'Write your own rules for the "All" feed: topics, post length, living posts only, images only... Tap a recipe to use it, tap again to turn it off.',
-                        ),
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                    for (final r in s.items)
-                      Card(
-                        // Công thức đang dùng: nền soft và viền Brand.
-                        color: s.activeId == r.id ? AppColors.soft : null,
-                        margin: const EdgeInsets.only(bottom: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(WeaveRadius.card),
-                          side: BorderSide(
-                            color: s.activeId == r.id
-                                ? AppColors.brand
-                                : AppColors.border,
-                          ),
-                        ),
-                        child: ListTile(
-                          leading: Icon(
-                            s.activeId == r.id
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_off,
-                            color: AppColors.brand,
-                          ),
-                          title: Text(
-                            r.name,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          subtitle: Text(_describe(r)),
-                          onTap: () => _persist(
-                            FeedRecipeState(
-                              s.items,
-                              s.activeId == r.id ? null : r.id,
-                            ),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                tooltip: tr('Sửa', 'Edit'),
-                                icon: const Icon(Icons.edit_outlined, size: 20),
-                                onPressed: () => _edit(r),
-                              ),
-                              IconButton(
-                                tooltip: tr('Xóa', 'Delete'),
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  size: 20,
-                                  color: AppColors.danger,
-                                ),
-                                onPressed: () => _delete(r),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    if (s.items.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          tr('Chưa có công thức nào.', 'No recipes yet.'),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                  ],
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  tr(
+                    'Tự đặt luật cho bảng tin "Tất cả": chọn chủ đề, độ dài bài, chỉ bài sống, chỉ bài có ảnh... Bấm một công thức để dùng, bấm lại để tắt.',
+                    'Write your own rules for the "All" feed: topics, post length, living posts only, images only... Tap a recipe to use it, tap again to turn it off.',
+                  ),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ),
-            ),
+              for (final r in s.items)
+                Card(
+                  // Công thức đang dùng: nền soft và viền Brand.
+                  color: s.activeId == r.id ? AppColors.soft : null,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(WeaveRadius.card),
+                    side: BorderSide(
+                      color: s.activeId == r.id
+                          ? AppColors.brand
+                          : AppColors.border,
+                    ),
+                  ),
+                  child: ListTile(
+                    leading: Icon(
+                      s.activeId == r.id
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      color: AppColors.brand,
+                    ),
+                    title: Text(
+                      r.name,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(_describe(r)),
+                    onTap: () => _persist(
+                      FeedRecipeState(
+                        s.items,
+                        s.activeId == r.id ? null : r.id,
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: tr('Sửa', 'Edit'),
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          onPressed: () => _edit(r),
+                        ),
+                        IconButton(
+                          tooltip: tr('Xóa', 'Delete'),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            size: 20,
+                            color: AppColors.danger,
+                          ),
+                          onPressed: () => _delete(r),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (s.items.isEmpty)
+                WeaveEmptyView(
+                  icon: Icons.tune,
+                  title: tr('Chưa có công thức nào.', 'No recipes yet.'),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -315,7 +328,7 @@ class _RecipeDialogState extends State<_RecipeDialog> {
                         '${findSpace(id)?.emoji ?? ''} ${tr(findSpace(id)?.name ?? id, findSpace(id)?.nameEn ?? findSpace(id)?.name ?? id)}',
                       ),
                       onDeleted: () => setState(
-                        () => _spaces = _spaces.where((e) => e != id).toList(),
+                            () => _spaces = _spaces.where((e) => e != id).toList(),
                       ),
                     ),
                   ActionChip(
@@ -386,18 +399,18 @@ class _RecipeDialogState extends State<_RecipeDialog> {
         FilledButton(
           onPressed: canSave
               ? () => Navigator.of(context).pop(
-                  FeedRecipe(
-                    id:
-                        widget.initial?.id ??
-                        DateTime.now().millisecondsSinceEpoch.toString(),
-                    name: _name.text.trim(),
-                    spaceIds: _spaces,
-                    minBlocks: _minBlocks,
-                    withUpdates: _withUpdates,
-                    withImages: _withImages,
-                    maxAgeDays: _maxAge,
-                  ),
-                )
+            FeedRecipe(
+              id:
+              widget.initial?.id ??
+                  DateTime.now().millisecondsSinceEpoch.toString(),
+              name: _name.text.trim(),
+              spaceIds: _spaces,
+              minBlocks: _minBlocks,
+              withUpdates: _withUpdates,
+              withImages: _withImages,
+              maxAgeDays: _maxAge,
+            ),
+          )
               : null,
           child: Text(tr('Lưu', 'Save')),
         ),

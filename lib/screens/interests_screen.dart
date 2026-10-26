@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
 import '../services/l10n.dart';
 import '../services/user_service.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 const _maxTags = 10;
 
@@ -38,6 +40,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
   final _interestCtrl = TextEditingController();
   final _goalCtrl = TextEditingController();
   bool _loading = true;
+  bool _failed = false;
   bool _saving = false;
 
   @override
@@ -54,15 +57,37 @@ class _InterestsScreenState extends State<InterestsScreen> {
   }
 
   Future<void> _load() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      final p = await UserService.watchProfile(uid).first;
-      if (p != null) {
-        _interests.addAll(p.interests);
-        _goals.addAll(p.goalTags);
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final p = await UserService.watchProfile(uid).first;
+        if (p != null) {
+          _interests
+            ..clear()
+            ..addAll(p.interests);
+          _goals
+            ..clear()
+            ..addAll(p.goalTags);
+        }
+      }
+      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      debugPrint('InterestsScreen load error: $e');
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _failed = true;
+        });
       }
     }
-    if (mounted) setState(() => _loading = false);
+  }
+
+  void _retry() {
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
+    _load();
   }
 
   void _add(List<String> list, TextEditingController ctrl, [String? value]) {
@@ -177,48 +202,56 @@ class _InterestsScreenState extends State<InterestsScreen> {
         title: Text(tr('Sở thích & mục tiêu', 'Interests & goals')),
         actions: [
           TextButton(
-            onPressed: _saving || _loading ? null : _save,
+            onPressed: _saving || _loading || _failed ? null : _save,
             child: Text(tr('Lưu', 'Save')),
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
+      body: _failed
+          ? WeaveErrorView(
+        message: tr(
+          'Không tải được sở thích của bạn.',
+          'Could not load your interests.',
+        ),
+        onRetry: _retry,
+      )
+          : _loading
+          ? const WeaveLoadingView()
           : Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    _section(
-                      title: tr('Sở thích', 'Interests'),
-                      hint: tr('Ví dụ: âm nhạc', 'e.g. music'),
-                      list: _interests,
-                      ctrl: _interestCtrl,
-                      showPresets: true,
-                    ),
-                    const SizedBox(height: 24),
-                    _section(
-                      title: tr(
-                        'Mục tiêu / dự án đang làm',
-                        'Goals / current projects',
-                      ),
-                      hint: tr('Ví dụ: học tiếng Nhật', 'e.g. learn Japanese'),
-                      list: _goals,
-                      ctrl: _goalCtrl,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      tr(
-                        'Các thẻ này giúp tìm bạn cùng sở thích và hiện điểm chung trên bản đồ quan hệ.',
-                        'These tags help find people with shared interests and show common ground on the map.',
-                      ),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _section(
+                title: tr('Sở thích', 'Interests'),
+                hint: tr('Ví dụ: âm nhạc', 'e.g. music'),
+                list: _interests,
+                ctrl: _interestCtrl,
+                showPresets: true,
               ),
-            ),
+              const SizedBox(height: 24),
+              _section(
+                title: tr(
+                  'Mục tiêu / dự án đang làm',
+                  'Goals / current projects',
+                ),
+                hint: tr('Ví dụ: học tiếng Nhật', 'e.g. learn Japanese'),
+                list: _goals,
+                ctrl: _goalCtrl,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                tr(
+                  'Các thẻ này giúp tìm bạn cùng sở thích và hiện điểm chung trên bản đồ quan hệ.',
+                  'These tags help find people with shared interests and show common ground on the map.',
+                ),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

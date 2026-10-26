@@ -1,19 +1,29 @@
-import '../theme/app_theme.dart';
-
 import 'package:flutter/material.dart';
 
 import '../models/chat_models.dart';
 import '../services/chat_service.dart';
+import '../services/l10n.dart';
+import '../theme/app_theme.dart';
 import '../widgets/chat_widgets.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'new_chat_screen.dart';
 
-class ChatInfoScreen extends StatelessWidget {
+class ChatInfoScreen extends StatefulWidget {
   final String chatId;
   const ChatInfoScreen({super.key, required this.chatId});
 
+  @override
+  State<ChatInfoScreen> createState() => _ChatInfoScreenState();
+}
+
+class _ChatInfoScreenState extends State<ChatInfoScreen> {
   /// Trên màn rộng (hoặc trong khung phải của desktop), nội dung được canh giữa
   /// và giới hạn bề ngang này.
   static const double _maxContentWidth = 640;
+
+  // Tạo stream một lần (không tạo lại mỗi lần build). Nút Thử lại gán stream mới.
+  late Stream<Chat?> _stream = ChatService.I.chat(widget.chatId);
 
   Future<String?> _ask(BuildContext context, String title, String initial) {
     final c = TextEditingController(text: initial);
@@ -38,11 +48,11 @@ class ChatInfoScreen extends StatelessWidget {
 
   /// Hộp xác nhận cho hành động nguy hiểm: nút xác nhận màu đỏ Danger.
   Future<bool> _confirmDanger(
-    BuildContext context, {
-    required String title,
-    String? content,
-    required String action,
-  }) async {
+      BuildContext context, {
+        required String title,
+        String? content,
+        required String action,
+      }) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -72,13 +82,36 @@ class ChatInfoScreen extends StatelessWidget {
     final svc = ChatService.I;
     final me = svc.me;
     return StreamBuilder<Chat?>(
-      stream: svc.chat(chatId),
+      stream: _stream,
       builder: (context, snap) {
-        final chat = snap.data;
-        if (chat == null) {
+        if (snap.hasError) {
+          debugPrint('ChatInfo: load failed: ${snap.error}');
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: CircularProgressIndicator()),
+            body: WeaveErrorView(
+              message: tr(
+                'Không tải được thông tin cuộc trò chuyện.',
+                'Could not load the chat info.',
+              ),
+              onRetry: () =>
+                  setState(() => _stream = ChatService.I.chat(widget.chatId)),
+            ),
+          );
+        }
+        final chat = snap.data;
+        if (chat == null) {
+          final waiting = snap.connectionState == ConnectionState.waiting;
+          return Scaffold(
+            appBar: AppBar(),
+            body: waiting
+                ? const WeaveLoadingView()
+                : WeaveEmptyView(
+              icon: Icons.chat_bubble_outline,
+              title: tr(
+                'Cuộc trò chuyện không còn tồn tại',
+                'This chat no longer exists',
+              ),
+            ),
           );
         }
         final isAdmin = chat.admins.contains(me);
@@ -145,33 +178,33 @@ class ChatInfoScreen extends StatelessWidget {
                     onTap: !canDisappear
                         ? null
                         : () async {
-                            final v = await showDialog<int>(
-                              context: context,
-                              builder: (ctx) => SimpleDialog(
-                                title: const Text('Tự hủy sau'),
-                                children: [
-                                  for (final e in {
-                                    'Tắt': 0,
-                                    '1 giờ': 3600,
-                                    '24 giờ': 86400,
-                                    '7 ngày': 604800,
-                                  }.entries)
-                                    SimpleDialogOption(
-                                      onPressed: () =>
-                                          Navigator.pop(ctx, e.value),
-                                      child: Text(e.key),
-                                    ),
-                                ],
+                      final v = await showDialog<int>(
+                        context: context,
+                        builder: (ctx) => SimpleDialog(
+                          title: const Text('Tự hủy sau'),
+                          children: [
+                            for (final e in {
+                              'Tắt': 0,
+                              '1 giờ': 3600,
+                              '24 giờ': 86400,
+                              '7 ngày': 604800,
+                            }.entries)
+                              SimpleDialogOption(
+                                onPressed: () =>
+                                    Navigator.pop(ctx, e.value),
+                                child: Text(e.key),
                               ),
-                            );
-                            if (v != null && v != chat.disappearAfterSec) {
-                              try {
-                                await svc.setDisappear(chat, v);
-                              } catch (e) {
-                                if (context.mounted) _snack(context, '$e');
-                              }
-                            }
-                          },
+                          ],
+                        ),
+                      );
+                      if (v != null && v != chat.disappearAfterSec) {
+                        try {
+                          await svc.setDisappear(chat, v);
+                        } catch (e) {
+                          if (context.mounted) _snack(context, '$e');
+                        }
+                      }
+                    },
                   ),
                   if (!chat.isGroup)
                     SwitchListTile(
@@ -187,7 +220,8 @@ class ChatInfoScreen extends StatelessWidget {
                           final ok = await _confirmDanger(
                             context,
                             title: 'Chặn người này?',
-                            content: 'Hai bạn sẽ không nhắn tin được cho nhau cho đến khi bạn bỏ chặn.',
+                            content:
+                            'Hai bạn sẽ không nhắn tin được cho nhau cho đến khi bạn bỏ chặn.',
                             action: 'Chặn',
                           );
                           if (!ok) return;
@@ -214,13 +248,13 @@ class ChatInfoScreen extends StatelessWidget {
                         onTap: () async {
                           final r = await Navigator.of(context)
                               .push<List<String>>(
-                                MaterialPageRoute(
-                                  builder: (_) => NewChatScreen(
-                                    pickOnly: true,
-                                    exclude: chat.members,
-                                  ),
-                                ),
-                              );
+                            MaterialPageRoute(
+                              builder: (_) => NewChatScreen(
+                                pickOnly: true,
+                                exclude: chat.members,
+                              ),
+                            ),
+                          );
                           if (r != null && r.isNotEmpty) {
                             try {
                               await svc.addMembers(chat, r);
@@ -242,12 +276,12 @@ class ChatInfoScreen extends StatelessWidget {
                         ),
                         trailing: chat.admins.contains(u)
                             ? const Text(
-                                'Quản trị',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              )
+                          'Quản trị',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        )
                             : null,
                       ),
                     const Divider(),

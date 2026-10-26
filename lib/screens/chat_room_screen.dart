@@ -1,5 +1,3 @@
-import '../theme/app_theme.dart';
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -8,9 +6,11 @@ import 'package:image_picker/image_picker.dart';
 
 import '../models/chat_models.dart';
 import '../services/chat_service.dart';
-import '../widgets/chat_widgets.dart';
 import '../services/l10n.dart';
+import '../theme/app_theme.dart';
+import '../widgets/chat_widgets.dart';
 import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'chat_info_screen.dart';
 
 /// Gắn vào nút "Nhắn tin" ở hồ sơ người dùng.
@@ -18,11 +18,15 @@ Future<void> openChatWith(BuildContext context, String uid) async {
   try {
     final id = await ChatService.I.ensureDirect(uid);
     if (!context.mounted) return;
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => ChatRoomScreen(chatId: id)));
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => ChatRoomScreen(chatId: id)));
   } catch (e) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(tr('Không mở được chat: $e', 'Could not open chat: $e'))));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(tr('Không mở được chat: $e', 'Could not open chat: $e')),
+      ),
+    );
   }
 }
 
@@ -40,7 +44,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final svc = ChatService.I;
   final _ctrl = TextEditingController();
   final _scroll = ScrollController();
-  late final Stream<Chat?> _chatStream = svc.chat(widget.chatId);
+  // Không để final: nút Thử lại gán stream mới để tải lại thật.
+  late Stream<Chat?> _chatStream = svc.chat(widget.chatId);
   late Stream<List<ChatMessage>> _msgStream = svc.messages(
     widget.chatId,
     _limit,
@@ -119,7 +124,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           !chat.lastRead[u]!.isBefore(m.createdAt),
     )
         .length;
-    if (chat.isGroup) return seen > 0 ? tr('Đã xem bởi $seen', 'Seen by $seen') : tr('Đã gửi', 'Sent');
+    if (chat.isGroup) {
+      return seen > 0
+          ? tr('Đã xem bởi $seen', 'Seen by $seen')
+          : tr('Đã gửi', 'Sent');
+    }
     return seen > 0 ? tr('Đã xem', 'Seen') : tr('Đã gửi', 'Sent');
   }
 
@@ -313,7 +322,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 leading: const Icon(Icons.undo, color: AppColors.danger),
                 title: Text(
                   tr('Thu hồi', 'Recall'),
-                  style: TextStyle(color: AppColors.danger),
+                  style: const TextStyle(color: AppColors.danger),
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -342,13 +351,24 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 'Không mở được cuộc trò chuyện.',
                 'Could not open this conversation.',
               ),
+              onRetry: () =>
+                  setState(() => _chatStream = svc.chat(widget.chatId)),
             ),
           );
         }
         if (chat == null) {
+          final waiting = cs.connectionState == ConnectionState.waiting;
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: CircularProgressIndicator()),
+            body: waiting
+                ? const WeaveLoadingView()
+                : WeaveEmptyView(
+              icon: Icons.chat_bubble_outline,
+              title: tr(
+                'Cuộc trò chuyện không còn tồn tại',
+                'This chat no longer exists',
+              ),
+            ),
           );
         }
         final me = svc.me;
@@ -384,7 +404,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           Text(
                             typing
                                 ? tr('Đang soạn tin…', 'Typing…')
-                                : tr('${chat.members.length} thành viên', '${chat.members.length} members'),
+                                : tr(
+                              '${chat.members.length} thành viên',
+                              '${chat.members.length} members',
+                            ),
                             style: const TextStyle(
                               fontSize: 11,
                               color: AppColors.textSecondary,
@@ -406,7 +429,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   itemBuilder: (_) => [
                     PopupMenuItem(
                       value: 'sum',
-                      child: Text(tr('✨ Tóm tắt bằng AI', '✨ Summarize with AI')),
+                      child: Text(
+                        tr('✨ Tóm tắt bằng AI', '✨ Summarize with AI'),
+                      ),
                     ),
                   ],
                 ),
@@ -517,7 +542,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       child: chat.blockedBy.contains(me)
           ? Row(
         children: [
-          Expanded(child: Text(tr('Bạn đã chặn người này.', 'You blocked this person.'))),
+          Expanded(
+            child: Text(
+              tr('Bạn đã chặn người này.', 'You blocked this person.'),
+            ),
+          ),
           TextButton(
             onPressed: () => svc.setBlocked(chat, false),
             child: Text(tr('Bỏ chặn', 'Unblock')),
@@ -525,7 +554,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         ],
       )
           : Text(
-        tr('Bạn không thể nhắn tin cho người này.', 'You cannot message this person.'),
+        tr(
+          'Bạn không thể nhắn tin cho người này.',
+          'You cannot message this person.',
+        ),
         textAlign: TextAlign.center,
       ),
     ),
@@ -573,6 +605,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     return StreamBuilder<List<ChatMessage>>(
       stream: _msgStream,
       builder: (context, ms) {
+        if (ms.hasError) {
+          debugPrint('ChatRoom: messages failed: ${ms.error}');
+          return WeaveErrorView(
+            message: tr(
+              'Không tải được tin nhắn.',
+              'Could not load the messages.',
+            ),
+            onRetry: () => setState(
+                  () => _msgStream = svc.messages(widget.chatId, _limit),
+            ),
+          );
+        }
         final all = ms.data ?? const <ChatMessage>[];
         final now = DateTime.now();
         final msgs = all
@@ -589,7 +633,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           });
         }
         if (ms.connectionState == ConnectionState.waiting && !ms.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const WeaveLoadingView();
         }
         if (msgs.isEmpty) return _emptyState(chat);
 
@@ -719,12 +763,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       minLines: 1,
       maxLines: 5,
       maxLength: 4000,
-      buildCounter: (
+      buildCounter:
+          (
           _, {
-            required currentLength,
-            required isFocused,
-            maxLength,
-          }) => null,
+        required currentLength,
+        required isFocused,
+        maxLength,
+      }) => null,
       onChanged: (_) {
         if (ChatConfig.enableTyping) svc.typing(chat.id);
         setState(() {});
@@ -813,7 +858,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ),
                 if (ChatConfig.aiComplete != null)
                   IconButton(
-                    tooltip: tr('Gợi ý trả lời bằng AI', 'AI reply suggestions'),
+                    tooltip: tr(
+                      'Gợi ý trả lời bằng AI',
+                      'AI reply suggestions',
+                    ),
                     onPressed: _aiBusy ? null : _suggestReplies,
                     icon: _aiBusy
                         ? const SizedBox(
@@ -828,10 +876,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   child: wide
                       ? CallbackShortcuts(
                     bindings: {
-                      const SingleActivator(
-                        LogicalKeyboardKey.enter,
-                      ): () =>
-                          _submit(),
+                      const SingleActivator(LogicalKeyboardKey.enter):
+                          () => _submit(),
                     },
                     child: field,
                   )

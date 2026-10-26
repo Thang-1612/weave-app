@@ -5,6 +5,8 @@ import '../models/post.dart';
 import '../services/feedback_service.dart';
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 class FeedbackScreen extends StatefulWidget {
   final Post post;
@@ -19,6 +21,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   final _focus = FocusNode();
   bool _public = true;
   bool _sending = false;
+
+  // Tạo stream một lần (không tạo lại mỗi lần gõ chữ hay đổi trạng thái).
+  // Nút Thử lại gán stream mới.
+  late Stream<List<FeedbackItem>> _stream = FeedbackService.watch(widget.post);
 
   /// Đang trả lời: góp ý gốc của chuỗi và tên người được trả lời.
   FeedbackItem? _replyRoot;
@@ -79,8 +85,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             root != null
                 ? tr('Đã gửi trả lời', 'Reply sent')
                 : (isPublic
-                      ? tr('Đã đăng góp ý công khai', 'Public feedback posted')
-                      : tr('Đã lưu góp ý riêng tư', 'Private feedback saved')),
+                ? tr('Đã đăng góp ý công khai', 'Public feedback posted')
+                : tr('Đã lưu góp ý riêng tư', 'Private feedback saved')),
           ),
         ),
       );
@@ -171,8 +177,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 f.isPublic
                     ? '🌐 ${tr('Công khai', 'Public')}'
                     : (byPostAuthor
-                          ? '🔒 ${tr('Chỉ tác giả thấy', 'Author only')}'
-                          : '🔒 ${tr('Riêng tư', 'Private')}'),
+                    ? '🔒 ${tr('Chỉ tác giả thấy', 'Author only')}'
+                    : '🔒 ${tr('Riêng tư', 'Private')}'),
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
@@ -282,23 +288,28 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             children: [
               Expanded(
                 child: StreamBuilder<List<FeedbackItem>>(
-                  stream: FeedbackService.watch(widget.post),
+                  stream: _stream,
                   builder: (context, snap) {
                     if (snap.hasError) {
-                      return Center(child: Text('${snap.error}'));
+                      debugPrint('FeedbackScreen stream error: ${snap.error}');
+                      return WeaveErrorView(
+                        message: tr(
+                          'Không tải được góp ý.',
+                          'Could not load feedback.',
+                        ),
+                        onRetry: () => setState(
+                              () => _stream = FeedbackService.watch(widget.post),
+                        ),
+                      );
                     }
                     if (!snap.hasData) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const WeaveLoadingView();
                     }
                     final items = snap.data!;
                     if (items.isEmpty) {
-                      return Center(
-                        child: Text(
-                          tr('Chưa có góp ý nào', 'No feedback yet'),
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
+                      return WeaveEmptyView(
+                        icon: Icons.chat_bubble_outline,
+                        title: tr('Chưa có góp ý nào', 'No feedback yet'),
                       );
                     }
                     return ListView(
@@ -323,7 +334,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (root != null)
-                          // Đang trả lời: chế độ theo góp ý gốc, không chọn lại
+                        // Đang trả lời: chế độ theo góp ý gốc, không chọn lại
                           Row(
                             children: [
                               const Icon(
@@ -335,7 +346,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               Expanded(
                                 child: Text(
                                   '${tr('Đang trả lời', 'Replying to')} $_replyToName'
-                                  ' · ${root.isPublic ? tr('công khai', 'public') : tr('riêng tư', 'private')}',
+                                      ' · ${root.isPublic ? tr('công khai', 'public') : tr('riêng tư', 'private')}',
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontSize: 12.5,
@@ -377,18 +388,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                             child: Text(
                               _public
                                   ? tr(
-                                      'Mọi người đều thấy góp ý này',
-                                      'Everyone can see this',
-                                    )
+                                'Mọi người đều thấy góp ý này',
+                                'Everyone can see this',
+                              )
                                   : isOwner
                                   ? tr(
-                                      'Chỉ mình bạn thấy',
-                                      'Only you can see this',
-                                    )
+                                'Chỉ mình bạn thấy',
+                                'Only you can see this',
+                              )
                                   : tr(
-                                      'Chỉ tác giả bài và bạn thấy',
-                                      'Only the author and you can see this',
-                                    ),
+                                'Chỉ tác giả bài và bạn thấy',
+                                'Only the author and you can see this',
+                              ),
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
@@ -408,13 +419,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                                 decoration: InputDecoration(
                                   hintText: root != null
                                       ? tr(
-                                          'Viết câu trả lời...',
-                                          'Write your reply...',
-                                        )
+                                    'Viết câu trả lời...',
+                                    'Write your reply...',
+                                  )
                                       : tr(
-                                          'Viết góp ý của bạn...',
-                                          'Write your feedback...',
-                                        ),
+                                    'Viết góp ý của bạn...',
+                                    'Write your feedback...',
+                                  ),
                                   counterText: '',
                                   // Theme đã có viền cho mọi ô nhập, nên ô này
                                   // phải tắt rõ từng trạng thái.
@@ -430,16 +441,16 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               tooltip: tr('Gửi', 'Send'),
                               icon: _sending
                                   ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                                   : const Icon(
-                                      Icons.send,
-                                      color: AppColors.brand,
-                                    ),
+                                Icons.send,
+                                color: AppColors.brand,
+                              ),
                               onPressed: _sending ? null : _send,
                             ),
                           ],

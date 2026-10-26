@@ -9,6 +9,7 @@ import '../services/friend_service.dart';
 import '../services/l10n.dart';
 import '../services/user_service.dart';
 import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'interests_screen.dart';
 import 'user_profile_page.dart';
 
@@ -89,8 +90,9 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
   }
 
   Future<void> _openInterests() async {
-    final saved = await Navigator.of(context)
-        .push<bool>(MaterialPageRoute(builder: (_) => const InterestsScreen()));
+    final saved = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const InterestsScreen()));
     if (saved == true) {
       ConstellationService.invalidate();
       _load(force: true);
@@ -134,20 +136,15 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
           future: UserService.suggestByInterests(tags, exclude: exclude),
           builder: (ctx, snap) {
             if (snap.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
+              return const WeaveLoadingView();
             }
             final list = snap.data ?? const <UserProfile>[];
             if (list.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    tr(
-                      'Chưa có ai trùng sở thích với bạn.',
-                      'No one shares your interests yet.',
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+              return WeaveEmptyView(
+                icon: Icons.people_outline,
+                title: tr(
+                  'Chưa có ai trùng sở thích với bạn.',
+                  'No one shares your interests yet.',
                 ),
               );
             }
@@ -275,7 +272,9 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
                       );
                       changed = true;
                     } catch (e) {
-                      debugPrint('Constellation: setVisibility failed: $e');
+                      debugPrint(
+                        'Constellation: setVisibility failed: $e',
+                      );
                       setSheet(() => mePublic = !v);
                     }
                   },
@@ -337,36 +336,21 @@ class _ConstellationScreenState extends State<ConstellationScreen> {
   }
 
   Widget _body() {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const WeaveLoadingView();
     if (_error != null) {
-      return WeaveErrorView(
-        message: _error!,
-        onRetry: () => _load(force: true),
-      );
+      return WeaveErrorView(message: _error!, onRetry: () => _load(force: true));
     }
     final me = _me!;
     if (_nodes.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                tr(
-                  'Bản đồ của bạn còn trống. Hãy kết bạn và thêm sở thích để các điểm xuất hiện.',
-                  'Your map is empty. Add friends and interests to see it fill up.',
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: _openInterests,
-                child: Text(tr('Thêm sở thích', 'Add interests')),
-              ),
-            ],
-          ),
+      return WeaveEmptyView(
+        icon: Icons.hub_outlined,
+        title: tr('Bản đồ của bạn còn trống.', 'Your map is empty.'),
+        description: tr(
+          'Hãy kết bạn và thêm sở thích để các điểm xuất hiện.',
+          'Add friends and interests to see it fill up.',
         ),
+        actionLabel: tr('Thêm sở thích', 'Add interests'),
+        onAction: _openInterests,
       );
     }
 

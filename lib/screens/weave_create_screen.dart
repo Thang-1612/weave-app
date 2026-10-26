@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/group_create_sheet.dart';
 import '../widgets/weave_activity_widgets.dart';
 import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'weave_detail_screen.dart';
 
 /// Từ chiều rộng này trở lên, form chia hai cột: thông tin hoạt động bên trái,
@@ -266,40 +267,32 @@ class _WeaveCreateScreenState extends State<WeaveCreateScreen> {
           if (snap.hasError) {
             debugPrint('WeaveCreate: load groups failed: ${snap.error}');
             return WeaveErrorView(
-              message: tr('Không tải được danh sách nhóm.', 'Could not load your groups.'),
+              message: tr(
+                'Không tải được danh sách nhóm.',
+                'Could not load your groups.',
+              ),
               onRetry: () => setState(() {
                 _groups = _loadGroups();
               }),
             );
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final groups = snap.data!;
           if (groups.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      tr(
-                        'Bạn chưa tham gia nhóm nào. Hãy tạo nhóm trước.',
-                        'You are not in any group yet. Create a group first.',
-                      ),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _createGroup,
-                      icon: const Icon(Icons.group_add_outlined),
-                      label: Text(tr('Tạo nhóm', 'Create group')),
-                    ),
-                  ],
-                ),
+            return WeaveEmptyView(
+              icon: Icons.groups_outlined,
+              title: tr(
+                'Bạn chưa tham gia nhóm nào.',
+                'You are not in any group yet.',
               ),
+              description: tr(
+                'Hãy tạo nhóm trước.',
+                'Create a group first.',
+              ),
+              actionLabel: tr('Tạo nhóm', 'Create group'),
+              onAction: _createGroup,
             );
           }
 

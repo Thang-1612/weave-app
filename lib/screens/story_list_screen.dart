@@ -6,14 +6,24 @@ import '../services/story_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/story_status_chip.dart';
 import '../widgets/story_widgets.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 import 'story_create_screen.dart';
 import 'story_detail_screen.dart';
 
 /// Từ chiều rộng này trở lên, thẻ câu chuyện xếp thành 2 cột.
 const double _kStoryListTwoColumnBreakpoint = 760;
 
-class StoryListScreen extends StatelessWidget {
+class StoryListScreen extends StatefulWidget {
   const StoryListScreen({super.key});
+
+  @override
+  State<StoryListScreen> createState() => _StoryListScreenState();
+}
+
+class _StoryListScreenState extends State<StoryListScreen> {
+  // Tạo stream một lần (không tạo lại mỗi lần build). Nút Thử lại gán stream mới.
+  Stream<List<Story>> _stream = StoryService.myStories();
 
   Widget _card(BuildContext context, Story s, String me) {
     return Card(
@@ -50,7 +60,7 @@ class StoryListScreen extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${storyKindLabel(s.kind)} · ${fmtDate(s.updatedAt)}'
-                      '${s.ownerId == me ? '' : ' · ${tr('Bạn bè mời', 'Shared with you')}'}',
+                          '${s.ownerId == me ? '' : ' · ${tr('Bạn bè mời', 'Shared with you')}'}',
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -75,31 +85,36 @@ class StoryListScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Weave Storymaker')),
       // Màu nút lấy từ theme: một hành động chính nổi bật mỗi màn hình
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const StoryCreateScreen())),
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const StoryCreateScreen()),
+        ),
         icon: const Icon(Icons.auto_awesome),
         label: Text(tr('Tạo câu chuyện', 'New story')),
       ),
       body: StreamBuilder<List<Story>>(
-        stream: StoryService.myStories(),
+        stream: _stream,
         builder: (context, snap) {
-          if (snap.hasError) return Center(child: Text('${snap.error}'));
+          if (snap.hasError) {
+            debugPrint('StoryListScreen stream error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được danh sách câu chuyện.',
+                'Could not load your stories.',
+              ),
+              onRetry: () => setState(() => _stream = StoryService.myStories()),
+            );
+          }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final list = snap.data!;
           if (list.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  tr(
-                    'Chưa có câu chuyện nào. Chọn ảnh và ghi chú để AI kể lại trải nghiệm của bạn.',
-                    'No stories yet. Pick photos and notes and let the AI retell your experience.',
-                  ),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
+            return WeaveEmptyView(
+              icon: Icons.auto_stories_outlined,
+              title: tr('Chưa có câu chuyện nào.', 'No stories yet.'),
+              description: tr(
+                'Chọn ảnh và ghi chú để AI kể lại trải nghiệm của bạn.',
+                'Pick photos and notes and let the AI retell your experience.',
               ),
             );
           }
@@ -111,7 +126,7 @@ class StoryListScreen extends StatelessWidget {
               const padH = 16.0;
               final contentWidth =
                   (constraints.maxWidth < maxW ? constraints.maxWidth : maxW) -
-                  padH * 2;
+                      padH * 2;
               const gap = WeaveSpacing.md;
               final cardWidth = wide ? (contentWidth - gap) / 2 : contentWidth;
 

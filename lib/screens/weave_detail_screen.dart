@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import '../models/weave_activity.dart';
 import '../models/weave_poll.dart';
 import '../services/l10n.dart';
+import '../services/maps_launcher.dart';
 import '../services/weave_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/place_picker_screen.dart';
 import '../widgets/weave_activity_widgets.dart';
+import '../widgets/weave_error_view.dart';
 import '../widgets/weave_extras_widgets.dart';
 import '../widgets/weave_moments_tab.dart';
-import '../widgets/weave_error_view.dart';
-import '../widgets/place_picker_screen.dart';
-import '../services/maps_launcher.dart';
+import '../widgets/weave_state_views.dart';
 
 /// Từ bề rộng KHUNG CHỨA này trở lên: Tổng quan cố định bên trái, các tab bên
 /// phải. (Đo bằng LayoutBuilder chứ không phải cả cửa sổ, vì khung điều hướng
@@ -22,37 +23,52 @@ const double _kWeaveOverviewWidth = 400;
 // Tab "Nhiệm vụ" đã được tạm ẩn khỏi bản beta (đưa vào backlog).
 // Khi hoàn thiện: thêm lại Tab + nội dung ở cả hai bố cục và tăng length.
 
-class WeaveDetailScreen extends StatelessWidget {
+class WeaveDetailScreen extends StatefulWidget {
   final String activityId;
   const WeaveDetailScreen({super.key, required this.activityId});
+
+  @override
+  State<WeaveDetailScreen> createState() => _WeaveDetailScreenState();
+}
+
+class _WeaveDetailScreenState extends State<WeaveDetailScreen> {
+  // Tạo stream một lần (không tạo lại mỗi lần build). Nút Thử lại gán stream mới.
+  late Stream<WeaveActivity?> _stream = WeaveService.watchOne(
+    widget.activityId,
+  );
 
   Widget _plain(Widget body) => Scaffold(appBar: AppBar(), body: body);
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<WeaveActivity?>(
-      stream: WeaveService.watchOne(activityId),
+      stream: _stream,
       builder: (context, snap) {
         if (snap.hasError) {
           debugPrint('WeaveDetail: load failed: ${snap.error}');
           return _plain(
             WeaveErrorView(
-              message: tr('Không tải được hoạt động.', 'Could not load this activity.'),
+              message: tr(
+                'Không tải được hoạt động.',
+                'Could not load this activity.',
+              ),
+              onRetry: () => setState(
+                    () => _stream = WeaveService.watchOne(widget.activityId),
+              ),
             ),
           );
         }
         if (snap.connectionState == ConnectionState.waiting) {
-          return _plain(const Center(child: CircularProgressIndicator()));
+          return _plain(const WeaveLoadingView());
         }
         final a = snap.data;
         if (a == null) {
           return _plain(
-            Center(
-              child: Text(
-                tr(
-                  'Hoạt động không còn tồn tại.',
-                  'This activity no longer exists.',
-                ),
+            WeaveEmptyView(
+              icon: Icons.event_busy_outlined,
+              title: tr(
+                'Hoạt động không còn tồn tại.',
+                'This activity no longer exists.',
               ),
             ),
           );
@@ -172,6 +188,12 @@ class _OverviewTab extends StatefulWidget {
 class _OverviewTabState extends State<_OverviewTab> {
   bool _busy = false;
 
+  // Tạo stream thành viên một lần: tránh đăng ký lại mỗi khi đổi _busy
+  // (làm danh sách thành viên nhấp nháy rỗng).
+  late final Stream<List<WeaveMember>> _members = WeaveService.watchMembers(
+    widget.activity.id,
+  );
+
   WeaveActivity get a => widget.activity;
   bool get _isHost => a.hostId == WeaveService.me;
 
@@ -269,7 +291,7 @@ class _OverviewTabState extends State<_OverviewTab> {
   Widget build(BuildContext context) {
     final notSet = tr('Chưa chốt', 'Not decided');
     return StreamBuilder<List<WeaveMember>>(
-      stream: WeaveService.watchMembers(a.id),
+      stream: _members,
       builder: (context, snap) {
         final members = snap.data ?? const <WeaveMember>[];
         WeaveMember? mine;
@@ -463,24 +485,38 @@ class _OverviewTabState extends State<_OverviewTab> {
   }
 }
 
-class _PollsTab extends StatelessWidget {
+class _PollsTab extends StatefulWidget {
   final WeaveActivity activity;
   const _PollsTab({required this.activity});
 
   @override
+  State<_PollsTab> createState() => _PollsTabState();
+}
+
+class _PollsTabState extends State<_PollsTab> {
+  // Tạo stream một lần. Nút Thử lại gán stream mới.
+  late Stream<List<WeavePoll>> _stream = WeaveService.watchPolls(
+    widget.activity.id,
+  );
+
+  @override
   Widget build(BuildContext context) {
+    final activity = widget.activity;
     final isHost = activity.hostId == WeaveService.me;
     return StreamBuilder<List<WeavePoll>>(
-      stream: WeaveService.watchPolls(activity.id),
+      stream: _stream,
       builder: (context, snap) {
         if (snap.hasError) {
           debugPrint('WeaveDetail polls: load failed: ${snap.error}');
           return WeaveErrorView(
             message: tr('Không tải được bình chọn.', 'Could not load polls.'),
+            onRetry: () => setState(
+                  () => _stream = WeaveService.watchPolls(widget.activity.id),
+            ),
           );
         }
         if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const WeaveLoadingView();
         }
         final polls = snap.data!;
         return LayoutBuilder(
@@ -500,18 +536,12 @@ class _PollsTab extends StatelessWidget {
                   ),
                 ),
               if (polls.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 40),
-                  child: Text(
-                    tr(
-                      'Chưa có bình chọn nào.\nTạo một bình chọn để cùng chọn địa điểm hoặc ngày.',
-                      'No polls yet.\nCreate one to pick a place or a date together.',
-                    ),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
+                WeaveEmptyView(
+                  icon: Icons.poll_outlined,
+                  title: tr('Chưa có bình chọn nào.', 'No polls yet.'),
+                  description: tr(
+                    'Tạo một bình chọn để cùng chọn địa điểm hoặc ngày.',
+                    'Create one to pick a place or a date together.',
                   ),
                 ),
               for (final p in polls)

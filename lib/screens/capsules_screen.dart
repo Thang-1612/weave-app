@@ -6,6 +6,8 @@ import '../services/capsule_service.dart';
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
 import '../widgets/post_card.dart';
+import '../widgets/weave_error_view.dart';
+import '../widgets/weave_state_views.dart';
 
 /// Từ chiều rộng này trở lên: bộ lọc bên trái, danh sách bên phải.
 /// Dưới mức này: bộ lọc nằm ở đầu trang.
@@ -34,8 +36,8 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
       CapsuleService.openedForMe(),
     ]);
     return (
-      r[0] as List<QueryDocumentSnapshot<Map<String, dynamic>>>,
-      r[1] as List<Post>,
+    r[0] as List<QueryDocumentSnapshot<Map<String, dynamic>>>,
+    r[1] as List<Post>,
     );
   }
 
@@ -178,15 +180,16 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
   }
 
   Widget _filters(
-    int mineCount,
-    int lockedCount,
-    int openedCount,
-    int recvCount,
-  ) {
+      int mineCount,
+      int lockedCount,
+      int openedCount,
+      int recvCount,
+      ) {
     // Màu và viền đã có trong chipTheme chung; chỉ giữ dạng viên thuốc, không tick.
     return ChipTheme(
-      data: ChipTheme.of(context)
-          .copyWith(shape: const StadiumBorder(), showCheckmark: false),
+      data: ChipTheme.of(
+        context,
+      ).copyWith(shape: const StadiumBorder(), showCheckmark: false),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -206,8 +209,8 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
             options: [
               (tr('Tất cả', 'All'), 0),
               (
-                tr('Đang niêm phong ($lockedCount)', 'Sealed ($lockedCount)'),
-                1,
+              tr('Đang niêm phong ($lockedCount)', 'Sealed ($lockedCount)'),
+              1,
               ),
               (tr('Đã mở ($openedCount)', 'Opened ($openedCount)'), 2),
             ],
@@ -227,15 +230,17 @@ class _CapsulesScreenState extends State<CapsulesScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: SelectableText('${snap.error}'),
+            debugPrint('CapsulesScreen load error: ${snap.error}');
+            return WeaveErrorView(
+              message: tr(
+                'Không tải được hộp thời gian.',
+                'Could not load time capsules.',
               ),
+              onRetry: () => _reload(),
             );
           }
           if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const WeaveLoadingView();
           }
           final (mine, received) = snap.data!;
           final now = DateTime.now();
