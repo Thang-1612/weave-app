@@ -1,0 +1,11 @@
+rules_version = '2';
+// Mã nguồn hiện KHÔNG dùng Firebase Storage (ảnh được lưu dạng chuỗi trong
+// Firestore). File này chặn mọi truy cập để bucket mặc định không bị mở nhầm.
+// Khi bắt đầu dùng Storage, viết luật theo từng đường dẫn và có test đi kèm.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

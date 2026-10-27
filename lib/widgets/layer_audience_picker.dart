@@ -1,34 +1,9 @@
 import 'package:flutter/material.dart';
-
 import '../models/weave_layer.dart';
 import '../services/group_service.dart';
 import '../services/l10n.dart';
 import '../theme/app_theme.dart';
-import 'layer_tab_bar.dart';
-
-String layerAudienceHint(String type) {
-  switch (type) {
-    case LayerAudience.kFriends:
-      return tr(
-        'Những người đang là bạn bè của bạn',
-        'People who are currently your friends',
-      );
-    case LayerAudience.kClose:
-      return tr(
-        'Chỉ những người trong danh sách bạn thân của bạn',
-        'Only people on your close friends list',
-      );
-    case LayerAudience.kGroup:
-      return tr(
-        'Chỉ thành viên của một nhóm riêng bạn chọn',
-        'Only members of a private group you choose',
-      );
-    case LayerAudience.kMe:
-      return tr('Chỉ bạn xem được', 'Only you can see it');
-    default:
-      return tr('Mọi người dùng trong ứng dụng', 'Everyone in the app');
-  }
-}
+import 'audience_meta.dart';
 
 /// Nhãn hiển thị của đối tượng: nhóm thì hiện tên nhóm nếu đã biết.
 String layerAudienceText(LayerAudience a) {
@@ -36,54 +11,24 @@ String layerAudienceText(LayerAudience a) {
     final n = GroupService.nameOf(a.groupId);
     if (n != null && n.isNotEmpty) return n;
   }
-  return layerAudienceLabel(a.type);
+  return audienceLabel(a.type);
 }
 
 /// Bảng chọn đối tượng cho một lớp. Chọn "Nhóm riêng" sẽ mở tiếp bảng chọn
 /// (hoặc tạo) nhóm. Trả về null nếu người dùng đóng bảng.
 Future<LayerAudience?> showLayerAudiencePicker(
-  BuildContext context, {
-  required LayerAudience current,
-  String? title,
-}) async {
-  final type = await showModalBottomSheet<String>(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (ctx) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title ?? tr('Ai xem được lớp này?', 'Who can see this layer?'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            for (final v in LayerAudience.kAll)
-              ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppColors.soft,
-                  child: Icon(layerAudienceIcon(v), color: AppColors.brand),
-                ),
-                title: Text(
-                  v == LayerAudience.kGroup && current.isGroup
-                      ? layerAudienceText(current)
-                      : layerAudienceLabel(v),
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Text(layerAudienceHint(v)),
-                trailing: current.type == v
-                    ? const Icon(Icons.check_circle, color: AppColors.brand)
-                    : null,
-                onTap: () => Navigator.of(ctx).pop(v),
-              ),
-          ],
-        ),
-      ),
-    ),
+    BuildContext context, {
+      required LayerAudience current,
+      String? title,
+    }) async {
+  final type = await showAudienceTypeSheet(
+    context,
+    types: LayerAudience.kAll,
+    current: current.type,
+    title: title ?? tr('Ai xem được lớp này?', 'Who can see this layer?'),
+    labelOf: (v) => v == LayerAudience.kGroup && current.isGroup
+        ? layerAudienceText(current)
+        : audienceLabel(v),
   );
   if (type == null || !context.mounted) return null;
   if (type != LayerAudience.kGroup) return LayerAudience(type);
@@ -174,26 +119,21 @@ class _GroupPickerSheetState extends State<_GroupPickerSheet> {
                         ListTile(
                           leading: const CircleAvatar(
                             backgroundColor: AppColors.soft,
-                            child: Icon(
-                              Icons.groups_outlined,
-                              color: AppColors.brand,
-                            ),
+                            child: Icon(Icons.groups_outlined,
+                                color: AppColors.brand),
                           ),
                           title: Text(
                             g.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            style:
+                            const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           subtitle: Text(
-                            tr(
-                              '${g.memberIds.length} thành viên',
-                              '${g.memberIds.length} members',
-                            ),
+                            tr('${g.memberIds.length} thành viên',
+                                '${g.memberIds.length} members'),
                           ),
                           trailing: widget.currentGroupId == g.id
-                              ? const Icon(
-                                  Icons.check_circle,
-                                  color: AppColors.brand,
-                                )
+                              ? const Icon(Icons.check_circle,
+                              color: AppColors.brand)
                               : null,
                           onTap: () => Navigator.of(context).pop(g),
                         ),
@@ -222,12 +162,12 @@ class _GroupPickerSheetState extends State<_GroupPickerSheet> {
 
 /// Hộp nhập một dòng chữ ngắn (tên lớp, tên nhóm). Trả về null nếu hủy.
 Future<String?> showLayerNameDialog(
-  BuildContext context, {
-  required String title,
-  String initial = '',
-  String? hint,
-  int maxLength = 40,
-}) {
+    BuildContext context, {
+      required String title,
+      String initial = '',
+      String? hint,
+      int maxLength = 40,
+    }) {
   return showDialog<String>(
     context: context,
     builder: (_) => _NameDialog(

@@ -1,0 +1,13 @@
+{
+  "name": "weave-rules-tests",
+  "private": true,
+  "description": "Kiểm thử Firestore Security Rules của Weave bằng Firebase Emulator",
+  "scripts": {
+    "test:rules": "npx firebase-tools emulators:exec --only firestore --project demo-weave \"jest --runInBand --config jest.config.js\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "firebase": "^13.0.0",
+    "jest": "^30.0.0"
+  }
+}

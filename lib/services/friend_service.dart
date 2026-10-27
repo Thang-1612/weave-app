@@ -79,12 +79,12 @@ class FriendService {
           .collection('notifications')
           .doc('${type}_${me.uid}')
           .set({
-            'type': type,
-            'fromUserId': me.uid,
-            'fromName': n.isNotEmpty ? n : (me.email ?? 'msgUser'),
-            'read': false,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+        'type': type,
+        'fromUserId': me.uid,
+        'fromName': n.isNotEmpty ? n : (me.email ?? 'msgUser'),
+        'read': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     } catch (_) {}
   }
 
@@ -99,10 +99,10 @@ class FriendService {
   }
 
   static FriendStatus statusWith(
-    List<Friendship> all,
-    String me,
-    String other,
-  ) {
+      List<Friendship> all,
+      String me,
+      String other,
+      ) {
     for (final f in all) {
       if (f.users.contains(me) && f.users.contains(other)) {
         if (f.accepted) return FriendStatus.friends;
@@ -142,9 +142,70 @@ class FriendService {
   }
 
   /// Hủy lời mời đã gửi, từ chối lời mời, hoặc hủy kết bạn.
+  /// Xóa luôn cả hai cạnh công khai trong cùng một batch để không sót dữ liệu.
+  /// Nếu hai người đang là bạn bè, thu hồi ngay quyền xem bài chỉ-bạn-bè của nhau.
   static Future<void> remove(String other) async {
-    await _col.doc(_id(_me, other)).delete();
-    await _syncQuietly();
+    final me = _me;
+    final ref = _col.doc(_id(me, other));
+    bool wasFriends = false;
+    try {
+      wasFriends = (await ref.get()).data()?['status'] == 'accepted';
+    } catch (_) {}
+
+    // Việc bắt buộc: xóa quan hệ. Không gộp chung batch với việc dọn phụ để
+    // một lỗi ở phần phụ (ví dụ rules chưa cập nhật) không chặn được việc này.
+    await ref.delete();
+
+    // Việc phụ, lỗi thì bỏ qua: cạnh công khai còn sót lại sẽ bị rules từ chối
+    // đọc (mất đồng thuận), và syncPublicEdges sẽ dọn ở lần sau.
+    await _deleteEdgesQuietly(me, other);
+    if (wasFriends) await _revokePostAccess(me, other);
+  }
+
+  static Future<void> _deleteEdgesQuietly(String a, String b) async {
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      _deleteEdges(batch, a, b);
+      await batch.commit();
+    } catch (_) {}
+  }
+
+  /// Gỡ [other] khỏi audience các bài chỉ-bạn-bè của tôi, và gỡ tôi khỏi
+  /// audience các bài chỉ-bạn-bè của [other]. Chạy ngay trong thao tác hủy kết
+  /// bạn thay vì chờ [FriendPostSync] của tác giả (chỉ chạy khi app của tác giả
+  /// đang mở). Lỗi được bỏ qua: FriendPostSync vẫn là lưới an toàn.
+  static Future<void> _revokePostAccess(String me, String other) async {
+    try {
+      final db = FirebaseFirestore.instance;
+      final posts = db.collection('friend_posts');
+      // Hai truy vấn dùng chỉ mục đơn trường có sẵn, lọc phần còn lại ở client.
+      final mine = await posts.where('authorId', isEqualTo: me).get();
+      final theirs = await posts.where('audience', arrayContains: me).get();
+
+      final ops = <void Function(WriteBatch)>[];
+      for (final d in mine.docs) {
+        final a = d.data()['audience'];
+        if (a is List && a.contains(other)) {
+          ops.add((b) => b.update(d.reference, {
+            'audience': FieldValue.arrayRemove([other]),
+          }));
+        }
+      }
+      for (final d in theirs.docs) {
+        if (d.data()['authorId'] == other) {
+          ops.add((b) => b.update(d.reference, {
+            'audience': FieldValue.arrayRemove([me]),
+          }));
+        }
+      }
+      for (var i = 0; i < ops.length; i += 400) {
+        final batch = db.batch();
+        for (final op in ops.skip(i).take(400)) {
+          op(batch);
+        }
+        await batch.commit();
+      }
+    } catch (_) {}
   }
 
   /// Tôi và [other] đã là bạn bè chưa.
@@ -160,35 +221,100 @@ class FriendService {
   // ---------------------------------------------------------------------
 
   /// Đổi mức hiển thị của mối quan hệ với [other]. Chỉ ghi phần của chính mình.
+  ///
+  ///  - Ẩn: đổi visibility và xóa cả hai cạnh công khai trong một batch.
+  ///  - Công khai: đổi visibility; nếu bên kia cũng đã công khai thì ghi luôn
+  ///    cả hai cạnh trong cùng batch (rules dùng getAfter để kiểm tra).
   static Future<void> setVisibility(String other, EdgeVisibility v) async {
     final me = _me;
-    await _col.doc(_id(me, other)).update({
+    final ref = _col.doc(_id(me, other));
+    await ref.update({
       'visibility.$me': v.name,
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    await _syncQuietly();
+
+    // Phần cạnh công khai là việc phụ: lỗi thì bỏ qua, syncPublicEdges tự chữa.
+    try {
+      if (v == EdgeVisibility.hidden) {
+        await _deleteEdgesQuietly(me, other);
+      } else {
+        final snap = await ref.get();
+        final vis = snap.data()?['visibility'];
+        final otherPublic = vis is Map && vis[other] == 'public';
+        final accepted = snap.data()?['status'] == 'accepted';
+        if (otherPublic && accepted) {
+          final batch = FirebaseFirestore.instance.batch();
+          _putEdges(batch, me, other);
+          await batch.commit();
+        }
+      }
+    } catch (_) {}
   }
 
-  /// Cập nhật `users/{me}/public/edges`: danh sách bạn mà CẢ HAI bên đều để
-  /// public. Chạy ở client vì gói Spark không có Cloud Functions.
+  static DocumentReference<Map<String, dynamic>> _edgeRef(
+      String owner, String friend) =>
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(owner)
+          .collection('public_edges')
+          .doc(friend);
+
+  static void _putEdges(WriteBatch batch, String a, String b) {
+    batch.set(_edgeRef(a, b), {
+      'friendUid': b,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    batch.set(_edgeRef(b, a), {
+      'friendUid': a,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static void _deleteEdges(WriteBatch batch, String a, String b) {
+    batch.delete(_edgeRef(a, b));
+    batch.delete(_edgeRef(b, a));
+  }
+
+  /// Tự chữa cho phía của tôi: xóa cạnh không còn hợp lệ, bổ sung cạnh còn
+  /// thiếu, và dọn tài liệu `public/edges` kiểu cũ. Chạy ở client vì gói Spark
+  /// không có Cloud Functions; rules vẫn là chốt chặn cuối cùng.
   static Future<void> syncPublicEdges() async {
     final me = _me;
+    final db = FirebaseFirestore.instance;
     final snap = await _col.where('users', arrayContains: me).get();
-    final friends = snap.docs
+    final valid = snap.docs
         .map(Friendship.fromDoc)
         .where((f) => f.accepted && f.isPublic)
         .map((f) => f.otherUid(me))
         .where((u) => u.isNotEmpty)
-        .toList();
-    await FirebaseFirestore.instance.doc('users/$me/public/edges').set({
-      'friends': friends,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
+        .toSet();
 
-  static Future<void> _syncQuietly() async {
+    final mine = db.collection('users').doc(me).collection('public_edges');
+    final existing = await mine.get();
+    final have = existing.docs.map((d) => d.id).toSet();
+
+    final ops = <void Function(WriteBatch)>[];
+    for (final id in have.difference(valid)) {
+      ops.add((b) => b.delete(mine.doc(id)));
+    }
+    for (final id in valid.difference(have)) {
+      ops.add((b) => b.set(mine.doc(id), {
+        'friendUid': id,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }));
+    }
+    // Mỗi batch tối đa 500 thao tác.
+    for (var i = 0; i < ops.length; i += 400) {
+      final batch = db.batch();
+      for (final op in ops.skip(i).take(400)) {
+        op(batch);
+      }
+      await batch.commit();
+    }
+
+    // Dọn dữ liệu cũ (mảng friends trong public/edges), bỏ qua nếu không có.
     try {
-      await syncPublicEdges();
+      await db.doc('users/$me/public/edges').delete();
     } catch (_) {}
   }
 }

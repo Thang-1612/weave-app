@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 import '../services/l10n.dart';
 import '../services/user_prefs.dart';
 import '../theme/app_theme.dart';
+import '../widgets/mutual_friends_row.dart';
 import 'constellation_screen.dart';
 import 'contribution_screen.dart';
 import 'on_this_day_screen.dart';
@@ -14,7 +14,11 @@ class UserProfilePage extends StatelessWidget {
   final String userId;
   final String title;
 
-  const UserProfilePage({super.key, required this.userId, required this.title});
+  const UserProfilePage({
+    super.key,
+    required this.userId,
+    required this.title,
+  });
 
   Future<void> _block(BuildContext context) async {
     final navigator = Navigator.of(context);
@@ -22,6 +26,9 @@ class UserProfilePage extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(WeaveRadius.card),
+        ),
         title: Text(tr('Chặn $name?', 'Block $name?')),
         content: Text(
           tr(
@@ -56,13 +63,15 @@ class UserProfilePage extends StatelessWidget {
   }
 
   void _openOnThisDay(BuildContext context) {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const OnThisDayScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const OnThisDayScreen()),
+    );
   }
 
   void _openConstellation(BuildContext context) {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const ConstellationScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ConstellationScreen()),
+    );
   }
 
   @override
@@ -134,7 +143,14 @@ class UserProfilePage extends StatelessWidget {
             ),
         ],
       ),
-      body: ProfileScreen(userId: userId),
+      body: isMe
+          ? ProfileScreen(userId: userId)
+          : Column(
+              children: [
+                MutualFriendsRow(otherUid: userId),
+                Expanded(child: ProfileScreen(userId: userId)),
+              ],
+            ),
     );
   }
 }

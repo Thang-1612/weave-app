@@ -1,33 +1,12 @@
 import 'package:flutter/material.dart';
-
-import '../models/weave_layer.dart';
-import '../services/l10n.dart';
 import '../theme/app_theme.dart';
-import 'audience_picker.dart';
+import 'audience_meta.dart';
 
-/// Icon theo loại đối tượng của lớp (mở rộng audienceIcon với bạn thân, nhóm).
-IconData layerAudienceIcon(String type) {
-  switch (type) {
-    case LayerAudience.kClose:
-      return Icons.favorite_border;
-    case LayerAudience.kGroup:
-      return Icons.groups_outlined;
-    default:
-      return audienceIcon(type);
-  }
-}
+/// Icon / nhãn theo loại đối tượng của lớp. Giữ tên cũ cho nơi đang gọi;
+/// nội dung nằm ở audience_meta.dart.
+IconData layerAudienceIcon(String type) => audienceIcon(type);
 
-/// Nhãn theo loại đối tượng của lớp.
-String layerAudienceLabel(String type) {
-  switch (type) {
-    case LayerAudience.kClose:
-      return tr('Bạn thân', 'Close friends');
-    case LayerAudience.kGroup:
-      return tr('Nhóm riêng', 'Private group');
-    default:
-      return audienceLabel(type);
-  }
-}
+String layerAudienceLabel(String type) => audienceLabel(type);
 
 class LayerTabItem {
   final String id;

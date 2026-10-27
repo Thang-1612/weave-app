@@ -50,3 +50,14 @@ app.*.map.json
 test_rules/node_modules/
 firestore-debug.log
 ui-debug.log
+
+# --- Thêm bởi bước 1 (dọn repo) ---
+node_modules/
+.firebase/
+*.log
+# File nháp dùng khi làm việc với AI, không thuộc mã nguồn
+box_context.txt
+card_context.txt
+shape_context.txt
+shape_kind.txt
+shape_matches.txt
